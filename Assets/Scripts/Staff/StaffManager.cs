@@ -12,30 +12,50 @@ namespace Staff
     /// </summary>
     public class StaffManager : MonoBehaviour
     {
-        [Header("Staff Settings")]
-        [SerializeField] private List<StaffFront> staffFronts = new List<StaffFront>();
+        [Header("Staff Settings")] [SerializeField]
+        private List<StaffFront> staffPrefabs = new();
+
+        private List<StaffFront> _staffInstances;
+
+        [SerializeField] private Transform canvasParent;
 
         // Eventos útiles para otros sistemas
         public event Action<StaffFront, Customer> OnServiceCompleted;
         public event Action<StaffFront> OnStaffBecameBusy;
         public event Action<StaffFront> OnStaffBecameFree;
 
-        public int GetStaffCount() => staffFronts?.Count ?? 0;
+        public int GetStaffCount() => _staffInstances?.Count ?? 0;
+
+
+        private void Start()
+        {
+            _staffInstances = new List<StaffFront>();
+            foreach (var staffPrefab in staffPrefabs)
+            {
+                if (staffPrefab != null)
+                {
+                    var instance = Instantiate(staffPrefab);
+                    instance.Configure(canvasParent, staffPrefab.GetStaff(), staffPrefab.GetIndex());
+                    _staffInstances.Add(instance);
+                }
+            }
+        }
 
         public StaffFront GetStaffByIndex(int index)
         {
-            if (staffFronts == null) return null;
-            return staffFronts.Find(sf => sf != null && sf.GetIndex() == index);
+            if (_staffInstances == null) return null;
+            return _staffInstances.Find(sf => sf != null && sf.GetIndex() == index);
         }
 
         // Devuelve el primer staff libre o null
         public StaffFront GetAvailableStaff()
         {
-            if (staffFronts == null) return null;
-            foreach (var sf in staffFronts)
+            if (_staffInstances == null) return null;
+            foreach (var sf in _staffInstances)
             {
                 if (sf != null && sf.CanAttend()) return sf;
             }
+
             return null;
         }
 
@@ -57,6 +77,18 @@ namespace Staff
             return true;
         }
 
+        // Intenta asignar un cliente a un staff específico por índice.
+        public bool TryAssignCustomerToStaff(Customer customer, int staffIndex)
+        {
+            if (customer == null) return false;
+
+            var sf = GetStaffByIndex(staffIndex);
+            if (sf == null || !sf.CanAttend()) return false;
+
+            StartCoroutine(HandleServiceCoroutine(sf, customer));
+            return true;
+        }
+
         // Maneja la simulación de servicio: marca ocupado, espera ServiceTime y libera
         private IEnumerator HandleServiceCoroutine(StaffFront staffFront, Customer customer)
         {
@@ -67,8 +99,19 @@ namespace Staff
             OnStaffBecameBusy?.Invoke(staffFront);
 
             float time = Mathf.Max(0f, staffFront.GetServiceTime());
-            // Espera el tiempo de servicio
-            yield return new WaitForSeconds(time);
+
+            float elapsed = 0f;
+            while (elapsed < time)
+            {
+                elapsed += Time.deltaTime;
+                staffFront.UpdateBusyProgress(Mathf.Min(elapsed, time));
+                yield return null;
+            }
+
+            if (time <= 0f)
+            {
+                staffFront.UpdateBusyProgress(0f);
+            }
 
             // Liberar
             staffFront.MarkFree();
@@ -92,4 +135,3 @@ namespace Staff
         }
     }
 }
-

@@ -48,3 +48,4 @@ MonoBehaviour:
     Type: 1
     Patience: 40
     Reward: 40
+  customerDropSlot: {fileID: 803188726724378241, guid: cac7e59cb214b294b87fb00cdb9ed1a8, type: 3}

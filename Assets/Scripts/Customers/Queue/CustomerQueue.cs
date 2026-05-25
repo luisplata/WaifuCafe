@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,23 +8,28 @@ namespace Customers.Queue
     public class CustomerQueue : MonoBehaviour
     {
         // ============ SERIALIZED FIELDS ============
-        [Header("Queue Settings")]
-        [SerializeField] private int maxQueueSize = 10;
+        [Header("Queue Settings")] [SerializeField]
+        private int maxQueueSize = 10;
+
         [SerializeField] private bool prioritizeVIP = true;
 
-        [Header("Spawn Settings")]
-        [SerializeField] private float spawnInterval = 3f;
+        [Header("Spawn Settings")] [SerializeField]
+        private float spawnInterval = 3f;
+
         [SerializeField] private float spawnVariation = 1f;
         [SerializeField] private int maxCustomersInGame = 15;
+        [SerializeField] private int maxSpawn = 3;
 
-        [Header("Customer Prefabs")]
-        [SerializeField] private List<CustomerFront> customerPrefabs;
+        [Header("Customer Prefabs")] [SerializeField]
+        private List<CustomerFront> customerPrefabs;
+
+        [SerializeField] private Transform parentOfCustomers;
 
         // ============ PRIVATE FIELDS ============
         private Queue<Customer> queue = new Queue<Customer>();
         private List<Customer> activeCustomers = new List<Customer>();
         private Dictionary<Customer, CustomerFront> customerViews = new Dictionary<Customer, CustomerFront>();
-        
+
         private float spawnTimer = 0f;
         private bool isSpawningEnabled = true;
         private bool isPaused = false;
@@ -55,15 +61,18 @@ namespace Customers.Queue
             UpdateCustomerPatience();
         }
 
+        private bool _isFirstCall = true;
+
         // ============ SPAWN MANAGEMENT ============
         private void UpdateSpawnTimer()
         {
             spawnTimer -= Time.deltaTime;
 
-            if (spawnTimer <= 0f && CanSpawnMore())
+            if (_isFirstCall || spawnTimer <= 0f && CanSpawnMore())
             {
                 SpawnCustomer();
                 ResetSpawnTimer();
+                _isFirstCall = false;
             }
         }
 
@@ -75,20 +84,24 @@ namespace Customers.Queue
                 return;
             }
 
-            // Instanciar prefab y extraer el Customer
-            CustomerFront prefab = customerPrefabs[UnityEngine.Random.Range(0, customerPrefabs.Count)];
-            CustomerFront instance = Instantiate(prefab);
-            Customer customerData = instance.GetCustomer();
-
-            if (customerData == null)
+            for (int i = 0; i <= maxSpawn; i++)
             {
-                Debug.LogWarning("Spawned CustomerFront has no Customer data assigned.");
-                Destroy(instance.gameObject);
-                return;
-            }
+                // Instanciar prefab y extraer el Customer
+                CustomerFront prefab = customerPrefabs[UnityEngine.Random.Range(0, customerPrefabs.Count)];
+                CustomerFront instance = Instantiate(prefab);
+                instance.Configure(parentOfCustomers);
+                Customer customerData = instance.GetCustomer();
 
-            EnqueueCustomer(customerData);
-            customerViews[customerData] = instance;
+                if (customerData == null)
+                {
+                    Debug.LogWarning("Spawned CustomerFront has no Customer data assigned.");
+                    Destroy(instance.gameObject);
+                    return;
+                }
+
+                EnqueueCustomer(customerData);
+                customerViews[customerData] = instance;
+            }
         }
 
         private bool CanSpawnMore()
@@ -201,6 +214,7 @@ namespace Customers.Queue
                     if (c != customer)
                         newQueue.Enqueue(c);
                 }
+
                 queue = newQueue;
 
                 TryDestroyCustomerView(customer);
@@ -240,13 +254,38 @@ namespace Customers.Queue
             {
                 customer.WaitTime += Time.deltaTime;
 
-                // Remove if patience expires
+                // Update visual if view exists
+                if (customerViews.TryGetValue(customer, out var view))
+                {
+                    view.UpdateWaitingProgress(customer.WaitTime);
+                }
+
+                // Remove if patience expires (play leaving transition first)
                 if (customer.WaitTime > customer.Patience)
                 {
-                    RemoveCustomer(customer);
+                    // Start a short visual transition before removing
+                    StartCoroutine(RemoveCustomerDelayed(customer, 0.6f));
                     break; // Avoid modifying collection while iterating
                 }
             }
+        }
+
+        private IEnumerator RemoveCustomerDelayed(Customer customer, float delay)
+        {
+            if (customer == null) yield break;
+
+            if (customerViews.TryGetValue(customer, out var view))
+            {
+                Debug.Log(
+                    $"[CustomerQueue] Patience expired for customer. Starting leaving sequence for {customer.Type}");
+                view.MarkLeaving();
+            }
+
+            yield return new WaitForSeconds(delay);
+
+            // Finally remove from queue and destroy view
+            Debug.Log($"[CustomerQueue] Removing customer after leave delay: {customer.Type}");
+            RemoveCustomer(customer);
         }
 
         // ============ GAME CONTROL ============
@@ -297,11 +336,11 @@ namespace Customers.Queue
         public void PrintStatistics()
         {
             Debug.Log($"=== Queue Statistics ===\n" +
-                $"Queue Size: {queue.Count}/{maxQueueSize}\n" +
-                $"Customers Served: {customersServed}\n" +
-                $"Customers Left: {customersLeft}\n" +
-                $"Average Wait Time: {GetAverageWaitTime():F2}s\n" +
-                $"Queue Satisfaction: {GetAverageSatisfaction()}%");
+                      $"Queue Size: {queue.Count}/{maxQueueSize}\n" +
+                      $"Customers Served: {customersServed}\n" +
+                      $"Customers Left: {customersLeft}\n" +
+                      $"Average Wait Time: {GetAverageWaitTime():F2}s\n" +
+                      $"Queue Satisfaction: {GetAverageSatisfaction()}%");
         }
 
         // ============ VALIDATION ============
@@ -343,6 +382,7 @@ namespace Customers.Queue
             {
                 if (view != null)
                 {
+                    Debug.Log($"[CustomerQueue] Destroying CustomerFront view: {view.name}");
                     Destroy(view.gameObject);
                 }
 
@@ -391,6 +431,12 @@ namespace Customers.Queue
         public Customer CompleteService(Customer customer)
         {
             activeCustomers.Remove(customer);
+            // If a view exists, ask it to show final state before destruction
+            if (customerViews.TryGetValue(customer, out var view))
+            {
+                view.FinishWaitingAndClear();
+            }
+
             TryDestroyCustomerView(customer);
 
             customersServed++;

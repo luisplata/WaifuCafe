@@ -5,6 +5,7 @@ namespace Staff
     [Serializable]
     public class Staff
     {
+        public string name;
         // Identificador dentro del pool (index)
         public int Index;
 

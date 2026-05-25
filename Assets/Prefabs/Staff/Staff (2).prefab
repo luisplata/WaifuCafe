@@ -45,5 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Staff.StaffFront
   staff:
+    name: Waifu 2
     Index: 1
     ServiceTime: 5
+  staffDragItem: {fileID: 4726565927271235942, guid: 99ea2845fc81ca74c8223a5cdb1dcad1, type: 3}
