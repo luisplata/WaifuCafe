@@ -161,6 +161,30 @@ namespace Customers.Queue
             return ServeCustomer(selected);
         }
 
+        // Intenta tomar el siguiente cliente para que lo atienda un staff.
+        // No marca el servicio como completado; eso debe llamarse luego con FinishService.
+        public bool TryTakeNextCustomer(out Customer customer)
+        {
+            if (queue.Count == 0)
+            {
+                customer = null;
+                OnQueueEmpty?.Invoke();
+                return false;
+            }
+
+            customer = queue.Dequeue();
+            activeCustomers.Remove(customer);
+            OnQueueCountChanged?.Invoke(queue.Count);
+            return true;
+        }
+
+        // Finaliza el servicio de un cliente (llamado por el staff cuando termina)
+        public void FinishService(Customer customer)
+        {
+            if (customer == null) return;
+            CompleteService(customer);
+        }
+
         public Customer PeekCustomer()
         {
             return queue.Count > 0 ? queue.Peek() : null;
@@ -363,7 +387,8 @@ namespace Customers.Queue
             return removed;
         }
 
-        private Customer CompleteService(Customer customer)
+        // Completa el servicio para el cliente. Public para que sistemas externos (ej. Staff) puedan invocarlo
+        public Customer CompleteService(Customer customer)
         {
             activeCustomers.Remove(customer);
             TryDestroyCustomerView(customer);
