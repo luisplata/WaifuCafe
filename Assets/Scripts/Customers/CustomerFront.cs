@@ -21,7 +21,7 @@ namespace Customers
             if (_customerComponentUi != null)
             {
                 _customerComponentUi.Configure(customer);
-                _customerComponentUi.StartWaiting(customer.Patience);
+                _customerComponentUi.StartWaiting(customer.GetCurrentPhaseDuration());
             }
         }
 
@@ -37,7 +37,6 @@ namespace Customers
             // Destruir el CustomerDropSlot asociado (se instancia en parent separado)
             if (_customerDropSlotInstance != null)
             {
-                Debug.Log($"[Customers] Destroying CustomerDropSlot for customer {_customerDropSlotInstance.name}");
                 Destroy(_customerDropSlotInstance.gameObject);
                 _customerDropSlotInstance = null;
             }

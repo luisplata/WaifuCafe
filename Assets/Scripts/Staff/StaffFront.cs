@@ -33,6 +33,12 @@ namespace Staff
             _staffComponentUi?.UpdateBusyProgress(elapsedBusyTime);
         }
 
+        public void SyncVisualState()
+        {
+            if (staff == null) return;
+            _staffComponentUi?.SyncFromStaff(staff);
+        }
+
         // Marca al staff como libre
         public void MarkFree()
         {
@@ -61,6 +67,7 @@ namespace Staff
             
             _staffComponentUi = _staffDragItemInstance.GetComponent<StaffComponentUi>();
             _staffComponentUi.Configure(staffData);
+            SyncVisualState();
 
             _staffDragItemInstance.SetInteractable(!staffData.IsBusy);
         }

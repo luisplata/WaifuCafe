@@ -22,6 +22,34 @@ namespace Staff
         private int selectedStaffIndex = -1;
         private int selectedCustomerQueueIndex = -1;
 
+        private void OnEnable()
+        {
+            if (staffManager != null)
+            {
+                staffManager.OnServiceCompleted += HandleServiceCompleted;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (staffManager != null)
+            {
+                staffManager.OnServiceCompleted -= HandleServiceCompleted;
+            }
+        }
+
+        private void HandleServiceCompleted(StaffFront staffFront, Customer customer)
+        {
+            if (customerQueue == null || customer == null)
+            {
+                return;
+            }
+
+            // En modo manual no hay ServiceCoordinator automático,
+            // así que confirmamos aquí la entrega al customer.
+            customerQueue.FinishService(customer);
+        }
+
         // Método para seleccionar un staff por su índice (0, 1, 2, etc)
         public void SelectStaff(int staffIndex)
         {
@@ -104,8 +132,11 @@ namespace Staff
 
             Customer customer = queuedCustomers[selectedCustomerQueueIndex];
             
-            // Sacar al cliente de la cola
-            customerQueue.ServeCustomer(customer); // Usa el mejor método existente; para ser manual quitamos directamente
+            // Marcar al cliente como tomado por el staff sin desaparecer de la cola aún
+            if (customerQueue.ServeCustomer(customer) == null)
+            {
+                return FailAssignment($"[UI] Customer {selectedCustomerQueueIndex} ya no está disponible");
+            }
             
             // Asignar al staff (esto usa la corutina de ServiceTime)
             bool assigned = staffManager.TryAssignCustomerToStaff(customer, selectedStaffIndex);
@@ -138,6 +169,45 @@ namespace Staff
             SelectStaff(staffIndex);
             SelectCustomer(queuePosition);
             return TryConfirmAssignment();
+        }
+
+        // Variante robusta para drag&drop: asigna usando la referencia del customer,
+        // evitando errores por índices de cola desactualizados.
+        public bool TryAssignByCustomer(int staffIndex, Customer customer)
+        {
+            if (customer == null)
+            {
+                return FailAssignment("[UI] Customer inválido para asignación");
+            }
+
+            if (staffManager == null || customerQueue == null)
+            {
+                return FailAssignment("[UI] StaffManager o CustomerQueue no asignados");
+            }
+
+            var staff = staffManager.GetStaffByIndex(staffIndex);
+            if (staff == null || !staff.CanAttend())
+            {
+                return FailAssignment($"[UI] Staff {staffIndex} no está disponible");
+            }
+
+            if (customerQueue.ServeCustomer(customer) == null)
+            {
+                return FailAssignment("[UI] Customer ya no está disponible para ser atendido");
+            }
+
+            bool assigned = staffManager.TryAssignCustomerToStaff(customer, staffIndex);
+            if (!assigned)
+            {
+                // Revertir el estado para que pueda volver a ser tomado.
+                customer.StartPhase(StateMachines.CustomerPhase.EsperaPedido);
+                return FailAssignment($"[UI] Fallo al asignar staff {staffIndex} a customer");
+            }
+
+            // Para telemetría UI, intentar resolver índice actual en snapshot.
+            int queueIndex = customerQueue.GetQueuedCustomersSnapshot().IndexOf(customer);
+            OnAssignmentConfirmed?.Invoke(staffIndex, queueIndex);
+            return true;
         }
 
         // Método auxiliar para limpiar selecciones

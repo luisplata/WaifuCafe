@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Staff;
+using StateMachines;
 
 namespace DragAndDrop
 {
@@ -18,6 +19,7 @@ namespace DragAndDrop
         [SerializeField] private StaffServiceUIController staffServiceUIController;
         
         private CanvasGroup _canvasGroup;
+        private Customer _customer;
 
         private void Awake()
         {
@@ -99,8 +101,24 @@ namespace DragAndDrop
                 return;
             }
 
-            Debug.Log($"[DragAndDrop] Intentando asignar Staff {draggable.StaffIndex} a Customer en posición {queuePosition}");
-            bool assigned = staffServiceUIController.TryAssignByIndices(draggable.StaffIndex, queuePosition);
+            if (_customer != null && _customer.CurrentPhase != CustomerPhase.EsperaPedido)
+            {
+                Debug.Log($"[DragAndDrop] Customer en estado {_customer.CurrentPhase}; no está listo para asignación.");
+                return;
+            }
+
+            bool assigned;
+            if (_customer != null)
+            {
+                Debug.Log($"[DragAndDrop] Intentando asignar Staff {draggable.StaffIndex} a Customer directo");
+                assigned = staffServiceUIController.TryAssignByCustomer(draggable.StaffIndex, _customer);
+            }
+            else
+            {
+                Debug.Log($"[DragAndDrop] Intentando asignar Staff {draggable.StaffIndex} a Customer en posición {queuePosition}");
+                assigned = staffServiceUIController.TryAssignByIndices(draggable.StaffIndex, queuePosition);
+            }
+
             if (!assigned)
             {
                 Debug.LogWarning($"[DragAndDrop] No se pudo asignar staff {draggable.StaffIndex} a customer en cola {queuePosition}");
@@ -113,7 +131,7 @@ namespace DragAndDrop
 
         public void Configure(Customer customer)
         {
-            
+            _customer = customer;
         }
     }
 }

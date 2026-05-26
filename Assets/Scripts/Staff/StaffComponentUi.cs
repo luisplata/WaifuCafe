@@ -41,23 +41,9 @@ namespace Staff
                 return;
             }
 
-            if (nameOfWaifu != null)
-            {
-                nameOfWaifu.text = string.IsNullOrWhiteSpace(staff.name) ? $"Staff {staff.Index}" : staff.name;
-            }
-
-            _busyDuration = Mathf.Max(0f, staff.ServiceTime);
-
-            if (serviceTimeSlider != null)
-            {
-                serviceTimeSlider.minValue = 0f;
-                serviceTimeSlider.maxValue = _busyDuration > 0f ? _busyDuration : 1f;
-                serviceTimeSlider.value = 0f;
-                serviceTimeSlider.interactable = false;
-            }
-
             _isConfigured = true;
             _isBusy = false;
+            SyncFromStaff(staff);
             SetInteractionEnabled(true);
             SetSliderValue(0f);
         }
@@ -90,6 +76,35 @@ namespace Staff
             BusyProgressUpdated?.Invoke(clampedTime);
         }
 
+        public void SyncFromStaff(Staff staff)
+        {
+            if (staff == null || !_isConfigured)
+            {
+                return;
+            }
+
+            _busyDuration = Mathf.Max(0f, staff.GetCurrentPhaseDuration());
+
+            if (nameOfWaifu != null)
+            {
+                string displayName = string.IsNullOrWhiteSpace(staff.name) ? $"Staff {staff.Index}" : staff.name;
+                nameOfWaifu.text = $"{displayName} - {staff.GetCurrentPhaseLabel()}";
+            }
+
+            float elapsed = Mathf.Clamp(staff.GetCurrentPhaseElapsed(), 0f, _busyDuration > 0f ? _busyDuration : 1f);
+
+            if (serviceTimeSlider != null)
+            {
+                serviceTimeSlider.minValue = 0f;
+                serviceTimeSlider.maxValue = _busyDuration > 0f ? _busyDuration : 1f;
+                serviceTimeSlider.value = elapsed;
+                serviceTimeSlider.interactable = false;
+            }
+
+            // NOTE: Interactability is managed ONLY by MarkBusy/MarkFree, not by phase changes.
+            // This ensures drag/drop remains responsive.
+        }
+
         public void FinishBusy()
         {
             if (!_isConfigured)
@@ -119,10 +134,12 @@ namespace Staff
 
         private void SetInteractionEnabled(bool isInteractable)
         {
+            // Note: blocksRaycasts is handled by StaffDragItem independently
+            // We only manage interactable for UI feedback, not raycasting
             if (canvasGroup != null)
             {
                 canvasGroup.interactable = isInteractable;
-                canvasGroup.blocksRaycasts = isInteractable;
+                // DO NOT set blocksRaycasts here - it breaks drag/drop handled by StaffDragItem
             }
 
             if (serviceTimeSlider != null)

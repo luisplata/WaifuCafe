@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using StateMachines;
 
 namespace Customers.Queue
 {
@@ -29,6 +30,7 @@ namespace Customers.Queue
         private Queue<Customer> queue = new Queue<Customer>();
         private List<Customer> activeCustomers = new List<Customer>();
         private Dictionary<Customer, CustomerFront> customerViews = new Dictionary<Customer, CustomerFront>();
+        private HashSet<Customer> _pendingRemoval = new HashSet<Customer>();
 
         private float spawnTimer = 0f;
         private bool isSpawningEnabled = true;
@@ -80,7 +82,6 @@ namespace Customers.Queue
         {
             if (customerPrefabs == null || customerPrefabs.Count == 0)
             {
-                Debug.LogWarning("No customer prefabs assigned!");
                 return;
             }
 
@@ -94,11 +95,11 @@ namespace Customers.Queue
 
                 if (customerData == null)
                 {
-                    Debug.LogWarning("Spawned CustomerFront has no Customer data assigned.");
                     Destroy(instance.gameObject);
                     return;
                 }
 
+                customerData.StartPhase(CustomerPhase.Llegada);
                 EnqueueCustomer(customerData);
                 customerViews[customerData] = instance;
             }
@@ -128,10 +129,13 @@ namespace Customers.Queue
             queue.Enqueue(customer);
             activeCustomers.Add(customer);
 
+            if (customerViews.TryGetValue(customer, out var view))
+            {
+                view.UpdateWaitingProgress(customer.GetCurrentPhaseElapsed());
+            }
+
             OnCustomerEnqueued?.Invoke(customer);
             OnQueueCountChanged?.Invoke(queue.Count);
-
-            Debug.Log($"Customer enqueued. Queue size: {queue.Count}");
         }
 
         public Customer DequeueCustomer()
@@ -142,8 +146,12 @@ namespace Customers.Queue
                 return null;
             }
 
-            Customer customer = queue.Dequeue();
-            return CompleteService(customer);
+            if (!TryTakeNextCustomer(out var customer))
+            {
+                return null;
+            }
+
+            return customer;
         }
 
         public Customer ServeCustomer(Customer customer)
@@ -153,13 +161,14 @@ namespace Customers.Queue
                 return null;
             }
 
-            bool removed = RemoveFromQueue(customer);
-            if (!removed)
+            if (!queue.Contains(customer) || customer.CurrentPhase != CustomerPhase.EsperaPedido)
             {
                 return null;
             }
 
-            return CompleteService(customer);
+            customer.StartPhase(CustomerPhase.EsperandoEntrega);
+            SyncCustomerView(customer);
+            return customer;
         }
 
         public Customer ServeCustomerAt(int queueIndex)
@@ -178,17 +187,28 @@ namespace Customers.Queue
         // No marca el servicio como completado; eso debe llamarse luego con FinishService.
         public bool TryTakeNextCustomer(out Customer customer)
         {
+            customer = null;
+
             if (queue.Count == 0)
             {
-                customer = null;
                 OnQueueEmpty?.Invoke();
                 return false;
             }
 
-            customer = queue.Dequeue();
-            activeCustomers.Remove(customer);
-            OnQueueCountChanged?.Invoke(queue.Count);
-            return true;
+            foreach (var current in queue)
+            {
+                if (current == null || current.CurrentPhase != CustomerPhase.EsperaPedido)
+                {
+                    continue;
+                }
+
+                current.StartPhase(CustomerPhase.EsperandoEntrega);
+                SyncCustomerView(current);
+                customer = current;
+                return true;
+            }
+
+            return false;
         }
 
         // Finaliza el servicio de un cliente (llamado por el staff cuando termina)
@@ -218,10 +238,20 @@ namespace Customers.Queue
                 queue = newQueue;
 
                 TryDestroyCustomerView(customer);
-                customersLeft++;
-                OnQueueCountChanged?.Invoke(queue.Count);
 
-                Debug.Log($"Customer removed from queue. Remaining: {queue.Count}");
+                // Contabilizar salida: si fue servido, aumentar customersServed y agregar wait time,
+                // si se fue por impaciencia, contabilizar customersLeft.
+                if (customer.WasServed)
+                {
+                    customersServed++;
+                    totalWaitTime += customer.WaitTime;
+                }
+                else
+                {
+                    customersLeft++;
+                }
+
+                OnQueueCountChanged?.Invoke(queue.Count);
             }
         }
 
@@ -252,18 +282,32 @@ namespace Customers.Queue
         {
             foreach (var customer in queue)
             {
-                customer.WaitTime += Time.deltaTime;
+                customer.UpdatePhase(Time.deltaTime);
 
-                // Update visual if view exists
                 if (customerViews.TryGetValue(customer, out var view))
                 {
-                    view.UpdateWaitingProgress(customer.WaitTime);
+                    view.UpdateWaitingProgress(customer.GetCurrentPhaseElapsed());
                 }
+
+                if (customer.CurrentPhase != CustomerPhase.EsperaPedido)
+                {
+                    if (customer.CurrentPhase == CustomerPhase.Irse &&
+                        customer.GetCurrentPhaseElapsed() >= customer.GetCurrentPhaseDuration() &&
+                        _pendingRemoval.Add(customer))
+                    {
+                        StartCoroutine(RemoveCustomerDelayed(customer, 0.6f));
+                    }
+
+                    continue;
+                }
+
+                customer.WaitTime += Time.deltaTime;
 
                 // Remove if patience expires (play leaving transition first)
                 if (customer.WaitTime > customer.Patience)
                 {
                     // Start a short visual transition before removing
+                    customer.StartPhase(CustomerPhase.Irse);
                     StartCoroutine(RemoveCustomerDelayed(customer, 0.6f));
                     break; // Avoid modifying collection while iterating
                 }
@@ -276,16 +320,13 @@ namespace Customers.Queue
 
             if (customerViews.TryGetValue(customer, out var view))
             {
-                Debug.Log(
-                    $"[CustomerQueue] Patience expired for customer. Starting leaving sequence for {customer.Type}");
                 view.MarkLeaving();
             }
 
             yield return new WaitForSeconds(delay);
 
-            // Finally remove from queue and destroy view
-            Debug.Log($"[CustomerQueue] Removing customer after leave delay: {customer.Type}");
             RemoveCustomer(customer);
+            _pendingRemoval.Remove(customer);
         }
 
         // ============ GAME CONTROL ============
@@ -335,25 +376,16 @@ namespace Customers.Queue
 
         public void PrintStatistics()
         {
-            Debug.Log($"=== Queue Statistics ===\n" +
-                      $"Queue Size: {queue.Count}/{maxQueueSize}\n" +
-                      $"Customers Served: {customersServed}\n" +
-                      $"Customers Left: {customersLeft}\n" +
-                      $"Average Wait Time: {GetAverageWaitTime():F2}s\n" +
-                      $"Queue Satisfaction: {GetAverageSatisfaction()}%");
         }
 
         // ============ VALIDATION ============
         private void ValidateSettings()
         {
-            if (customerPrefabs == null || customerPrefabs.Count == 0)
-                Debug.LogError("CustomerQueue: No customer prefabs assigned!");
+            if (customerPrefabs == null || customerPrefabs.Count == 0) return;
 
-            if (maxQueueSize <= 0)
-                Debug.LogWarning("CustomerQueue: maxQueueSize should be > 0");
+            if (maxQueueSize <= 0) return;
 
-            if (spawnInterval <= 0)
-                Debug.LogWarning("CustomerQueue: spawnInterval should be > 0");
+            if (spawnInterval <= 0) return;
         }
 
         // ============ DEBUG ============
@@ -430,22 +462,38 @@ namespace Customers.Queue
         // Completa el servicio para el cliente. Public para que sistemas externos (ej. Staff) puedan invocarlo
         public Customer CompleteService(Customer customer)
         {
-            activeCustomers.Remove(customer);
-            // If a view exists, ask it to show final state before destruction
-            if (customerViews.TryGetValue(customer, out var view))
+            if (customer == null) return null;
+
+            // Evitar doble finalización: solo completar si realmente estaba esperando entrega.
+            if (customer.CurrentPhase != CustomerPhase.EsperandoEntrega)
             {
-                view.FinishWaitingAndClear();
+                return null;
             }
 
-            TryDestroyCustomerView(customer);
+            // Cuando el staff completa la entrega, el cliente debe pasar a Consumir
+            // pero permanecer visible hasta que termine de consumir y se vaya.
+            customer.WasServed = true;
+            customer.StartPhase(CustomerPhase.Consumir);
 
-            customersServed++;
-            totalWaitTime += customer.WaitTime;
+            // Actualizar la vista si existe
+            if (customerViews.TryGetValue(customer, out var view))
+            {
+                view.UpdateWaitingProgress(customer.GetCurrentPhaseElapsed());
+            }
 
-            OnCustomerDequeued?.Invoke(customer);
-            OnQueueCountChanged?.Invoke(queue.Count);
-
+            // No removemos ni destruimos la vista aquí: la eliminación ocurre cuando
+            // el cliente completa su fase de Irse (ver UpdateCustomerPatience / RemoveCustomerDelayed).
             return customer;
+        }
+
+        private void SyncCustomerView(Customer customer)
+        {
+            if (customer == null) return;
+
+            if (customerViews.TryGetValue(customer, out var view) && view != null)
+            {
+                view.UpdateWaitingProgress(customer.GetCurrentPhaseElapsed());
+            }
         }
     }
 }

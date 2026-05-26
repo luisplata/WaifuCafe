@@ -238,7 +238,7 @@ namespace Customers.Queue.Input
                 if (action != null)
                 {
                     // Crear nuevos bindings
-                    for (int i = 0; i < action.bindings.Count; i++)
+                    for (int i = 0; i < action.bindings.Count; )
                     {
                         var binding = action.bindings[i];
                         binding.overridePath = $"<Keyboard>/{newKey.ToString()}";

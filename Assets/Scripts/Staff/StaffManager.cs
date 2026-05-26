@@ -36,6 +36,8 @@ namespace Staff
                 {
                     var instance = Instantiate(staffPrefab);
                     instance.Configure(canvasParent, staffPrefab.GetStaff(), staffPrefab.GetIndex());
+                    // Inicializar el estado del staff a EnEspera para garantizar consistencia
+                    instance.GetStaff().StartPhase(StateMachines.StaffPhase.EnEspera);
                     _staffInstances.Add(instance);
                 }
             }
@@ -89,29 +91,42 @@ namespace Staff
             return true;
         }
 
-        // Maneja la simulación de servicio: marca ocupado, espera ServiceTime y libera
+        // Para ordenar a un staff libre que atienda:
+        public bool TryAssignAttend(int staffIndex)
+        {
+            if (staffIndex < 0 || staffIndex >= _staffInstances.Count) return false;
+            return _staffInstances[staffIndex].GetStaff().CommandAttend();
+        }
+
+        // Maneja la simulación de servicio: marca ocupado, espera el ciclo completo de servicio y libera
         private IEnumerator HandleServiceCoroutine(StaffFront staffFront, Customer customer)
         {
             if (staffFront == null) yield break;
 
-            // Mark busy
+            var staff = staffFront.GetStaff();
+            if (staff == null) yield break;
+
+            // Iniciar la máquina de estados del staff
+            // Esto inicia AtendiendoCliente (2s) → PreparandoPedido (ServiceTime) → LlevandoPedido (2s) → EnEspera
+            bool started = staff.CommandAttend();
+            if (!started)
+            {
+                // Si no pudo iniciar, no continuar la corutina para evitar bloqueo.
+                yield break;
+            }
+
+            // Mark busy - controla la interactividad del drag/drop
             staffFront.MarkBusy();
             OnStaffBecameBusy?.Invoke(staffFront);
 
-            float time = Mathf.Max(0f, staffFront.GetServiceTime());
-
-            float elapsed = 0f;
-            while (elapsed < time)
+            // Esperar a que el staff complete TODO el ciclo de servicio
+            // La máquina de estados avanza automáticamente cada frame via UpdatePhase()
+            // Solo esperamos a que vuelva a CanAttend() (es decir, EnEspera fase)
+            while (!staff.CanAttend())
             {
-                elapsed += Time.deltaTime;
-                staffFront.UpdateBusyProgress(Mathf.Min(elapsed, time));
                 yield return null;
             }
 
-            if (time <= 0f)
-            {
-                staffFront.UpdateBusyProgress(0f);
-            }
 
             // Liberar
             staffFront.MarkFree();
@@ -132,6 +147,18 @@ namespace Staff
             var sf = GetStaffByIndex(index);
             sf?.MarkFree();
             if (sf != null) OnStaffBecameFree?.Invoke(sf);
+        }
+
+        void Update()
+        {
+            float dt = Time.deltaTime;
+            foreach (var s in _staffInstances)
+            {
+                if (s == null || s.GetStaff() == null) continue;
+
+                s.GetStaff().UpdatePhase(dt);
+                s.SyncVisualState();
+            }
         }
     }
 }

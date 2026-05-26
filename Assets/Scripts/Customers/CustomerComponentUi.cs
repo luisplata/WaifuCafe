@@ -19,9 +19,9 @@ namespace Customers
         public event Action<float> WaitProgressUpdated;
         public event Action Left;
 
+        private Customer _customer;
         private float _patienceDuration;
         private bool _isConfigured;
-        private bool _isWaiting;
 
         private void Awake()
         {
@@ -37,29 +37,16 @@ namespace Customers
                 return;
             }
 
-            if (nameText != null)
-            {
-                nameText.text = customer.Type.ToString();
-            }
+            _customer = customer;
 
-            _patienceDuration = Mathf.Max(0f, customer.Patience);
-
-            if (patienceSlider != null)
-            {
-                patienceSlider.minValue = 0f;
-                patienceSlider.maxValue = _patienceDuration > 0f ? _patienceDuration : 1f;
-                patienceSlider.value = Mathf.Clamp(customer.WaitTime, 0f, patienceSlider.maxValue);
-                patienceSlider.interactable = false;
-            }
+            RefreshFromCustomer(customer, customer.GetCurrentPhaseElapsed());
 
             _isConfigured = true;
-            _isWaiting = false;
         }
 
         public void StartWaiting(float patience)
         {
             _patienceDuration = Mathf.Max(0f, patience);
-            _isWaiting = true;
 
             if (patienceSlider != null)
             {
@@ -73,15 +60,18 @@ namespace Customers
 
         public void UpdateWaitingProgress(float elapsed)
         {
-            if (!_isWaiting && !_isConfigured) return;
+            if (!_isConfigured) return;
 
-            float clamped = Mathf.Clamp(elapsed, 0f, _patienceDuration > 0f ? _patienceDuration : 1f);
-            if (patienceSlider != null)
+            if (_customer != null)
             {
-                patienceSlider.value = clamped;
+                RefreshFromCustomer(_customer, elapsed);
+            }
+            else
+            {
+                RefreshFallback(elapsed);
             }
 
-            WaitProgressUpdated?.Invoke(clamped);
+            WaitProgressUpdated?.Invoke(elapsed);
         }
 
         public void FinishWaitingAndClear()
@@ -93,7 +83,6 @@ namespace Customers
                 patienceSlider.value = patienceSlider.maxValue;
             }
 
-            _isWaiting = false;
         }
 
         public void MarkLeaving()
@@ -109,10 +98,41 @@ namespace Customers
 
         private void SetIdleState()
         {
-            _isWaiting = false;
             if (patienceSlider != null)
             {
                 patienceSlider.value = 0f;
+            }
+        }
+
+        private void RefreshFromCustomer(Customer customer, float elapsed)
+        {
+            float duration = Mathf.Max(0f, customer.GetCurrentPhaseDuration());
+            float clampedDuration = duration > 0f ? duration : 1f;
+            float clampedElapsed = Mathf.Clamp(elapsed, 0f, clampedDuration);
+
+            _patienceDuration = clampedDuration;
+
+            if (nameText != null)
+            {
+                nameText.text = $"{customer.Type} - {customer.GetCurrentPhaseLabel()}";
+            }
+
+            if (patienceSlider != null)
+            {
+                patienceSlider.minValue = 0f;
+                patienceSlider.maxValue = clampedDuration;
+                patienceSlider.value = clampedElapsed;
+                patienceSlider.interactable = false;
+            }
+        }
+
+        private void RefreshFallback(float elapsed)
+        {
+            float clamped = Mathf.Clamp(elapsed, 0f, _patienceDuration > 0f ? _patienceDuration : 1f);
+
+            if (patienceSlider != null)
+            {
+                patienceSlider.value = clamped;
             }
         }
     }
