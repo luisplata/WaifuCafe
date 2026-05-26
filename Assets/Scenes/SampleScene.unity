@@ -1286,11 +1286,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fe6f874078bdb44e92208d03a2fb183, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Customers.Queue.CustomerQueue
-  maxQueueSize: 10
+  maxQueueSize: 2
   prioritizeVIP: 1
   spawnInterval: 5
   spawnVariation: 5
-  maxCustomersInGame: 15
+  maxCustomersInGame: 1
   maxSpawn: 1
   customerPrefabs:
   - {fileID: 5594606946216599074, guid: 8ebfb75871303134293149220ceffc4d, type: 3}
@@ -4227,8 +4227,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Staff.StaffManager
   staffPrefabs:
   - {fileID: 3145049217284413158, guid: deddf2b424ef05c4abf98881e9b7316f, type: 3}
-  - {fileID: 565730421569710001, guid: f147e955f69d2fa429b84fa4e3bbb8f1, type: 3}
-  - {fileID: 8732872445843394783, guid: d69f0f3c0b6171d4f8cee84663859193, type: 3}
   canvasParent: {fileID: 785497732}
 --- !u!4 &1395228885
 Transform:
