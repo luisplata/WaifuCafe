@@ -19,7 +19,7 @@ namespace Staff
 
         [SerializeField] private Transform canvasParent;
 
-        private bool _configured = false;
+        private bool _configured;
 
         // Eventos útiles para otros sistemas
         public event Action<StaffFront, Customer> OnServiceCompleted;
@@ -32,7 +32,8 @@ namespace Staff
         private void Start()
         {
             // Initialization is deferred to Configure() to allow GameManager to control startup timing.
-            _staffInstances = new List<StaffFront>();
+            // Si Configure() ya corrió antes de este Start, no pisar la lista configurada.
+            _staffInstances ??= new List<StaffFront>();
         }
 
         // Inicializa/Configura el pool de staff. Idempotente: si ya hay instancias, las reemplaza.
@@ -169,6 +170,39 @@ namespace Staff
             var sf = GetStaffByIndex(index);
             sf?.MarkFree();
             if (sf != null) OnStaffBecameFree?.Invoke(sf);
+        }
+
+        // Limpia el estado de todos los staff: detiene corutinas pendientes y los pone en EnEspera.
+        // Útil al terminar la run (GameOver) para evitar que queden ocupados y puedan seguir siendo usados.
+        public void ClearAllStaff()
+        {
+            // Detener cualquier corutina de servicio en curso
+            try
+            {
+                StopAllCoroutines();
+            }
+            catch (Exception)
+            {
+                // StopAllCoroutines puede lanzar si el objeto está siendo destruido; ignorar en ese caso.
+            }
+
+            if (_staffInstances == null) return;
+
+            foreach (var sf in _staffInstances)
+            {
+                if (sf == null) continue;
+
+                var staff = sf.GetStaff();
+                if (staff != null)
+                {
+                    // Forzar fase EnEspera para restablecer estado interno
+                    staff.StartPhase(StateMachines.StaffPhase.EnEspera);
+                }
+
+                // Asegurar representación visual e interactividad
+                sf.MarkFree();
+                OnStaffBecameFree?.Invoke(sf);
+            }
         }
 
         void Update()

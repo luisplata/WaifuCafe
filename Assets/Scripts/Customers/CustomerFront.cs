@@ -1,4 +1,5 @@
 using DragAndDrop;
+using GameManager;
 using UnityEngine;
 
 namespace Customers
@@ -9,13 +10,18 @@ namespace Customers
         [SerializeField] private CustomerDropSlot customerDropSlot;
         private CustomerDropSlot _customerDropSlotInstance;
         private CustomerComponentUi _customerComponentUi;
+        private RegardsManager _regardsManager;
 
         public Customer GetCustomer() => customer;
 
-        public void Configure(Transform parentOfCustomers)
+        public void Configure(Transform parentOfCustomers, RegardsManager regardsManager)
         {
             _customerDropSlotInstance = Instantiate(customerDropSlot, parentOfCustomers);
             _customerDropSlotInstance.Configure(customer);
+
+            _regardsManager = regardsManager;
+            
+            customer.AddRegardManager(_regardsManager);
 
             _customerComponentUi = _customerDropSlotInstance.GetComponent<CustomerComponentUi>();
             if (_customerComponentUi != null)

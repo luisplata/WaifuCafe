@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using GameManager;
 using UnityEngine;
 using StateMachines;
 
@@ -69,6 +70,7 @@ namespace Customers.Queue
         }
 
         private bool _isFirstCall = true;
+        private RegardsManager _regardsManager;
 
         // ============ SPAWN MANAGEMENT ============
         private void UpdateSpawnTimer()
@@ -95,7 +97,7 @@ namespace Customers.Queue
                 // Instanciar prefab y extraer el Customer
                 CustomerFront prefab = customerPrefabs[UnityEngine.Random.Range(0, customerPrefabs.Count)];
                 CustomerFront instance = Instantiate(prefab);
-                instance.Configure(parentOfCustomers);
+                instance.Configure(parentOfCustomers, _regardsManager);
                 Customer customerData = instance.GetCustomer();
 
                 if (customerData == null)
@@ -501,10 +503,11 @@ namespace Customers.Queue
             }
         }
 
-        public void Configure()
+        public void Configure(RegardsManager regardsManager)
         {
             StartCustomerQueue();
             _configured = true;
+            _regardsManager = regardsManager;
         }
     }
 }

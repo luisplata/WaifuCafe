@@ -8,17 +8,20 @@ namespace GameManager
     // Orquesta la state machine global y aplica side effects de pausa/reanudacion.
     public class GameManager : MonoBehaviour
     {
-        [Header("State Durations")]
-        [SerializeField] private float preparationDuration = 2f;
+        [Header("State Durations")] [SerializeField]
+        private float preparationDuration = 2f;
+
         [SerializeField] private float transitionDuration = 2f;
         [SerializeField] private float gameOverAfterSeconds = 60f;
 
-        [Header("Behavior")]
-        [SerializeField] private bool autoStart = true;
+        [Header("Behavior")] [SerializeField] private bool autoStart = true;
 
-        [Header("References")]
-        [SerializeField] private StaffManager staffManager;
+        [Header("References")] [SerializeField]
+        private StaffManager staffManager;
+
         [SerializeField] private CustomerQueue customerQueue;
+
+        [Header("Golds")] [SerializeField] private RegardsManager regardsManager;
 
         private GameStateMachine _machine;
 
@@ -156,7 +159,7 @@ namespace GameManager
 
                 try
                 {
-                    customerQueue?.Configure();
+                    customerQueue?.Configure(regardsManager);
                 }
                 catch (Exception ex)
                 {
@@ -174,9 +177,27 @@ namespace GameManager
         private void HandleGameOverReached()
         {
             Debug.Log("[SM][Game] GameOver reached by timer");
+
+            // Limpiar subsistemas para evitar que queden staff/customers disponibles tras el GameOver
+            try
+            {
+                staffManager?.ClearAllStaff();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[GameManager] Error clearing StaffManager on GameOver: {ex.Message}");
+            }
+
+            try
+            {
+                customerQueue?.ClearQueue();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[GameManager] Error clearing CustomerQueue on GameOver: {ex.Message}");
+            }
+
             OnGameOverReached?.Invoke();
         }
     }
-    
-    
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using GameManager;
 using UnityEngine;
 using StateMachines;
 
@@ -10,14 +11,17 @@ namespace Customers
         public CustomerType Type;
         public float Patience;
         public int Reward;
-        
+
+        private bool _fueAtendido = false;
+
         // Estado actual del cliente dentro de la state machine
         public CustomerPhase CurrentPhase = CustomerPhase.Llegada;
-        
+
         [NonSerialized] public float WaitTime = 0f;
         [NonSerialized] public bool WasServed = false;
 
         [NonSerialized] private PhaseTimer _phaseTimer = new PhaseTimer();
+        private RegardsManager _regardsManager;
 
         private string Label => Type.ToString();
 
@@ -51,6 +55,7 @@ namespace Customers
                     // Esperando entrega: esperar a que el staff entregue el pedido.
                     // No iniciar temporizador automático aquí; la transición a Consumir
                     // será disparada por el staff/coordindor cuando la entrega ocurra.
+                    _fueAtendido = true;
                     _phaseTimer.Stop();
                     break;
                 case CustomerPhase.Consumir:
@@ -58,6 +63,12 @@ namespace Customers
                     break;
                 case CustomerPhase.Irse:
                     _phaseTimer.Start(3f);
+                    if (_fueAtendido)
+                    {
+                        _regardsManager.AddGold(Reward);
+                        Debug.Log($"[SM][Customer] {Label}: Served and leaving, reward {Reward} gold");
+                    }
+
                     break;
                 default:
                     _phaseTimer.Stop();
@@ -88,6 +99,11 @@ namespace Customers
                     _phaseTimer.Stop();
                     break;
             }
+        }
+
+        public void AddRegardManager(RegardsManager regardsManager)
+        {
+            _regardsManager = regardsManager;
         }
     }
 }
