@@ -36,6 +36,8 @@ namespace Customers.Queue
         private bool isSpawningEnabled = true;
         private bool isPaused = false;
 
+        private bool _configured = false;
+
         // Statistics
         private int customersServed = 0;
         private int customersLeft = 0;
@@ -49,7 +51,7 @@ namespace Customers.Queue
         public event Action<int> OnQueueCountChanged;
 
         // ============ LIFECYCLE ============
-        private void Start()
+        private void StartCustomerQueue()
         {
             ValidateSettings();
             ResetSpawnTimer();
@@ -57,6 +59,9 @@ namespace Customers.Queue
 
         private void Update()
         {
+            // Bloquear Update hasta que Configure() sea llamado por GameManager
+            if (!_configured) return;
+
             if (isPaused || !isSpawningEnabled) return;
 
             UpdateSpawnTimer();
@@ -494,6 +499,12 @@ namespace Customers.Queue
             {
                 view.UpdateWaitingProgress(customer.GetCurrentPhaseElapsed());
             }
+        }
+
+        public void Configure()
+        {
+            StartCustomerQueue();
+            _configured = true;
         }
     }
 }

@@ -19,6 +19,8 @@ namespace Staff
 
         [SerializeField] private Transform canvasParent;
 
+        private bool _configured = false;
+
         // Eventos útiles para otros sistemas
         public event Action<StaffFront, Customer> OnServiceCompleted;
         public event Action<StaffFront> OnStaffBecameBusy;
@@ -29,18 +31,38 @@ namespace Staff
 
         private void Start()
         {
+            // Initialization is deferred to Configure() to allow GameManager to control startup timing.
+            _staffInstances = new List<StaffFront>();
+        }
+
+        // Inicializa/Configura el pool de staff. Idempotente: si ya hay instancias, las reemplaza.
+        public void Configure(Transform canvasParentOverride = null)
+        {
+            Transform parent = canvasParentOverride != null ? canvasParentOverride : canvasParent;
+
+            // Clean previous instances if any
+            if (_staffInstances != null && _staffInstances.Count > 0)
+            {
+                foreach (var inst in _staffInstances)
+                {
+                    if (inst != null) Destroy(inst.gameObject);
+                }
+                _staffInstances.Clear();
+            }
+
             _staffInstances = new List<StaffFront>();
             foreach (var staffPrefab in staffPrefabs)
             {
                 if (staffPrefab != null)
                 {
-                    var instance = Instantiate(staffPrefab);
-                    instance.Configure(canvasParent, staffPrefab.GetStaff(), staffPrefab.GetIndex());
+                    var instance = Instantiate(staffPrefab, parent);
+                    instance.Configure(parent, staffPrefab.GetStaff(), staffPrefab.GetIndex());
                     // Inicializar el estado del staff a EnEspera para garantizar consistencia
                     instance.GetStaff().StartPhase(StateMachines.StaffPhase.EnEspera);
                     _staffInstances.Add(instance);
                 }
             }
+            _configured = true;
         }
 
         public StaffFront GetStaffByIndex(int index)
@@ -151,6 +173,9 @@ namespace Staff
 
         void Update()
         {
+            // Bloquear Update hasta que Configure() sea llamado por GameManager
+            if (!_configured) return;
+
             float dt = Time.deltaTime;
             foreach (var s in _staffInstances)
             {
@@ -160,5 +185,7 @@ namespace Staff
                 s.SyncVisualState();
             }
         }
+
+        // Configure(Transform) is the main initializer; no parameterless overload kept to avoid ambiguity.
     }
 }
