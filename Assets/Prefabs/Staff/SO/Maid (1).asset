@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7471a7697494c1294cf2da52e531ebe, type: 3}
+  m_Name: Maid (1)
+  m_EditorClassIdentifier: Assembly-CSharp::Staff.StaffFrontSo
+  maidObject: {fileID: 5111108201452668658, guid: d9820270ccd5d614ab371e91b914ae29, type: 3}

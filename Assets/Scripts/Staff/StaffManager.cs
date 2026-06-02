@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Customers;
+using V2.Staff.Infra;
 
 namespace Staff
 {
@@ -13,18 +14,19 @@ namespace Staff
     public class StaffManager : MonoBehaviour
     {
         [Header("Staff Settings")] [SerializeField]
-        private List<StaffFront> staffPrefabs = new();
+        private List<StaffFrontSo> staffPrefabs = new();
+        
+        [SerializeField] private List<GameObject> staffPositions;
+        private int _staffIndex = 0;
 
-        private List<StaffFront> _staffInstances;
-
-        [SerializeField] private Transform canvasParent;
+        private List<StaffMediatorComponent> _staffInstances;
 
         private bool _configured;
 
         // Eventos útiles para otros sistemas
-        public event Action<StaffFront, Customer> OnServiceCompleted;
-        public event Action<StaffFront> OnStaffBecameBusy;
-        public event Action<StaffFront> OnStaffBecameFree;
+        public event Action<StaffMediatorComponent, Customer> OnServiceCompleted;
+        public event Action<StaffMediatorComponent> OnStaffBecameBusy;
+        public event Action<StaffMediatorComponent> OnStaffBecameFree;
 
         public int GetStaffCount() => _staffInstances?.Count ?? 0;
 
@@ -33,14 +35,12 @@ namespace Staff
         {
             // Initialization is deferred to Configure() to allow GameManager to control startup timing.
             // Si Configure() ya corrió antes de este Start, no pisar la lista configurada.
-            _staffInstances ??= new List<StaffFront>();
+            _staffInstances ??= new List<StaffMediatorComponent>();
         }
 
         // Inicializa/Configura el pool de staff. Idempotente: si ya hay instancias, las reemplaza.
-        public void Configure(Transform canvasParentOverride = null)
+        public void Configure()
         {
-            Transform parent = canvasParentOverride != null ? canvasParentOverride : canvasParent;
-
             // Clean previous instances if any
             if (_staffInstances != null && _staffInstances.Count > 0)
             {
@@ -48,37 +48,40 @@ namespace Staff
                 {
                     if (inst != null) Destroy(inst.gameObject);
                 }
+
                 _staffInstances.Clear();
             }
 
-            _staffInstances = new List<StaffFront>();
+            _staffInstances = new List<StaffMediatorComponent>();
             foreach (var staffPrefab in staffPrefabs)
             {
                 if (staffPrefab != null)
                 {
-                    var instance = Instantiate(staffPrefab, parent);
-                    instance.Configure(parent, staffPrefab.GetStaff(), staffPrefab.GetIndex());
-                    // Inicializar el estado del staff a EnEspera para garantizar consistencia
-                    instance.GetStaff().StartPhase(StateMachines.StaffPhase.EnEspera);
+                    var instance = Instantiate(staffPrefab.GetPrefab());
+                    //get next position index to set the staff instance
+                    var staffPosition = staffPositions[_staffIndex % staffPositions.Count];
+                    _staffIndex++;
+                    instance.Configure(staffPosition);
                     _staffInstances.Add(instance);
                 }
             }
+
             _configured = true;
         }
 
-        public StaffFront GetStaffByIndex(int index)
+        public StaffMediatorComponent GetStaffByIndex(int index)
         {
             if (_staffInstances == null) return null;
-            return _staffInstances.Find(sf => sf != null && sf.GetIndex() == index);
+            return _staffInstances.Find(sf => sf != null && sf.GetStaff().Index == index);
         }
 
         // Devuelve el primer staff libre o null
-        public StaffFront GetAvailableStaff()
+        public StaffMediatorComponent GetAvailableStaff()
         {
             if (_staffInstances == null) return null;
             foreach (var sf in _staffInstances)
             {
-                if (sf != null && sf.CanAttend()) return sf;
+                if (sf != null && sf.GetStaff().CanAttend()) return sf;
             }
 
             return null;
@@ -88,7 +91,7 @@ namespace Staff
         public int GetAvailableStaffIndex()
         {
             var sf = GetAvailableStaff();
-            return sf != null ? sf.GetIndex() : -1;
+            return sf != null ? sf.GetStaff().Index : -1;
         }
 
         // Intenta asignar un cliente a un staff libre. Devuelve true si se asignó.
@@ -98,7 +101,8 @@ namespace Staff
             var sf = GetAvailableStaff();
             if (sf == null) return false;
 
-            StartCoroutine(HandleServiceCoroutine(sf, customer));
+            //TODO: Falta implementar aqui el nuevo mediator
+            // StartCoroutine(HandleServiceCoroutine(sf, customer));
             return true;
         }
 
@@ -108,21 +112,15 @@ namespace Staff
             if (customer == null) return false;
 
             var sf = GetStaffByIndex(staffIndex);
-            if (sf == null || !sf.CanAttend()) return false;
+            if (sf == null || !sf.GetStaff().CanAttend()) return false;
 
-            StartCoroutine(HandleServiceCoroutine(sf, customer));
+            //TODO: Falta implementar aqui el nuevo mediator
+            // StartCoroutine(HandleServiceCoroutine(sf, customer));
             return true;
         }
 
-        // Para ordenar a un staff libre que atienda:
-        public bool TryAssignAttend(int staffIndex)
-        {
-            if (staffIndex < 0 || staffIndex >= _staffInstances.Count) return false;
-            return _staffInstances[staffIndex].GetStaff().CommandAttend();
-        }
-
         // Maneja la simulación de servicio: marca ocupado, espera el ciclo completo de servicio y libera
-        private IEnumerator HandleServiceCoroutine(StaffFront staffFront, Customer customer)
+        private IEnumerator HandleServiceCoroutine(StaffMediatorComponent staffFront, Customer customer)
         {
             if (staffFront == null) yield break;
 
@@ -215,8 +213,7 @@ namespace Staff
             {
                 if (s == null || s.GetStaff() == null) continue;
 
-                s.GetStaff().UpdatePhase(dt);
-                s.SyncVisualState();
+                s.UpdatePhase(dt);
             }
         }
 

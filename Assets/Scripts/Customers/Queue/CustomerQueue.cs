@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using GameManager;
 using UnityEngine;
 using StateMachines;
@@ -26,6 +27,7 @@ namespace Customers.Queue
         private List<CustomerFront> customerPrefabs;
 
         [SerializeField] private Transform parentOfCustomers;
+        [SerializeField] private List<CustomerPosition> spawnPoints;
 
         // ============ PRIVATE FIELDS ============
         private Queue<Customer> queue = new Queue<Customer>();
@@ -95,9 +97,9 @@ namespace Customers.Queue
             for (int i = 0; i <= maxSpawn; i++)
             {
                 // Instanciar prefab y extraer el Customer
-                CustomerFront prefab = customerPrefabs[UnityEngine.Random.Range(0, customerPrefabs.Count)];
+                CustomerFront prefab = GetNextCustomer();
                 CustomerFront instance = Instantiate(prefab);
-                instance.Configure(parentOfCustomers, _regardsManager);
+                instance.Configure(GetNextCustomerPositionAvalible(), _regardsManager);
                 Customer customerData = instance.GetCustomer();
 
                 if (customerData == null)
@@ -110,6 +112,23 @@ namespace Customers.Queue
                 EnqueueCustomer(customerData);
                 customerViews[customerData] = instance;
             }
+        }
+
+        private Transform GetNextCustomerPositionAvalible()
+        {
+            foreach (var spawnPoint in spawnPoints.Where(spawnPoint => !spawnPoint.IsOccupied()))
+            {
+                spawnPoint.Occupy();
+                return spawnPoint.gameObject.transform;
+            }
+
+            // Si no hay puntos disponibles, usar el primero (esto no debería pasar si maxCustomersInGame <= spawnPoints.Count)
+            throw new InvalidOperationException("No hay puntos de spawn disponibles para nuevos clientes.");
+        }
+
+        private CustomerFront GetNextCustomer()
+        {
+            return customerPrefabs[UnityEngine.Random.Range(0, customerPrefabs.Count)];
         }
 
         private bool CanSpawnMore()

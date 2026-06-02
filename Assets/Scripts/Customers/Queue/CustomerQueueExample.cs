@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using Customers;
-using Customers.Queue;
 using Customers.Queue.Input;
 
 namespace Customers.Queue.Examples

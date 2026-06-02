@@ -13,7 +13,7 @@ namespace DragAndDrop
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(CanvasGroup))]
     [RequireComponent(typeof(Image))]
-    public class CustomerDropSlot : MonoBehaviour, IDropHandler
+    public class CustomerDropSlot : MonoBehaviour, IDropHandler, IDropReceiver
     {
         [SerializeField] private int queuePosition = -1;
         [SerializeField] private StaffServiceUIController staffServiceUIController;
@@ -107,17 +107,8 @@ namespace DragAndDrop
                 return;
             }
 
-            bool assigned;
-            if (_customer != null)
-            {
-                Debug.Log($"[DragAndDrop] Intentando asignar Staff {draggable.StaffIndex} a Customer directo");
-                assigned = staffServiceUIController.TryAssignByCustomer(draggable.StaffIndex, _customer);
-            }
-            else
-            {
-                Debug.Log($"[DragAndDrop] Intentando asignar Staff {draggable.StaffIndex} a Customer en posición {queuePosition}");
-                assigned = staffServiceUIController.TryAssignByIndices(draggable.StaffIndex, queuePosition);
-            }
+            int staffIndex = draggable.StaffIndex;
+            bool assigned = TryAssignStaffIndex(staffIndex);
 
             if (!assigned)
             {
@@ -127,6 +118,70 @@ namespace DragAndDrop
             {
                 Debug.Log($"[DragAndDrop] ✓ Staff asignado exitosamente");
             }
+        }
+
+        // Soporta drops originados desde DragManager (DropPayload)
+        public bool Accepts(DropPayload payload)
+        {
+            // Aceptar si el payload contiene un origin que represente un staff draggable
+            if (payload == null || payload.origin == null) return false;
+            if (payload.origin.GetComponent<StaffDragItem>() != null) return true;
+            if (payload.origin.GetComponentInParent<StaffDragSpriteAdapter>() != null) return true;
+            return false;
+        }
+
+        public void OnDrop(DropPayload payload)
+        {
+            Debug.Log($"[DragAndDrop] OnDrop(DropPayload) en CustomerDropSlot (posición: {queuePosition}) from {payload.origin?.name}");
+            if (payload == null || payload.origin == null) return;
+
+            int staffIndex = -1;
+            var uiDraggable = payload.origin.GetComponent<StaffDragItem>();
+            if (uiDraggable != null) staffIndex = uiDraggable.StaffIndex;
+            else
+            {
+                var spriteAdapter = payload.origin.GetComponentInParent<StaffDragSpriteAdapter>();
+                if (spriteAdapter != null) staffIndex = spriteAdapter.GetStaffIndex();
+            }
+
+            if (staffIndex < 0)
+            {
+                Debug.LogWarning("[DragAndDrop] No pude obtener staffIndex desde DropPayload.origin");
+                return;
+            }
+
+            bool assigned = TryAssignStaffIndex(staffIndex);
+            if (!assigned)
+            {
+                Debug.LogWarning($"[DragAndDrop] No se pudo asignar staff {staffIndex} a customer en cola {queuePosition}");
+            }
+            else
+            {
+                Debug.Log($"[DragAndDrop] ✓ Staff asignado exitosamente (payload)");
+            }
+        }
+
+        private bool TryAssignStaffIndex(int staffIndex)
+        {
+            if (_customer != null && _customer.CurrentPhase != CustomerPhase.EsperaPedido)
+            {
+                Debug.Log($"[DragAndDrop] Customer en estado {_customer.CurrentPhase}; no está listo para asignación.");
+                return false;
+            }
+
+            bool assigned;
+            if (_customer != null)
+            {
+                Debug.Log($"[DragAndDrop] Intentando asignar Staff {staffIndex} a Customer directo");
+                assigned = staffServiceUIController.TryAssignByCustomer(staffIndex, _customer);
+            }
+            else
+            {
+                Debug.Log($"[DragAndDrop] Intentando asignar Staff {staffIndex} a Customer en posición {queuePosition}");
+                assigned = staffServiceUIController.TryAssignByIndices(staffIndex, queuePosition);
+            }
+
+            return assigned;
         }
 
         public void Configure(Customer customer)

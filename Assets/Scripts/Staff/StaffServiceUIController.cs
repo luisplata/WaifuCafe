@@ -2,6 +2,7 @@
 using System;
 using Customers;
 using Customers.Queue;
+using V2.Staff.Infra;
 
 namespace Staff
 {
@@ -38,7 +39,7 @@ namespace Staff
             }
         }
 
-        private void HandleServiceCompleted(StaffFront staffFront, Customer customer)
+        private void HandleServiceCompleted(StaffMediatorComponent staffFront, Customer customer)
         {
             if (customerQueue == null || customer == null)
             {
@@ -118,7 +119,7 @@ namespace Staff
 
             // Obtener el staff
             var staff = staffManager.GetStaffByIndex(selectedStaffIndex);
-            if (staff == null || !staff.CanAttend())
+            if (staff == null || !staff.GetStaff().CanAttend())
             {
                 return FailAssignment($"[UI] Staff {selectedStaffIndex} no está disponible");
             }
@@ -145,7 +146,7 @@ namespace Staff
             {
                 int assignedStaffIndex = selectedStaffIndex;
                 int assignedQueueIndex = selectedCustomerQueueIndex;
-                Debug.Log($"[UI] Staff {selectedStaffIndex} asignado a customer. Tiempo de servicio: {staff.GetServiceTime()} segundos");
+                Debug.Log($"[UI] Staff {selectedStaffIndex} asignado a customer. Tiempo de servicio: {staff.GetStaff().ServiceTime} segundos");
                 OnAssignmentConfirmed?.Invoke(assignedStaffIndex, assignedQueueIndex);
             }
             else
@@ -186,7 +187,7 @@ namespace Staff
             }
 
             var staff = staffManager.GetStaffByIndex(staffIndex);
-            if (staff == null || !staff.CanAttend())
+            if (staff == null || !staff.GetStaff().CanAttend())
             {
                 return FailAssignment($"[UI] Staff {staffIndex} no está disponible");
             }

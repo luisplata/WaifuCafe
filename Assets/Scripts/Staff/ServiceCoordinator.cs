@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Customers;
 using Customers.Queue;
+using V2.Staff.Infra;
 
 namespace Staff
 {
@@ -64,7 +65,7 @@ namespace Staff
             TryAssignNext();
         }
 
-        private void OnStaffBecameFreeHandler(StaffFront sf)
+        private void OnStaffBecameFreeHandler(StaffMediatorComponent sf)
         {
             TryAssignNext();
         }
@@ -94,7 +95,7 @@ namespace Staff
         }
 
         // Cuando el staff completa el servicio, avisar a CustomerQueue para finalizar el servicio
-        private void HandleServiceCompleted(StaffFront sf, Customer customer)
+        private void HandleServiceCompleted(StaffMediatorComponent sf, Customer customer)
         {
             if (customerQueue != null)
             {

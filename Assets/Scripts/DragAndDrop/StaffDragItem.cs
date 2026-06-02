@@ -9,7 +9,7 @@ namespace DragAndDrop
     /// </summary>
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(CanvasGroup))]
-    public class StaffDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public class StaffDragItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, DragAndDrop.IStaffDragView
     {
         [SerializeField] private int staffIndex = -1;
         [SerializeField] private StaffServiceUIController staffServiceUIController;

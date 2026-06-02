@@ -6,9 +6,12 @@ namespace Staff
     public class StaffFront : MonoBehaviour, IStaffMediator
     {
         [SerializeField] private Staff staff;
-        [SerializeField] private StaffDragItem staffDragItem;
+        [SerializeField] private StaffDragItem staffDragItem; // legacy UI prefab
+        [SerializeField] private GameObject staffDragPrefab; // optional: sprite-based prefab or alternative drag view
+
         private StaffComponentUi _staffComponentUi;
-        private StaffDragItem _staffDragItemInstance;
+        private IStaffDragView _staffDragItemInstance;
+        private GameObject _staffDragGameObjectInstance;
 
         // Devuelve el index (id) del staff
         public int GetIndex() => staff != null ? staff.Index : -1;
@@ -55,21 +58,13 @@ namespace Staff
 
         public void Configure(Transform canvasParent, Staff staffData, int index)
         {
-            if (staffData == null)
-            {
-                return;
-            }
+            if (staffData == null) return;
 
             staff = staffData;
 
-            _staffDragItemInstance = Instantiate(staffDragItem, canvasParent);
-            _staffDragItemInstance.Configure(staffData, index, this);
-            
-            _staffComponentUi = _staffDragItemInstance.GetComponent<StaffComponentUi>();
-            _staffComponentUi.Configure(staffData);
             SyncVisualState();
 
-            _staffDragItemInstance.SetInteractable(!staffData.IsBusy);
+            _staffDragItemInstance?.SetInteractable(!staffData.IsBusy);
         }
     }
 }

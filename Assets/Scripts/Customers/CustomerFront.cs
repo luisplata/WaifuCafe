@@ -7,8 +7,8 @@ namespace Customers
     public class CustomerFront : MonoBehaviour
     {
         [SerializeField] private Customer customer;
-        [SerializeField] private CustomerDropSlot customerDropSlot;
-        private CustomerDropSlot _customerDropSlotInstance;
+        [SerializeField] private DropTargetSprite customerDropSlot;
+        private DropTargetSprite _customerDropSlotInstance;
         private CustomerComponentUi _customerComponentUi;
         private RegardsManager _regardsManager;
 
@@ -16,8 +16,9 @@ namespace Customers
 
         public void Configure(Transform parentOfCustomers, RegardsManager regardsManager)
         {
-            _customerDropSlotInstance = Instantiate(customerDropSlot, parentOfCustomers);
-            _customerDropSlotInstance.Configure(customer);
+            _customerDropSlotInstance = Instantiate(customerDropSlot);
+            
+            _customerDropSlotInstance.transform.position = parentOfCustomers.position;
 
             _regardsManager = regardsManager;
             
