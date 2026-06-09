@@ -5,7 +5,8 @@ using UnityEditor;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using GameManager;
-using Cinemachine;
+using Unity.Cinemachine;
+using UnityEditor.SceneManagement;
 
 namespace EditorTools
 {
@@ -72,16 +73,16 @@ namespace EditorTools
                 ppc.refResolutionY = 180;
             }
 
-            // CinemachineBrain
+            // CinemachineBrain (CM3 API — no m_ prefix)
             if (mainCamGO.GetComponent<CinemachineBrain>() == null)
             {
                 var cb = mainCamGO.AddComponent<CinemachineBrain>();
-                cb.m_ShowDebugText = false;
-                cb.m_ShowCameraFrustum = true;
-                cb.m_IgnoreTimeScale = false;
-                cb.m_UpdateMethod = CinemachineBrain.UpdateMethod.SmartUpdate;
-                cb.m_DefaultBlend.m_Style = CinemachineBlendDefinition.Style.EaseInOut;
-                cb.m_DefaultBlend.m_Time = 2;
+                cb.ShowDebugText = false;
+                cb.ShowCameraFrustum = true;
+                cb.IgnoreTimeScale = false;
+                cb.UpdateMethod = CinemachineBrain.UpdateMethods.SmartUpdate;
+                cb.DefaultBlend = new CinemachineBlendDefinition(
+                    CinemachineBlendDefinition.Styles.EaseInOut, 2f);
             }
 
             // Physics2DRaycaster
@@ -108,6 +109,15 @@ namespace EditorTools
             mainCamGO.transform.SetParent(envGO.transform);
             mainCamGO.transform.localPosition = new Vector3(0, 0, -1);
 
+            // CinemachineCamera (CM3 virtual camera — required for CinemachineBrain)
+            GameObject cmCamGO = new GameObject("CinemachineCamera");
+            cmCamGO.transform.SetParent(envGO.transform);
+            cmCamGO.transform.localPosition = Vector3.zero;
+            cmCamGO.transform.localRotation = Quaternion.identity;
+            cmCamGO.transform.localScale = Vector3.one;
+            cmCamGO.AddComponent<CinemachineCamera>();
+            cmCamGO.AddComponent<CinemachinePixelPerfect>();
+
             // Global Light 2D
             GameObject lightGO = new GameObject("Global Light 2D");
             lightGO.transform.SetParent(envGO.transform);
@@ -120,7 +130,8 @@ namespace EditorTools
                 lightTypeField.SetValue(light2D, Light2D.LightType.Global);
             light2D.intensity = 1f;
             light2D.color = Color.white;
-            light2D.alphaBlendOnOverlap = false;
+            // alphaBlendOnOverlap is read-only in this URP version — use overlapOperation instead
+            light2D.overlapOperation = Light2D.OverlapOperation.Additive;
 
             // Background sprite
             GameObject bgGO = new GameObject("bg_maid_cafe_0");
@@ -192,8 +203,8 @@ namespace EditorTools
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
 
             Debug.Log("[Setup] Version_1 scene configured successfully!");
-            Debug.Log("[Setup] Root GameObjects: _Environment (MainCamera, GlobalLight2D, bg_maid_cafe_0), EventSystem, GameManager+, _Queue, _Staff, ServiceCoordinator, _UI, DragManager");
-            Debug.Log("[Setup] ⚠️ Remember to connect StaffManager and CustomerQueue references in GameManager+ during Phase 3-4");
+            Debug.Log("[Setup] Root GOs: _Environment (MainCamera, CinemachineCamera, GlobalLight2D, bg), EventSystem, GameManager+, _Queue, _Staff, ServiceCoordinator, _UI, DragManager");
+            Debug.Log("[Setup] ⚠️ Connect StaffManager & CustomerQueue refs in GameManager+ during Phase 3-4");
         }
 
         private static GameObject CreateFolder(string name)

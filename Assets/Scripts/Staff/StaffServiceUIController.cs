@@ -2,7 +2,7 @@
 using System;
 using Customers;
 using Customers.Queue;
-using V2.Staff.Infra;
+using V2.Customer;
 
 namespace Staff
 {
@@ -39,7 +39,7 @@ namespace Staff
             }
         }
 
-        private void HandleServiceCompleted(StaffMediatorComponent staffFront, Customer customer)
+        private void HandleServiceCompleted(StaffFront staffFront, Customer customer)
         {
             if (customerQueue == null || customer == null)
             {
@@ -201,7 +201,7 @@ namespace Staff
             if (!assigned)
             {
                 // Revertir el estado para que pueda volver a ser tomado.
-                customer.StartPhase(StateMachines.CustomerPhase.EsperaPedido);
+                customer.StartPhase(CustomerPhase.EntregandoPedido);
                 return FailAssignment($"[UI] Fallo al asignar staff {staffIndex} a customer");
             }
 

@@ -7,7 +7,7 @@ namespace DragAndDrop
     // Payload enviado al receptor de drop
     public class DropPayload
     {
-        public GameObject origin; // objeto que inició el drag
+        public IDragOriginControllerHandle origin; // objeto que inició el drag
         public OriginType originType;
         public object data; // referencia libre (item id, SO, etc.)
         public int pointerId;

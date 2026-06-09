@@ -535,7 +535,6 @@ GameObject:
   - component: {fileID: 1993503825814867643}
   - component: {fileID: 1592669629588305862}
   - component: {fileID: 3820040261243757677}
-  - component: {fileID: 803188726724378241}
   - component: {fileID: 8228787427671729805}
   - component: {fileID: 1910159710170127085}
   m_Layer: 5
@@ -604,20 +603,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &803188726724378241
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 9210342045554239587}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7677ccbd8a63a0b4c8a32b23728b3d87, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DragAndDrop.CustomerDropSlot
-  queuePosition: 0
-  staffServiceUIController: {fileID: 0}
 --- !u!114 &8228787427671729805
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,5 +1,4 @@
 ﻿using System;
-using GameManager;
 using UnityEngine;
 using StateMachines;
 
@@ -15,13 +14,14 @@ namespace Customers
         private bool _fueAtendido = false;
 
         // Estado actual del cliente dentro de la state machine
-        public CustomerPhase CurrentPhase = CustomerPhase.Llegada;
+        public CustomerPhase CurrentPhase = CustomerPhase.ListoParaPedir;
 
         [NonSerialized] public float WaitTime = 0f;
         [NonSerialized] public bool WasServed = false;
 
         [NonSerialized] private PhaseTimer _phaseTimer = new PhaseTimer();
-        private RegardsManager _regardsManager;
+
+        public event Action<int> OnGoldEarned;
 
         private string Label => Type.ToString();
 
@@ -43,11 +43,11 @@ namespace Customers
 
             switch (phase)
             {
-                case CustomerPhase.Llegada:
+                case CustomerPhase.ListoParaPedir:
                     WaitTime = 0f;
                     _phaseTimer.Start(3f);
                     break;
-                case CustomerPhase.EsperaPedido:
+                case CustomerPhase.EntregandoPedido:
                     WaitTime = 0f;
                     _phaseTimer.Start(Math.Max(0f, Patience));
                     break;
@@ -65,7 +65,7 @@ namespace Customers
                     _phaseTimer.Start(3f);
                     if (_fueAtendido)
                     {
-                        _regardsManager.AddGold(Reward);
+                        OnGoldEarned?.Invoke(Reward);
                         Debug.Log($"[SM][Customer] {Label}: Served and leaving, reward {Reward} gold");
                     }
 
@@ -82,11 +82,11 @@ namespace Customers
 
             switch (CurrentPhase)
             {
-                case CustomerPhase.Llegada:
+                case CustomerPhase.ListoParaPedir:
                     Debug.Log($"[SM][Customer] {Label}: Llegada completed");
-                    StartPhase(CustomerPhase.EsperaPedido);
+                    StartPhase(CustomerPhase.EntregandoPedido);
                     break;
-                case CustomerPhase.EsperaPedido:
+                case CustomerPhase.EntregandoPedido:
                     Debug.Log($"[SM][Customer] {Label}: Patience expired, leaving");
                     StartPhase(CustomerPhase.Irse);
                     break;
@@ -101,9 +101,7 @@ namespace Customers
             }
         }
 
-        public void AddRegardManager(RegardsManager regardsManager)
-        {
-            _regardsManager = regardsManager;
-        }
+        // AddRegardManager eliminated in favor of event-driven approach.
+        // Subscribers listen to OnGoldEarned instead.
     }
 }

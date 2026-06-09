@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using V2.Staff.Infra;
 
 namespace Staff
 {
@@ -8,12 +7,10 @@ namespace Staff
     {
         [SerializeField, InterfaceType(typeof(IStaffMediator))]
         private Object maidObject;
-        
-        private IStaffMediator Maid => maidObject as IStaffMediator;
 
-        public StaffMediatorComponent GetPrefab()
+        public GameObject GetPrefab()
         {
-            return Maid  as StaffMediatorComponent;
+            return maidObject as GameObject;
         }
     }
 }

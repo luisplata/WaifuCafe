@@ -49,4 +49,4 @@ MonoBehaviour:
     Patience: 60
     Reward: 10
     CurrentPhase: 0
-  customerDropSlot: {fileID: 450944248840966762, guid: 3c4f126c5723621439adbe4888f3e2c3, type: 3}
+  customerComponentUi: {fileID: 0}

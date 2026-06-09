@@ -12,13 +12,18 @@ namespace DragAndDrop
             return true;
         }
 
+        public GameObject GetGameObject()
+        {
+            return gameObject;
+        }
+
         public void OnDrop(DropPayload payload)
         {
-            Debug.Log($"DropTargetSprite: recibí drop desde {payload.origin.name} sobre {gameObject.name}");
+            Debug.Log($"DropTargetSprite: recibí drop desde {payload.origin.GetGameObject().name} sobre {gameObject.name}");
             // Ejemplo simple: si origin es sprite, posicionar origin en el centro del target
             if (payload.originType == OriginType.Sprite && payload.origin != null)
             {
-                payload.origin.transform.position = transform.position;
+                payload.origin.GetGameObject().transform.position = transform.position;
             }
 
             // Si origin es UI, podrías instanciar un objeto en el mundo o aplicar lógica de uso

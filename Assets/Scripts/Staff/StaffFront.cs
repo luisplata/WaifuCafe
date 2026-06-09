@@ -13,6 +13,11 @@ namespace Staff
         private IStaffDragView _staffDragItemInstance;
         private GameObject _staffDragGameObjectInstance;
 
+        private void Awake()
+        {
+            _staffComponentUi = GetComponentInChildren<StaffComponentUi>(true);
+        }
+
         // Devuelve el index (id) del staff
         public int GetIndex() => staff != null ? staff.Index : -1;
 

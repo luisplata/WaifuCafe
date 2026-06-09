@@ -1,7 +1,9 @@
 ﻿using System;
 using UnityEngine;
 using Staff;
+using Customers;
 using Customers.Queue;
+using V2.Customer;
 
 namespace GameManager
 {
@@ -20,6 +22,8 @@ namespace GameManager
         private StaffManager staffManager;
 
         [SerializeField] private CustomerQueue customerQueue;
+
+        [SerializeField] private ServiceCoordinator serviceCoordinator;
 
         [Header("Golds")] [SerializeField] private RegardsManager regardsManager;
 
@@ -165,6 +169,13 @@ namespace GameManager
                 {
                     Debug.LogWarning($"[GameManager] Error configuring CustomerQueue: {ex.Message}");
                 }
+
+                // Subscribe to customer events for gold accumulation
+                if (customerQueue != null)
+                {
+                    customerQueue.OnCustomerEnqueued += OnCustomerEnqueued;
+                    customerQueue.OnCustomerDequeued += OnCustomerDequeued;
+                }
             }
 
             bool shouldPauseTime = next == GameLoopState.Pausa || next == GameLoopState.GameOver;
@@ -188,6 +199,13 @@ namespace GameManager
                 Debug.LogWarning($"[GameManager] Error clearing StaffManager on GameOver: {ex.Message}");
             }
 
+            // Unsubscribe from customer events
+            if (customerQueue != null)
+            {
+                customerQueue.OnCustomerEnqueued -= OnCustomerEnqueued;
+                customerQueue.OnCustomerDequeued -= OnCustomerDequeued;
+            }
+
             try
             {
                 customerQueue?.ClearQueue();
@@ -198,6 +216,24 @@ namespace GameManager
             }
 
             OnGameOverReached?.Invoke();
+        }
+
+        private void OnCustomerEnqueued(Customer customer)
+        {
+            customer.OnGoldEarned += HandleCustomerGoldEarned;
+        }
+
+        private void OnCustomerDequeued(Customer customer)
+        {
+            customer.OnGoldEarned -= HandleCustomerGoldEarned;
+        }
+
+        private void HandleCustomerGoldEarned(int reward)
+        {
+            if (regardsManager != null)
+            {
+                regardsManager.AddGold(reward);
+            }
         }
     }
 }

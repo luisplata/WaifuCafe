@@ -8,7 +8,7 @@ using StateMachines;
 
 namespace Customers.Queue
 {
-    public class CustomerQueue : MonoBehaviour
+    public class CustomerQueue : MonoBehaviour, ICustomerQueue
     {
         // ============ SERIALIZED FIELDS ============
         [Header("Queue Settings")] [SerializeField]
@@ -26,7 +26,6 @@ namespace Customers.Queue
         [Header("Customer Prefabs")] [SerializeField]
         private List<CustomerFront> customerPrefabs;
 
-        [SerializeField] private Transform parentOfCustomers;
         [SerializeField] private List<CustomerPosition> spawnPoints;
 
         // ============ PRIVATE FIELDS ============
@@ -99,7 +98,7 @@ namespace Customers.Queue
                 // Instanciar prefab y extraer el Customer
                 CustomerFront prefab = GetNextCustomer();
                 CustomerFront instance = Instantiate(prefab);
-                instance.Configure(GetNextCustomerPositionAvalible(), _regardsManager);
+                instance.Configure(GetNextCustomerPositionAvalible());
                 Customer customerData = instance.GetCustomer();
 
                 if (customerData == null)
@@ -108,7 +107,7 @@ namespace Customers.Queue
                     return;
                 }
 
-                customerData.StartPhase(CustomerPhase.Llegada);
+                customerData.StartPhase(CustomerPhase.ListoParaPedir);
                 EnqueueCustomer(customerData);
                 customerViews[customerData] = instance;
             }
@@ -187,7 +186,7 @@ namespace Customers.Queue
                 return null;
             }
 
-            if (!queue.Contains(customer) || customer.CurrentPhase != CustomerPhase.EsperaPedido)
+            if (!queue.Contains(customer) || customer.CurrentPhase != CustomerPhase.EntregandoPedido)
             {
                 return null;
             }
@@ -223,7 +222,7 @@ namespace Customers.Queue
 
             foreach (var current in queue)
             {
-                if (current == null || current.CurrentPhase != CustomerPhase.EsperaPedido)
+                if (current == null || current.CurrentPhase != CustomerPhase.EntregandoPedido)
                 {
                     continue;
                 }
@@ -277,6 +276,7 @@ namespace Customers.Queue
                     customersLeft++;
                 }
 
+                OnCustomerDequeued?.Invoke(customer);
                 OnQueueCountChanged?.Invoke(queue.Count);
             }
         }
@@ -315,7 +315,7 @@ namespace Customers.Queue
                     view.UpdateWaitingProgress(customer.GetCurrentPhaseElapsed());
                 }
 
-                if (customer.CurrentPhase != CustomerPhase.EsperaPedido)
+                if (customer.CurrentPhase != CustomerPhase.EntregandoPedido)
                 {
                     if (customer.CurrentPhase == CustomerPhase.Irse &&
                         customer.GetCurrentPhaseElapsed() >= customer.GetCurrentPhaseDuration() &&
@@ -412,16 +412,6 @@ namespace Customers.Queue
             if (maxQueueSize <= 0) return;
 
             if (spawnInterval <= 0) return;
-        }
-
-        // ============ DEBUG ============
-        private void OnGUI()
-        {
-            // Optional: Remove this in production
-            if (GUI.Button(new Rect(10, 10, 150, 30), "Print Queue Stats"))
-            {
-                PrintStatistics();
-            }
         }
 
         private void OnDestroy()
