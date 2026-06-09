@@ -101,8 +101,7 @@ namespace Staff
             var sf = GetAvailableStaff();
             if (sf == null) return false;
 
-            //TODO: Falta implementar aqui el nuevo mediator
-            // StartCoroutine(HandleServiceCoroutine(sf, customer));
+            StartCoroutine(HandleServiceCoroutine(sf, customer));
             return true;
         }
 
@@ -114,8 +113,7 @@ namespace Staff
             var sf = GetStaffByIndex(staffIndex);
             if (sf == null || !sf.GetStaff().CanAttend()) return false;
 
-            //TODO: Falta implementar aqui el nuevo mediator
-            // StartCoroutine(HandleServiceCoroutine(sf, customer));
+            StartCoroutine(HandleServiceCoroutine(sf, customer));
             return true;
         }
 
