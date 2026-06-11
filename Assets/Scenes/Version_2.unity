@@ -844,7 +844,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StaffSpawnerManager
   staffPrefab: {fileID: 927664258131433897, guid: 29526c649168e3248b80a0b60e4d06ce, type: 3}
-  countOfStaff: 2
+  countOfStaff: 4
   staffPositions: {fileID: 547633250}
   spawnPosition: {fileID: 1525979461}
 --- !u!114 &547633250
