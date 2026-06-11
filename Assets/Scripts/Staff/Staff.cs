@@ -76,7 +76,7 @@ namespace Staff
                     _phaseTimer.Start(Mathf.Max(0.01f, ServiceTime));
                     IsBusy = true;
                     break;
-                case StaffPhase.LlevandoPedido:
+                case StaffPhase.LlevandoPedidoCocina:
                     // Tiempo fijo para llevar el pedido
                     _phaseTimer.Start(2f);
                     IsBusy = true;
@@ -105,9 +105,9 @@ namespace Staff
                     case StaffPhase.PreparandoPedido:
                         Debug.Log($"[SM][Staff] {Label}: preparing finished, delivering order");
                         // Después de preparar -> llevar al cliente
-                        StartPhase(StaffPhase.LlevandoPedido);
+                        StartPhase(StaffPhase.LlevandoPedidoCocina);
                         break;
-                    case StaffPhase.LlevandoPedido:
+                    case StaffPhase.LlevandoPedidoCocina:
                         Debug.Log($"[SM][Staff] {Label}: delivery finished, back to idle");
                         // Después de llevar -> volver a estar en espera
                         StartPhase(StaffPhase.EnEspera);

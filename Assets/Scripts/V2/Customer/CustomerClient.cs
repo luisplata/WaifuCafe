@@ -18,6 +18,7 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
         Tween.Position(transform, seat.transform.position, customerData.moveToSeatTime).OnComplete(() =>
         {
             stateMachine.SetState(CustomerPhase.ListoParaPedir);
+            stateMachine.ListoParaPedir();
         });
         stateMachine.Configure(this, customerData);
         _pointToSpawn = pointToSpawn;
@@ -33,17 +34,30 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
                 $"DropTargetSprite: recibí drop desde {payload.origin.GetGameObject().name} sobre {gameObject.name}");
             payload.origin.GetGameObject().transform.position = transform.position;
             stateMachine.SetState(CustomerPhase.EntregandoPedido);
+            stateMachine.Esperando();
+            payload.origin.GetDragControllerHandle().PedirPedido(customerData.tiempoDeEntregaDePedido, this);
         }
     }
 
     public bool Accepts(DropPayload payload)
     {
-        return true;
+        return stateMachine.State == CustomerPhase.ListoParaPedir;
     }
 
     public GameObject GetGameObject()
     {
         return gameObject;
+    }
+
+    public void EsperandoPedido()
+    {
+        stateMachine.SetState(CustomerPhase.EsperandoEntrega);
+        stateMachine.Esperando();
+    }
+
+    public void Consumiendo()
+    {
+        stateMachine.SetState(CustomerPhase.Consumir);
     }
 
     public void Irse()

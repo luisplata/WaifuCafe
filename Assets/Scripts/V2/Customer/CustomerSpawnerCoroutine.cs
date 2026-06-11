@@ -9,10 +9,13 @@ public class CustomerSpawnerCoroutine : MonoBehaviour
     [SerializeField] private CustomerPositions customerPositions;
     [SerializeField] private GameObject customerSpawnPosition;
     private float localTime;
+    private IGameRules _gameRules;
+    private bool isConfigured;
 
 
     private void FixedUpdate()
     {
+        if (!isConfigured) return;
         localTime += Time.fixedDeltaTime;
 
         if (localTime >= timeToSpawn)
@@ -37,5 +40,12 @@ public class CustomerSpawnerCoroutine : MonoBehaviour
                 return;
             }
         }
+    }
+
+    public void Configure(IGameRules gameRules)
+    {
+        localTime = timeToSpawn;
+        _gameRules = gameRules;
+        isConfigured = true;
     }
 }

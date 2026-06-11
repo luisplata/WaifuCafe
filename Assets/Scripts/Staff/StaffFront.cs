@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Staff
 {
-    public class StaffFront : MonoBehaviour, IStaffMediator
+    public class StaffFront : MonoBehaviour
     {
         [SerializeField] private Staff staff;
         [SerializeField] private StaffDragItem staffDragItem; // legacy UI prefab

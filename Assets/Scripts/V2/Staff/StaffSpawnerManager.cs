@@ -8,21 +8,18 @@ public class StaffSpawnerManager : MonoBehaviour
     [SerializeField] private int countOfStaff;
     [SerializeField] private StaffPositions staffPositions;
     [SerializeField] private GameObject spawnPosition;
-    private List<StaffClient> _staffClientsInstantiated = new();
+    private readonly List<StaffClient> _staffClientsInstantiated = new();
+    private IGameRules _gameRules;
 
-    private void Start()
+    public void Configure(IGameRules gameRules)
     {
-        Configure();
-    }
-
-    public void Configure()
-    {
+        _gameRules = gameRules;
         for (int i = 0; i < countOfStaff; i++)
         {
             if (staffPositions.GetNextPosition(out StaffPosition staffPosition))
             {
                 var staffInstantiated = Instantiate(staffPrefab, spawnPosition.transform.position, Quaternion.identity);
-                staffInstantiated.Configure(staffPosition);
+                staffInstantiated.Configure(staffPosition, spawnPosition);
                 _staffClientsInstantiated.Add(staffInstantiated);
             }
         }

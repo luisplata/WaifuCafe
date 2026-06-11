@@ -114,5 +114,10 @@ namespace DragAndDrop
         {
             return gameObject;
         }
+
+        public IDragControllerHandle GetDragControllerHandle()
+        {
+            return _IDragControllerHandle;
+        }
     }
 }
