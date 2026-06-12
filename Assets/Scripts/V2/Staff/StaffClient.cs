@@ -80,5 +80,10 @@ namespace V2.Staff
         {
             PrimeTween.Tween.Position(transform, _staffPosition.transform.position, staff.timeToIntro);
         }
+
+        public StaffModel GetModel()
+        {
+            return staff;
+        }
     }
 }

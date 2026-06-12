@@ -9,5 +9,7 @@ namespace V2.Customer
         public float paciencia;
         public float tiempoDeEntregaDePedido;
         public float tiempoDeConsumo;
+        public CustomerIdentify customerIdentify;
+        public int pointsToAttend;
     }
 }

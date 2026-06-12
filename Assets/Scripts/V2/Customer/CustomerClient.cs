@@ -1,24 +1,35 @@
+using System;
 using Customers;
 using DragAndDrop;
 using PrimeTween;
 using UnityEngine;
 using V2.Customer;
+using V2.Food;
 
 [RequireComponent(typeof(Collider2D))]
 public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
 {
+    public Action<CustomerClientModel, FoodModel> OnCustomerAttended;
+    [SerializeField] private CustomerFoodClient foodClient;
     [SerializeField] private CustomerClientModel customerData;
     [SerializeField] private CustomerStateMachine stateMachine;
     private CustomerSeat _seat;
     private GameObject _pointToSpawn;
+    private bool isAttended = false;
+    private FoodModel _foodByRandom;
 
-    public void Configure(CustomerSeat seat, GameObject pointToSpawn)
+    public CustomerClientModel CustomerData => customerData;
+
+    public void Configure(CustomerSeat seat, GameObject pointToSpawn, FoodModel foodByRandom)
     {
+        _foodByRandom = foodByRandom;
+        foodClient.Configure(foodByRandom);
         _seat = seat;
         Tween.Position(transform, seat.transform.position, customerData.moveToSeatTime).OnComplete(() =>
         {
             stateMachine.SetState(CustomerPhase.ListoParaPedir);
             stateMachine.ListoParaPedir();
+            foodClient.Show();
         });
         stateMachine.Configure(this, customerData);
         _pointToSpawn = pointToSpawn;
@@ -36,6 +47,7 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
             stateMachine.SetState(CustomerPhase.EntregandoPedido);
             stateMachine.Esperando();
             payload.origin.GetDragControllerHandle().PedirPedido(customerData.tiempoDeEntregaDePedido, this);
+            foodClient.Hide();
         }
     }
 
@@ -57,16 +69,22 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
 
     public void Consumiendo()
     {
+        isAttended = true;
         stateMachine.SetState(CustomerPhase.Consumir);
     }
 
     public void Irse()
     {
+        foodClient.Hide();
         _seat.Release();
         Tween.Position(transform, _pointToSpawn.transform.position, customerData.moveToSeatTime).OnComplete(() =>
         {
             Destroy(gameObject, 2);
         });
         stateMachine.SetState(CustomerPhase.Llendose);
+        if (isAttended)
+        {
+            OnCustomerAttended?.Invoke(customerData, _foodByRandom);
+        }
     }
 }
