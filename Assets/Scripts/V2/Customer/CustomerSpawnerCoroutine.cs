@@ -43,6 +43,7 @@ public class CustomerSpawnerCoroutine : MonoBehaviour
             );
             customer.Configure(seat, customerSpawnPosition, foodFactory.GetFoodByRandom());
             customer.OnCustomerAttended += OnCustomerAttended;
+            customer.OnLeftGo += () => { customer.OnCustomerAttended -= OnCustomerAttended;  };
         }
     }
 

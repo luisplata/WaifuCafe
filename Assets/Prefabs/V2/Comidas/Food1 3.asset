@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a99778eb66ed414187c9f5f64c72cac5, type: 3}
+  m_Name: Food1 3
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Customer.FoodDataSO
+  food:
+    foodName: Malteada
+    foodSprite: {fileID: -4280791437551486454, guid: 2a867b8220527e444b772a8f36a2bc95, type: 3}
+    pointsToAttend: 5
+    tiempoDePreparacion: 1
+    tiempoDeConsumo: 1
+    foodModelType: 3

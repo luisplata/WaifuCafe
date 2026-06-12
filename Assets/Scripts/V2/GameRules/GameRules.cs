@@ -13,8 +13,13 @@ public class GameRules : MonoBehaviour, IGameRules
     [SerializeField] private float timeToRun;
     [SerializeField] private Slider timeSlider;
     [SerializeField] private TextMeshProUGUI pointsText;
+    [SerializeField] private TextMeshProUGUI comboText;
+    [SerializeField] private TextMeshProUGUI acumuladoText;
+    [SerializeField] private ComboManager comboManager;
     private float localTime;
     private int totalPoints;
+    private FoodModelType? currentComboType;
+    private int currentComboCount;
 
     private TeaTime intro, game, pause, endGame;
 
@@ -43,12 +48,23 @@ public class GameRules : MonoBehaviour, IGameRules
         endGame.Pause().Add(timeToIntro).Add(() => { SceneManager.LoadScene(0); });
 
         intro.Play();
+        pointsText.text = $"Points: {0}";
+        comboText.text = $"Combo: x{0}";
+        acumuladoText.text = $"Acumulado: {0}";
+
+        comboManager.onComboFinished += OnComboFinished;
+    }
+
+    private void OnComboFinished(int obj)
+    {
+        totalPoints += obj;
         pointsText.text = $"Points: {totalPoints}";
     }
 
     public void CustomerAttended(CustomerClientModel customer, FoodModel food)
     {
-        totalPoints += customer.pointsToAttend + food.pointsToAttend;
-        pointsText.text = $"Points: {totalPoints}";
+        var comboCount = comboManager.RegisterServedFood(food, customer);
+        acumuladoText.text = $"Acumulado: {comboCount.Item3}";
+        comboText.text = $"Combo: x{comboCount.Item1} , {comboCount.Item2}";
     }
 }

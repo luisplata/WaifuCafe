@@ -10,6 +10,7 @@ using V2.Food;
 public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
 {
     public Action<CustomerClientModel, FoodModel> OnCustomerAttended;
+    public Action OnLeftGo;
     [SerializeField] private CustomerFoodClient foodClient;
     [SerializeField] private CustomerClientModel customerData;
     [SerializeField] private CustomerStateMachine stateMachine;
@@ -31,7 +32,7 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
             stateMachine.ListoParaPedir();
             foodClient.Show();
         });
-        stateMachine.Configure(this, customerData);
+        stateMachine.Configure(this, customerData, _foodByRandom);
         _pointToSpawn = pointToSpawn;
         _seat.Hold();
     }
@@ -46,7 +47,8 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
             payload.origin.GetGameObject().transform.position = transform.position;
             stateMachine.SetState(CustomerPhase.EntregandoPedido);
             stateMachine.Esperando();
-            payload.origin.GetDragControllerHandle().PedirPedido(customerData.tiempoDeEntregaDePedido, this);
+            payload.origin.GetDragControllerHandle()
+                .PedirPedido(customerData.tiempoDeEntregaDePedido, this, _foodByRandom);
             foodClient.Hide();
         }
     }
@@ -77,14 +79,18 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
     {
         foodClient.Hide();
         _seat.Release();
-        Tween.Position(transform, _pointToSpawn.transform.position, customerData.moveToSeatTime).OnComplete(() =>
-        {
-            Destroy(gameObject, 2);
-        });
-        stateMachine.SetState(CustomerPhase.Llendose);
+
         if (isAttended)
         {
             OnCustomerAttended?.Invoke(customerData, _foodByRandom);
         }
+
+        Tween.Position(transform, _pointToSpawn.transform.position, customerData.moveToSeatTime).OnComplete(() =>
+        {
+            Destroy(gameObject, 2);
+        });
+
+        stateMachine.SetState(CustomerPhase.Llendose);
+        OnLeftGo?.Invoke();
     }
 }

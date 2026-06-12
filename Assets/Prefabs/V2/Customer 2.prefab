@@ -293,9 +293,9 @@ MonoBehaviour:
     moveToSeatTime: 2
     paciencia: 15
     tiempoDeEntregaDePedido: 2
-    tiempoDeConsumo: 2
+    tiempoDeConsumo: 1
     customerIdentify: 2
-    pointsToAttend: 1
+    pointsToAttend: 3
   stateMachine: {fileID: 3758838135751519930}
 --- !u!61 &8932739410114764712
 BoxCollider2D:
@@ -356,7 +356,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CustomerStateMachine
   customerPhase: 0
-  _renderer: {fileID: 8055303218183300741}
 --- !u!114 &1397223813870306451
 MonoBehaviour:
   m_ObjectHideFlags: 0

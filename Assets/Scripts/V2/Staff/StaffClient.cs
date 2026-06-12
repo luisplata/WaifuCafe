@@ -2,6 +2,7 @@ using DragAndDrop;
 using Staff;
 using StateMachines;
 using UnityEngine;
+using V2.Food;
 
 namespace V2.Staff
 {
@@ -48,10 +49,11 @@ namespace V2.Staff
             return stateMachine.CanUse();
         }
 
-        public void PedirPedido(float customerDataTiempoDeEntregaDePedido, ICustomerClient customerClient)
+        public void PedirPedido(float customerDataTiempoDeEntregaDePedido, ICustomerClient customerClient,
+            FoodModel foodModel)
         {
             _customerClient = customerClient;
-            stateMachine.PedirPedido(customerDataTiempoDeEntregaDePedido);
+            stateMachine.PedirPedido(customerDataTiempoDeEntregaDePedido, foodModel);
             stateMachine.SetState(StaffPhase.AtendiendoCliente);
         }
 

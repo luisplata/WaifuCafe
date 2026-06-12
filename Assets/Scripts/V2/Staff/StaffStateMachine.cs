@@ -3,6 +3,7 @@ using PrimeTween;
 using Staff;
 using StateMachines;
 using UnityEngine;
+using V2.Food;
 
 namespace V2.Staff
 {
@@ -11,12 +12,11 @@ namespace V2.Staff
         public Action<StaffPhase> OnStateChange;
         public Action<float> OnLoadingState;
         [SerializeField] private StaffPhase staffPhase = StaffPhase.Entrando;
-        [SerializeField] private float timeDePreparacionDeComida;
         [SerializeField] private float tiempoDeMoverseEntreCocinaCliente;
-        [SerializeField] private SpriteRenderer _renderer;
         private float _localDelta;
         private IStaffMediator _staffClient;
         private float _customerDataTiempoDeEntregaDePedido;
+        private float _timeDePreparacionDeComida;
 
         public bool CanUse()
         {
@@ -40,7 +40,6 @@ namespace V2.Staff
                     {
                         _localDelta = 0f;
                         SetState(StaffPhase.EnEspera);
-                        _renderer.color = Color.white;
                     }
 
                     break;
@@ -62,8 +61,8 @@ namespace V2.Staff
                     break;
                 case StaffPhase.PreparandoPedido:
                     _localDelta += Time.deltaTime;
-                    OnLoadingState?.Invoke(_localDelta / timeDePreparacionDeComida);
-                    if (_localDelta >= timeDePreparacionDeComida)
+                    OnLoadingState?.Invoke(_localDelta / _timeDePreparacionDeComida);
+                    if (_localDelta >= _timeDePreparacionDeComida)
                     {
                         _localDelta = 0f;
                         SetState(StaffPhase.LlevandoPedidoCliente);
@@ -99,10 +98,10 @@ namespace V2.Staff
             }
         }
 
-        public void PedirPedido(float customerDataTiempoDeEntregaDePedido)
+        public void PedirPedido(float customerDataTiempoDeEntregaDePedido, FoodModel food)
         {
             _customerDataTiempoDeEntregaDePedido = customerDataTiempoDeEntregaDePedido;
-            _renderer.color = Color.brown;
+            _timeDePreparacionDeComida = food.tiempoDePreparacion;
         }
 
         public void Configure(IStaffMediator staffClient)
@@ -112,7 +111,7 @@ namespace V2.Staff
 
         public void Disponible()
         {
-            _renderer.color = Color.white;
+            
         }
     }
 }
