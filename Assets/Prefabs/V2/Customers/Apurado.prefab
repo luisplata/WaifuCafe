@@ -193,7 +193,7 @@ GameObject:
   - component: {fileID: 3758838135751519930}
   - component: {fileID: 1397223813870306451}
   m_Layer: 0
-  m_Name: Customer 3
+  m_Name: Apurado
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -291,10 +291,10 @@ MonoBehaviour:
   foodClient: {fileID: 8790694284054565439}
   customerData:
     moveToSeatTime: 2
-    paciencia: 10
+    paciencia: 30
     tiempoDeEntregaDePedido: 2
     tiempoDeConsumo: 2
-    customerIdentify: 3
+    customerIdentify: 4
     pointsToAttend: 5
   stateMachine: {fileID: 3758838135751519930}
 --- !u!61 &8932739410114764712

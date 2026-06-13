@@ -1,0 +1,299 @@
+fileFormatVersion: 2
+guid: 74941472ecad397449e9237cd8b92ef0
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2903776692696511091
+    second: Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_0
+  - first:
+      213: 6430273560190864936
+    second: Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_1
+  - first:
+      213: -1290764882015205467
+    second: Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_2
+  - first:
+      213: 1414461878789570350
+    second: Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_3
+  - first:
+      213: 8250137401831414168
+    second: Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_4
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_0
+      rect:
+        serializedVersion: 2
+        x: 48
+        y: 11
+        width: 407
+        height: 744
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d8d04cc9b76b3b7d0800000000000000
+      internalID: -2903776692696511091
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_1
+      rect:
+        serializedVersion: 2
+        x: 494
+        y: 3
+        width: 285
+        height: 765
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 82e43c3ebbbec3950800000000000000
+      internalID: 6430273560190864936
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_2
+      rect:
+        serializedVersion: 2
+        x: 778
+        y: 3
+        width: 278
+        height: 625
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5a74fe6bd28461ee0800000000000000
+      internalID: -1290764882015205467
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_3
+      rect:
+        serializedVersion: 2
+        x: 1055
+        y: 385
+        width: 6
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e2f7599a59d21a310800000000000000
+      internalID: 1414461878789570350
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_4
+      rect:
+        serializedVersion: 2
+        x: 1066
+        y: 3
+        width: 263
+        height: 618
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 899535081406e7270800000000000000
+      internalID: 8250137401831414168
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_0: -2903776692696511091
+      Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_1: 6430273560190864936
+      Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_2: -1290764882015205467
+      Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_3: 1414461878789570350
+      Default_anime_maid_waitress_chibi_character_standing_pose_fron_0_47d1e0b7-a6cc-4fdd-9fea-49df0b348ec1_0_4: 8250137401831414168
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

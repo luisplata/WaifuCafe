@@ -18,14 +18,21 @@ public class StaffSpawnerManager : MonoBehaviour
         _gameRules = gameRules;
         for (int i = 0; i < countOfStaff; i++)
         {
-            var nextStaff = staffSelected.GetNextStaff(i);
-            if (nextStaff == StaffIdentified.None) continue;
-            if (staffPositions.GetNextPosition(out StaffPosition staffPosition))
+            try
             {
-                var staffInstantiated = Instantiate(staffFactory.GetStaffById(nextStaff),
-                    spawnPosition.transform.position, Quaternion.identity);
-                staffInstantiated.Configure(staffPosition, spawnPosition);
-                _staffClientsInstantiated.Add(staffInstantiated);
+                var nextStaff = staffSelected.GetNextStaff(i);
+                if (staffPositions.GetNextPosition(out StaffPosition staffPosition))
+                {
+                    var classOfStaff = staffFactory.GetStaffById(nextStaff);
+                    var staffInstantiated = Instantiate(staffPrefab,
+                        spawnPosition.transform.position, Quaternion.identity);
+                    staffInstantiated.Configure(staffPosition, spawnPosition, classOfStaff);
+                    _staffClientsInstantiated.Add(staffInstantiated);
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Error configuring staff spawner: {e.Message}");
             }
         }
     }

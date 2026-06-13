@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: -8870345951138774766}
   - component: {fileID: 7350010057770849910}
   - component: {fileID: 6133939326070025784}
+  - component: {fileID: 5738739547449608011}
   m_Layer: 0
   m_Name: Staff 4
   m_TagString: Untagged
@@ -186,9 +187,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StaffStatus
   staffPhase: 0
-  timeDePreparacionDeComida: 5
   tiempoDeMoverseEntreCocinaCliente: 2
-  _renderer: {fileID: 9188973015153988801}
 --- !u!114 &6133939326070025784
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -204,6 +203,18 @@ MonoBehaviour:
   staffStatus: {fileID: 2640208849944928722}
   staffStateMachine: {fileID: 7350010057770849910}
   staffSlider: {fileID: 6858096661905146295}
+--- !u!114 &5738739547449608011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3729709343424769738}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da5aae137b56f7f48bfa07fd93fab315, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Staff.StaffAnimationBridge
 --- !u!1 &4056405638937615814
 GameObject:
   m_ObjectHideFlags: 0
@@ -214,6 +225,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6515402929835146105}
   - component: {fileID: 3462448405011666704}
+  - component: {fileID: 6588037474090557211}
   m_Layer: 0
   m_Name: waifu
   m_TagString: Untagged
@@ -295,6 +307,28 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!95 &6588037474090557211
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4056405638937615814}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 27858036e2f189241a7050c53c8d8ca9, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &7795850929870398318
 GameObject:
   m_ObjectHideFlags: 0

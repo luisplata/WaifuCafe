@@ -16,6 +16,8 @@ public class GameRules : MonoBehaviour, IGameRules
     [SerializeField] private TextMeshProUGUI comboText;
     [SerializeField] private TextMeshProUGUI acumuladoText;
     [SerializeField] private ComboManager comboManager;
+    [SerializeField] private float percentOfGame;
+    public float Percent => percentOfGame;
     private float localTime;
     private int totalPoints;
     private FoodModelType? currentComboType;
@@ -36,7 +38,8 @@ public class GameRules : MonoBehaviour, IGameRules
         }).Loop(handler =>
         {
             localTime += handler.deltaTime;
-            timeSlider.value = localTime / timeToRun;
+            percentOfGame =  localTime / timeToRun;
+            timeSlider.value = percentOfGame;
             if (localTime >= timeToRun)
             {
                 handler.Break();

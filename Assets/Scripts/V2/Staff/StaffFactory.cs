@@ -1,25 +1,60 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using V2.Staff;
 
 public class StaffFactory : MonoBehaviour
 {
-    [SerializeField] private List<StaffClient> staffPrefabs;
-    private Dictionary<StaffIdentified, StaffClient> _staffDictionary;
+    [SerializeField] private List<StaffNames> staffPrefabs;
+    private Dictionary<StaffNames, StaffModel> _staffDictionary;
 
     private void Start()
     {
-        _staffDictionary = new Dictionary<StaffIdentified, StaffClient>();
-        foreach (var staff in staffPrefabs.Where(staff =>
-                     !_staffDictionary.TryAdd(staff.GetModel().staffIdentified, staff)))
+        _staffDictionary = new Dictionary<StaffNames, StaffModel>();
+        foreach (var staffPrefab in staffPrefabs)
         {
-            Debug.LogWarning($"Duplicate staff ID found: {staff.GetModel().staffIdentified}. Skipping.");
+            var staffModel = GetModel(staffPrefab);
+            if (staffModel != null)
+            {
+                _staffDictionary[staffPrefab] = staffModel;
+            }
+            else
+            {
+                Debug.LogError($"Failed to load StaffModel for prefab: {staffPrefab}");
+            }
         }
     }
 
-    public StaffClient GetStaffById(StaffIdentified staffId)
+    private StaffModel GetModel(StaffNames staffPrefab)
+    {
+        switch (staffPrefab)
+        {
+            case StaffNames.Airi:
+                return new StaffAiri();
+            case StaffNames.Yuki:
+                return new StaffYuki();
+            case StaffNames.Luna:
+                return new StaffLuna();
+            case StaffNames.Neko:
+                return new StaffNeko();
+            case StaffNames.Alice:
+                return new StaffAlice();
+            case StaffNames.Emi:
+                return new StaffEmi();
+            case StaffNames.Hana:
+                return new StaffHana();
+            case StaffNames.Rika:
+                return new StaffRika();
+            case StaffNames.Miko:
+                return new StaffMiko();
+            case StaffNames.Sora:
+                return new StaffSora();
+            default:
+                throw new ArgumentException($"Staff with ID {staffPrefab} not found in the factory.");
+        }
+    }
+
+    public StaffModel GetStaffById(StaffNames staffId)
     {
         if (_staffDictionary.TryGetValue(staffId, out var staffPrefab))
         {

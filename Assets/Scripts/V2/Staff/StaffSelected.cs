@@ -3,15 +3,15 @@ using UnityEngine;
 
 public class StaffSelected : MonoBehaviour
 {
-    [SerializeField] private List<StaffIdentified> listOfStaffs;
+    [SerializeField] private List<StaffNames> listOfStaffsSelected;
 
-    public StaffIdentified GetNextStaff(int index)
+    public StaffNames GetNextStaff(int index)
     {
-        if (listOfStaffs.Count == 0 || index >= listOfStaffs.Count)
+        if (listOfStaffsSelected.Count == 0 || index >= listOfStaffsSelected.Count)
         {
-            return StaffIdentified.None;
+            throw new System.IndexOutOfRangeException($"Index {index} is out of range for the list of staffs.");
         }
 
-        return listOfStaffs[index];
+        return listOfStaffsSelected[index];
     }
 }

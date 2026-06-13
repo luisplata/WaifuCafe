@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
 using V2.Customer;
 using V2.Food;
@@ -12,6 +12,7 @@ public class CustomerSpawnerCoroutine : MonoBehaviour
     [SerializeField] private int countOfCustomerByStep;
     [SerializeField] private CustomerPositions customerPositions;
     [SerializeField] private GameObject customerSpawnPosition;
+    [SerializeField] private List<StepsOfRun> stepsOfRuns;
     private float localTime;
     private IGameRules _gameRules;
     private bool isConfigured;
@@ -21,6 +22,16 @@ public class CustomerSpawnerCoroutine : MonoBehaviour
     {
         if (!isConfigured) return;
         localTime += Time.fixedDeltaTime;
+
+        foreach (var stepsOfRun in stepsOfRuns)
+        {
+            if (_gameRules.Percent >= stepsOfRun.percente)
+            {
+                timeToSpawn = stepsOfRun.spawnPerSecond;
+                stepsOfRuns.Remove(stepsOfRun);
+                break;
+            }
+        }
 
         if (!(localTime >= timeToSpawn)) return;
         SpawnCustomers();
@@ -43,7 +54,7 @@ public class CustomerSpawnerCoroutine : MonoBehaviour
             );
             customer.Configure(seat, customerSpawnPosition, foodFactory.GetFoodByRandom());
             customer.OnCustomerAttended += OnCustomerAttended;
-            customer.OnLeftGo += () => { customer.OnCustomerAttended -= OnCustomerAttended;  };
+            customer.OnLeftGo += () => { customer.OnCustomerAttended -= OnCustomerAttended; };
         }
     }
 
@@ -58,13 +69,4 @@ public class CustomerSpawnerCoroutine : MonoBehaviour
         _gameRules = gameRules;
         isConfigured = true;
     }
-}
-
-public enum CustomerIdentify
-{
-    None,
-    Customer1,
-    Customer2,
-    Customer3,
-    Customer4
 }

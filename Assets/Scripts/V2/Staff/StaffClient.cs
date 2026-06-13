@@ -8,19 +8,20 @@ namespace V2.Staff
 {
     public class StaffClient : MonoBehaviour, IDragControllerHandle, IStaffMediator
     {
-        [SerializeField] private StaffModel staff;
         [SerializeField] private StaffStateMachine stateMachine;
         [SerializeField] private DraggableSprite draggableSprite;
+        private StaffModel _staff;
         private GameObject _spawnPosition;
         private ICustomerClient _customerClient;
         private StaffPosition _staffPosition;
 
-        public void Configure(StaffPosition staffPosition, GameObject spawnPosition)
+        public void Configure(StaffPosition staffPosition, GameObject spawnPosition, StaffModel staffreference)
         {
+            _staff = staffreference;
             _staffPosition = staffPosition;
             _spawnPosition = spawnPosition;
             stateMachine.Configure(this);
-            PrimeTween.Tween.Position(transform, staffPosition.transform.position, staff.timeToIntro).OnComplete(() =>
+            PrimeTween.Tween.Position(transform, staffPosition.transform.position, _staff.TimeToIntro).OnComplete(() =>
             {
                 stateMachine.SetState(StaffPhase.EnEspera);
                 stateMachine.Disponible();
@@ -80,12 +81,12 @@ namespace V2.Staff
 
         public void IrPuesto()
         {
-            PrimeTween.Tween.Position(transform, _staffPosition.transform.position, staff.timeToIntro);
+            PrimeTween.Tween.Position(transform, _staffPosition.transform.position, _staff.TimeToIntro);
         }
 
         public StaffModel GetModel()
         {
-            return staff;
+            return _staff;
         }
     }
 }

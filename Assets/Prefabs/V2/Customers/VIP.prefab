@@ -193,7 +193,7 @@ GameObject:
   - component: {fileID: 3758838135751519930}
   - component: {fileID: 1397223813870306451}
   m_Layer: 0
-  m_Name: Customer 4
+  m_Name: VIP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -291,10 +291,10 @@ MonoBehaviour:
   foodClient: {fileID: 3062710247271261361}
   customerData:
     moveToSeatTime: 2
-    paciencia: 5
+    paciencia: 40
     tiempoDeEntregaDePedido: 2
     tiempoDeConsumo: 5
-    customerIdentify: 4
+    customerIdentify: 3
     pointsToAttend: 20
   stateMachine: {fileID: 3758838135751519930}
 --- !u!61 &8932739410114764712

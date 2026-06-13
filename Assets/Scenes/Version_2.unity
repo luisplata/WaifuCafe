@@ -881,9 +881,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02b80a612bd458a498909351fa126231, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StaffFactory
-  staffPrefabs:
-  - {fileID: 927664258131433897, guid: 29526c649168e3248b80a0b60e4d06ce, type: 3}
-  - {fileID: 927664258131433897, guid: 20c25dbc68f08de409678e6c992a6bf0, type: 3}
+  staffPrefabs: 00000000010000000200000003000000040000000500000006000000070000000800000009000000
 --- !u!114 &547633252
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -896,7 +894,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52d20693b4774874a9699bdce1f04b36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StaffSelected
-  listOfStaffs: 01000000020000000000000000000000
+  listOfStaffsSelected: 04000000000000000300000005000000
 --- !u!1 &696760526
 GameObject:
   m_ObjectHideFlags: 0
@@ -1598,10 +1596,17 @@ MonoBehaviour:
   foodFactory: {fileID: 1288736308}
   customerFactory: {fileID: 1288736307}
   customerPrefab: {fileID: 5311295719306095637, guid: 07c3e6d9cec36aa48bebc3144f57453e, type: 3}
-  timeToSpawn: 1
+  timeToSpawn: 10
   countOfCustomerByStep: 1
   customerPositions: {fileID: 1288736305}
   customerSpawnPosition: {fileID: 1675840135}
+  stepsOfRuns:
+  - percente: 0
+    spawnPerSecond: 10
+  - percente: 0.4
+    spawnPerSecond: 5
+  - percente: 0.6
+    spawnPerSecond: 10
 --- !u!114 &1288736307
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1674,6 +1679,7 @@ MonoBehaviour:
   comboText: {fileID: 854162766}
   acumuladoText: {fileID: 946886057}
   comboManager: {fileID: 1314447866}
+  percentOfGame: 0
 --- !u!4 &1314447865
 Transform:
   m_ObjectHideFlags: 0
