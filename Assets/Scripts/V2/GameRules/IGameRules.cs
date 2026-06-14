@@ -5,4 +5,9 @@ public interface IGameRules
 {
     void CustomerAttended(CustomerClientModel customer, FoodModel food);
     float Percent { get; }
+    bool IsPatienceAltered();
+    float GetAlteredPatience();
+    bool IsComboBreaker();
+    float GetAlteredEconomy();
+    bool IsEconomyModify();
 }

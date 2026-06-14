@@ -5,6 +5,7 @@ using PrimeTween;
 using UnityEngine;
 using V2.Customer;
 using V2.Food;
+using V2.Staff;
 
 [RequireComponent(typeof(Collider2D))]
 public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
@@ -18,14 +19,19 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
     private GameObject _pointToSpawn;
     private bool isAttended = false;
     private FoodModel _foodByRandom;
+    private StaffModel _staffModel;
+    private ICustomerSpawn _customerSpawnerCoroutine;
 
     public CustomerClientModel CustomerData => customerData;
 
-    public void Configure(CustomerSeat seat, GameObject pointToSpawn, FoodModel foodByRandom)
+    public void Configure(CustomerSeat seat, GameObject pointToSpawn, FoodModel foodByRandom,
+        float modificadorDePaciencia, ICustomerSpawn customerSpawnerCoroutine)
     {
+        _customerSpawnerCoroutine = customerSpawnerCoroutine;
         _foodByRandom = foodByRandom;
         foodClient.Configure(foodByRandom);
         _seat = seat;
+        customerData.paciencia *= 1 + modificadorDePaciencia;
         Tween.Position(transform, seat.transform.position, customerData.moveToSeatTime).OnComplete(() =>
         {
             stateMachine.SetState(CustomerPhase.ListoParaPedir);
@@ -50,6 +56,7 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
             payload.origin.GetDragControllerHandle()
                 .PedirPedido(customerData.tiempoDeEntregaDePedido, this, _foodByRandom);
             foodClient.Hide();
+            _staffModel = payload.origin.GetStaffModel();
         }
     }
 
@@ -79,6 +86,22 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
     {
         foodClient.Hide();
         _seat.Release();
+
+
+        if (
+            _staffModel.StaffEspeciality == StaffEspeciality.VipSpecialist ||
+            _staffModel.StaffEspeciality == StaffEspeciality.CasualSpecialist ||
+            _staffModel.StaffEspeciality == StaffEspeciality.RushSpecialist
+        )
+        {
+            customerData.pointsToAttend *= 1 + _staffModel.GetIncrementOfPoints();
+        }
+
+        if (_customerSpawnerCoroutine.IsEconomyModify())
+        {
+            customerData.pointsToAttend *= 1 + _customerSpawnerCoroutine.GetGameRules().GetAlteredEconomy();
+            _foodByRandom.pointsToAttend *= 1 + _customerSpawnerCoroutine.GetGameRules().GetAlteredEconomy();
+        }
 
         if (isAttended)
         {

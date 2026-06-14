@@ -848,7 +848,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StaffSpawnerManager
   staffSelected: {fileID: 547633252}
   staffFactory: {fileID: 547633251}
-  staffPrefab: {fileID: 927664258131433897, guid: 29526c649168e3248b80a0b60e4d06ce, type: 3}
+  staffPrefab: {fileID: 927664258131433897, guid: 5a532d4f1e24c3d45a2f1d5cf58a0531, type: 3}
   countOfStaff: 4
   staffPositions: {fileID: 547633250}
   spawnPosition: {fileID: 1525979461}
@@ -881,7 +881,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02b80a612bd458a498909351fa126231, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StaffFactory
-  staffPrefabs: 00000000010000000200000003000000040000000500000006000000070000000800000009000000
+  staffPrefabs:
+  - StaffName: 0
+    StaffSprite: {fileID: -1978027901758831722, guid: aef302fc72b4ada4c84ed02dc6df5df3, type: 3}
+  - StaffName: 1
+    StaffSprite: {fileID: 6672463683007520127, guid: c0a703eb6f6929147a28c8f69e4d5bcb, type: 3}
+  - StaffName: 2
+    StaffSprite: {fileID: 4751386297217743694, guid: 1f4a05e1ca33b3049a5cf5b497ee38ee, type: 3}
+  - StaffName: 3
+    StaffSprite: {fileID: 5350769754350432577, guid: 47c2eab1fe88a624c820b362634ab1d7, type: 3}
+  - StaffName: 4
+    StaffSprite: {fileID: 3953189837751567947, guid: 94fa151a5d2b6cb449cec5772b63085d, type: 3}
+  - StaffName: 5
+    StaffSprite: {fileID: -755952535651798241, guid: 082e283c6fa2e9b419ef1540e3715a7a, type: 3}
+  - StaffName: 6
+    StaffSprite: {fileID: -2218525244689790349, guid: 58859945ead636b4881f11696c3408e7, type: 3}
+  - StaffName: 7
+    StaffSprite: {fileID: -7295960579960719121, guid: 7f2a5c9ac7415da4eb8a31b76c363553, type: 3}
+  - StaffName: 8
+    StaffSprite: {fileID: -3229323532422905222, guid: 7eeb20c4907285744aa000f85cdb3f55, type: 3}
+  - StaffName: 9
+    StaffSprite: {fileID: 3435432789577861712, guid: e76132f09fca73b439ec5022a6957b13, type: 3}
 --- !u!114 &547633252
 MonoBehaviour:
   m_ObjectHideFlags: 0

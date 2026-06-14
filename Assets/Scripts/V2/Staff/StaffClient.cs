@@ -10,6 +10,7 @@ namespace V2.Staff
     {
         [SerializeField] private StaffStateMachine stateMachine;
         [SerializeField] private DraggableSprite draggableSprite;
+        [SerializeField] private SpriteRenderer staffRenderer;
         private StaffModel _staff;
         private GameObject _spawnPosition;
         private ICustomerClient _customerClient;
@@ -21,7 +22,7 @@ namespace V2.Staff
             _staffPosition = staffPosition;
             _spawnPosition = spawnPosition;
             stateMachine.Configure(this);
-            PrimeTween.Tween.Position(transform, staffPosition.transform.position, _staff.TimeToIntro).OnComplete(() =>
+            PrimeTween.Tween.Position(transform, staffPosition.transform.position, _staff.TimeToMove()).OnComplete(() =>
             {
                 stateMachine.SetState(StaffPhase.EnEspera);
                 stateMachine.Disponible();
@@ -30,11 +31,15 @@ namespace V2.Staff
             draggableSprite.OnEnterDrag += OnEnterDrag;
             draggableSprite.OnFinishDrag += OnFinishDrag;
             draggableSprite.OnDragging += OnDragging;
+            staffRenderer.sprite = _staff.Sprite;
         }
 
         private void OnFinishDrag(IDropReceiver obj)
         {
-            Debug.Log($"StaffClient: recibí drop desde {gameObject.name} sobre {obj.GetGameObject().name}");
+            if(obj != null)
+            {
+                Debug.Log($"StaffClient: recibí drop desde {gameObject.name} sobre {obj.GetGameObject().name}");
+            }
         }
 
         private void OnDragging()
@@ -55,7 +60,11 @@ namespace V2.Staff
         {
             _customerClient = customerClient;
             stateMachine.PedirPedido(customerDataTiempoDeEntregaDePedido, foodModel);
-            stateMachine.SetState(StaffPhase.AtendiendoCliente);
+        }
+
+        public StaffModel GetStaffModel()
+        {
+            return _staff;
         }
 
         public void GoToKichen(float tiempoDeMoverseEntreCocinaCliente)
@@ -81,7 +90,12 @@ namespace V2.Staff
 
         public void IrPuesto()
         {
-            PrimeTween.Tween.Position(transform, _staffPosition.transform.position, _staff.TimeToIntro);
+            PrimeTween.Tween.Position(transform, _staffPosition.transform.position, _staff.TimeToMove());
+        }
+
+        public float GetTimeToPrepare(float timeDePreparacionDeComida, FoodModel food)
+        {
+            return timeDePreparacionDeComida * 1 - _staff.ModificadorDeTiempoDePreparacion(food);
         }
 
         public StaffModel GetModel()

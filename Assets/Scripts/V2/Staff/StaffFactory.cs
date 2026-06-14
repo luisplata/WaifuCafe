@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using V2.Staff;
+using V2.Staff.Models;
 
 public class StaffFactory : MonoBehaviour
 {
-    [SerializeField] private List<StaffNames> staffPrefabs;
+    [SerializeField] private List<StaffModelConfiguration> staffPrefabs;
     private Dictionary<StaffNames, StaffModel> _staffDictionary;
 
     private void Start()
@@ -13,12 +14,13 @@ public class StaffFactory : MonoBehaviour
         _staffDictionary = new Dictionary<StaffNames, StaffModel>();
         foreach (var staffPrefab in staffPrefabs)
         {
-            var staffModel = GetModel(staffPrefab);
-            if (staffModel != null)
+            try
             {
-                _staffDictionary[staffPrefab] = staffModel;
+                var staffModel = GetModel(staffPrefab.StaffName);
+                staffModel.SetStaffSprite(staffPrefab.StaffSprite);
+                _staffDictionary[staffPrefab.StaffName] = staffModel;
             }
-            else
+            catch (Exception e)
             {
                 Debug.LogError($"Failed to load StaffModel for prefab: {staffPrefab}");
             }

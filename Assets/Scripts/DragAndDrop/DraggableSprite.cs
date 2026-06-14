@@ -119,5 +119,10 @@ namespace DragAndDrop
         {
             return _IDragControllerHandle;
         }
+
+        public StaffModel GetStaffModel()
+        {
+            return _IDragControllerHandle.GetStaffModel();
+        }
     }
 }

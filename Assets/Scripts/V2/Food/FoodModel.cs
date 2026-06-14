@@ -8,7 +8,7 @@ namespace V2.Food
     {
         public string foodName;
         public Sprite foodSprite;
-        public int pointsToAttend;
+        public float pointsToAttend;
         public float tiempoDePreparacion;
         public float tiempoDeConsumo;
         public FoodModelType foodModelType;

@@ -15,7 +15,7 @@ MonoBehaviour:
   food:
     foodName: Almuerzo
     foodSprite: {fileID: 4064692485810914980, guid: e5edd92f2108e0d47a3bc7fb7c362992, type: 3}
-    pointsToAttend: 15
+    pointsToAttend: 10
     tiempoDePreparacion: 5
     tiempoDeConsumo: 3
     foodModelType: 2

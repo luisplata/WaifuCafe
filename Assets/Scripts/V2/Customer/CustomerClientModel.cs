@@ -10,6 +10,6 @@ namespace V2.Customer
         public float tiempoDeEntregaDePedido;
         public float tiempoDeConsumo;
         public CustomerIdentify customerIdentify;
-        public int pointsToAttend;
+        public float pointsToAttend;
     }
 }

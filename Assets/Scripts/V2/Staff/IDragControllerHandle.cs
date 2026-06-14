@@ -11,5 +11,7 @@ namespace V2.Staff
             ICustomerClient customerClient,
             FoodModel foodModel
         );
+
+        StaffModel GetStaffModel();
     }
 }

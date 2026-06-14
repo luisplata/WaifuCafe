@@ -7,5 +7,10 @@
             name = "Miku";
             staffEspeciality = StaffEspeciality.Patience;
         }
+
+        public override float GetPatienceAltered()
+        {
+            return 0.5f;
+        }
     }
 }

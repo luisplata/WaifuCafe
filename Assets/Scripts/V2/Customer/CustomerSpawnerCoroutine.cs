@@ -3,7 +3,7 @@ using UnityEngine;
 using V2.Customer;
 using V2.Food;
 
-public class CustomerSpawnerCoroutine : MonoBehaviour
+public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
 {
     [SerializeField] private FoodFactory foodFactory;
     [SerializeField] private CustomerFactory customerFactory;
@@ -52,10 +52,21 @@ public class CustomerSpawnerCoroutine : MonoBehaviour
                 customerSpawnPosition.transform.position,
                 Quaternion.identity
             );
-            customer.Configure(seat, customerSpawnPosition, foodFactory.GetFoodByRandom());
+            customer.Configure(seat, customerSpawnPosition, foodFactory.GetFoodByRandom(), GetModificadorDePaciencia(),
+                this);
             customer.OnCustomerAttended += OnCustomerAttended;
             customer.OnLeftGo += () => { customer.OnCustomerAttended -= OnCustomerAttended; };
         }
+    }
+
+    private float GetModificadorDePaciencia()
+    {
+        if (_gameRules.IsPatienceAltered())
+        {
+            return _gameRules.GetAlteredPatience();
+        }
+
+        return 0;
     }
 
     private void OnCustomerAttended(CustomerClientModel customer, FoodModel food)
@@ -68,5 +79,15 @@ public class CustomerSpawnerCoroutine : MonoBehaviour
         localTime = timeToSpawn;
         _gameRules = gameRules;
         isConfigured = true;
+    }
+
+    public bool IsEconomyModify()
+    {
+        return _gameRules.IsEconomyModify();
+    }
+
+    public IGameRules GetGameRules()
+    {
+        return _gameRules;
     }
 }

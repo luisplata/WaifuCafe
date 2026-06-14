@@ -18,6 +18,7 @@ public class GameRules : MonoBehaviour, IGameRules
     [SerializeField] private ComboManager comboManager;
     [SerializeField] private float percentOfGame;
     public float Percent => percentOfGame;
+
     private float localTime;
     private int totalPoints;
     private FoodModelType? currentComboType;
@@ -38,7 +39,7 @@ public class GameRules : MonoBehaviour, IGameRules
         }).Loop(handler =>
         {
             localTime += handler.deltaTime;
-            percentOfGame =  localTime / timeToRun;
+            percentOfGame = localTime / timeToRun;
             timeSlider.value = percentOfGame;
             if (localTime >= timeToRun)
             {
@@ -54,7 +55,7 @@ public class GameRules : MonoBehaviour, IGameRules
         pointsText.text = $"Points: {0}";
         comboText.text = $"Combo: x{0}";
         acumuladoText.text = $"Acumulado: {0}";
-
+        comboManager.Configure(this);
         comboManager.onComboFinished += OnComboFinished;
     }
 
@@ -69,5 +70,30 @@ public class GameRules : MonoBehaviour, IGameRules
         var comboCount = comboManager.RegisterServedFood(food, customer);
         acumuladoText.text = $"Acumulado: {comboCount.Item3}";
         comboText.text = $"Combo: x{comboCount.Item1} , {comboCount.Item2}";
+    }
+
+    public bool IsPatienceAltered()
+    {
+        return staffManager.IsPatienceAltered();
+    }
+
+    public float GetAlteredPatience()
+    {
+        return staffManager.GetAlteredPatience();
+    }
+
+    public bool IsComboBreaker()
+    {
+        return staffManager.IsComboBreaker();
+    }
+
+    public float GetAlteredEconomy()
+    {
+        return staffManager.GetAlteredEconomy();
+    }
+
+    public bool IsEconomyModify()
+    {
+        return staffManager.IsEconomyModify();
     }
 }

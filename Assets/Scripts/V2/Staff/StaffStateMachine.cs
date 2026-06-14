@@ -17,6 +17,7 @@ namespace V2.Staff
         private IStaffMediator _staffClient;
         private float _customerDataTiempoDeEntregaDePedido;
         private float _timeDePreparacionDeComida;
+        private FoodModel _food;
 
         public bool CanUse()
         {
@@ -56,6 +57,7 @@ namespace V2.Staff
                         SetState(StaffPhase.LlevandoPedidoCocina);
                         _staffClient.GoToKichen(tiempoDeMoverseEntreCocinaCliente);
                         _staffClient.CustomerToWaitPedido();
+                        _timeDePreparacionDeComida = _staffClient.GetTimeToPrepare(_timeDePreparacionDeComida, _food);
                     }
 
                     break;
@@ -102,6 +104,8 @@ namespace V2.Staff
         {
             _customerDataTiempoDeEntregaDePedido = customerDataTiempoDeEntregaDePedido;
             _timeDePreparacionDeComida = food.tiempoDePreparacion;
+            _food = food;
+            SetState(StaffPhase.AtendiendoCliente);
         }
 
         public void Configure(IStaffMediator staffClient)
@@ -111,7 +115,6 @@ namespace V2.Staff
 
         public void Disponible()
         {
-            
         }
     }
 }

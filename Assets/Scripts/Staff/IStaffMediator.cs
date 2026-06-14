@@ -1,4 +1,6 @@
-﻿namespace Staff
+﻿using V2.Food;
+
+namespace Staff
 {
     public interface IStaffMediator
     {
@@ -7,5 +9,6 @@
         void CustomerToWaitPedido();
         void Consumiendo();
         void IrPuesto();
+        float GetTimeToPrepare(float timeDePreparacionDeComida, FoodModel food);
     }
 }

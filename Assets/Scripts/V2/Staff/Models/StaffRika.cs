@@ -7,5 +7,10 @@
             name = "Rika";
             staffEspeciality = StaffEspeciality.Speed;
         }
+
+        public override float TimeToMove()
+        {
+            return base.TimeToMove() / 2;
+        }
     }
 }

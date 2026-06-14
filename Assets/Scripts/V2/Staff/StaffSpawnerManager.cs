@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using V2.Staff;
 
@@ -35,5 +36,42 @@ public class StaffSpawnerManager : MonoBehaviour
                 Debug.LogError($"Error configuring staff spawner: {e.Message}");
             }
         }
+    }
+
+    public bool IsPatienceAltered()
+    {
+        return _staffClientsInstantiated.Any(staffClient =>
+            staffClient.GetModel().StaffEspeciality == StaffEspeciality.Patience);
+    }
+
+    public float GetAlteredPatience()
+    {
+        return _staffClientsInstantiated
+            .Where(staffClient => staffClient.GetModel().StaffEspeciality == StaffEspeciality.Patience)
+            .Sum(staffClient => staffClient.GetModel().GetPatienceAltered());
+    }
+
+    public bool IsComboBreaker()
+    {
+        foreach (var staffClient in _staffClientsInstantiated.Where(staffClient =>
+                     staffClient.GetModel().StaffEspeciality == StaffEspeciality.Combo))
+        {
+            return staffClient.GetModel().IsComboBreaker();
+        }
+
+        return true;
+    }
+
+    public bool IsEconomyModify()
+    {
+        return _staffClientsInstantiated.Any(staffClient =>
+            staffClient.GetModel().StaffEspeciality == StaffEspeciality.Economy);
+    }
+
+    public float GetAlteredEconomy()
+    {
+        return _staffClientsInstantiated
+            .Where(staffClient => staffClient.GetModel().StaffEspeciality == StaffEspeciality.Economy)
+            .Sum(staffClient => staffClient.GetModel().GetEconomyAltered());
     }
 }

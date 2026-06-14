@@ -7,5 +7,6 @@ namespace DragAndDrop
     {
         GameObject GetGameObject();
         IDragControllerHandle GetDragControllerHandle();
+        StaffModel GetStaffModel();
     }
 }

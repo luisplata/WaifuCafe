@@ -5,6 +5,11 @@ public class StaffSelected : MonoBehaviour
 {
     [SerializeField] private List<StaffNames> listOfStaffsSelected;
 
+    private void Awake()
+    {
+        listOfStaffsSelected = SaveGame.Instance.GetWaifusSelected();
+    }
+
     public StaffNames GetNextStaff(int index)
     {
         if (listOfStaffsSelected.Count == 0 || index >= listOfStaffsSelected.Count)
