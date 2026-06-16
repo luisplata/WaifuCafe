@@ -92,7 +92,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 41.2
+  m_fontSize: 1
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -202,8 +202,9 @@ MonoBehaviour:
   contorno: {fileID: 3961984743424037803}
   cardImage: {fileID: 6446482217693141476}
   cardName: {fileID: 521972207881149815}
-  cardSprite: {fileID: 7287379568744487092, guid: 09c47dbdb2bbd6b468a8d5a683a94f78, type: 3}
-  splash: {fileID: -3490271596658135930, guid: 01ad9f763c6c3f44a8bc3a9cf170de68, type: 3}
+  cardSprite: {fileID: 4825321804654087343, guid: be732d1b132eb784b9faa9595952abc0, type: 3}
+  cardArt: {fileID: 2661547004076748139, guid: 1ff123e3ae9a0654cb7e8076b386778c, type: 3}
+  splashArt: {fileID: -4012836159186315625, guid: cfb2233a291387147b11498da72b852f, type: 3}
   waifuName: Hana - Rush Specialist
   waifuDescription: "Cuando llega la hora punta, Hana parece multiplicarse. Siempre
     aparece donde m\xE1s se la necesita y mantiene el caf\xE9 funcionando incluso

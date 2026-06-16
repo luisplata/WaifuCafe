@@ -13,11 +13,13 @@ public class CardOfWaifu : MonoBehaviour
     [SerializeField] private Image cardImage;
     [SerializeField] private TextMeshProUGUI cardName;
     [SerializeField] private Sprite cardSprite;
-    [SerializeField] private Sprite splash;
+    [SerializeField] private Sprite cardArt;
+    [SerializeField] private Sprite splashArt;
     [SerializeField] private string waifuName;
     [SerializeField] private string waifuDescription;
     [SerializeField] private StaffNames staffEspeciality;
-    public Sprite SplashArt => splash;
+    public Sprite CardArtArt => cardArt;
+    public Sprite SplashArt => splashArt;
     public string WaifuName => waifuName;
     public string WaifuDescription => waifuDescription;
     public StaffNames StaffEspeciality => staffEspeciality;

@@ -202,8 +202,9 @@ MonoBehaviour:
   contorno: {fileID: 3961984743424037803}
   cardImage: {fileID: 6446482217693141476}
   cardName: {fileID: 521972207881149815}
-  cardSprite: {fileID: -8850272068336278201, guid: 4e0bbae5f465ef34aa44dd3a6af02a7e, type: 3}
-  splash: {fileID: 9113380959159315192, guid: 5e871c9befb8b1c4598af35764c294c6, type: 3}
+  cardSprite: {fileID: 403749973857221504, guid: 5fbb99f5bdf87ec4bbbe24f86909fe6d, type: 3}
+  cardArt: {fileID: 2467319145190556368, guid: 85913179dd9deca408e57b847d9e7776, type: 3}
+  splashArt: {fileID: -6098531640184580459, guid: 34272ea4c4b59134594703fd2344497b, type: 3}
   waifuName: "Neko \u2014 Drink Specialist"
   waifuDescription: "Neko pasa m\xE1s tiempo en la barra de bebidas que en cualquier
     otro lugar. Su memoria para recetas es sorprendente, aunque a veces a\xF1ade

@@ -202,8 +202,9 @@ MonoBehaviour:
   contorno: {fileID: 3961984743424037803}
   cardImage: {fileID: 6446482217693141476}
   cardName: {fileID: 521972207881149815}
-  cardSprite: {fileID: -6943030197650730235, guid: 164041c8a2335784bb0cd49310921d95, type: 3}
-  splash: {fileID: -831577457789550480, guid: 0a7a66682aadbe64e80c9e4d87d9b342, type: 3}
+  cardSprite: {fileID: -8657028285809663063, guid: c456ffc2ce665f247b0b6fecfc962dbf, type: 3}
+  cardArt: {fileID: -8609752399534411149, guid: 5b899b8aa795f4a409bc8b0b6b0ea153, type: 3}
+  splashArt: {fileID: 4357704733175849912, guid: ffefc4e54eae6cc498e5acd883851a6c, type: 3}
   waifuName: "Emi \u2014 Casual Specialist"
   waifuDescription: "Emi trata a cada cliente como si fuera un fan. Su energ\xEDa
     convierte incluso una visita com\xFAn en una experiencia memorable."

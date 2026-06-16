@@ -202,8 +202,9 @@ MonoBehaviour:
   contorno: {fileID: 3961984743424037803}
   cardImage: {fileID: 6446482217693141476}
   cardName: {fileID: 521972207881149815}
-  cardSprite: {fileID: 3456547057163072115, guid: 78ec333dd3f5a11499e52cc7245f5e8c, type: 3}
-  splash: {fileID: -3392161468125645212, guid: d91d80707abb56945b571b6280fdc4c0, type: 3}
+  cardSprite: {fileID: 1585623328901404273, guid: f77462a55abeacf41b882a9bee817009, type: 3}
+  cardArt: {fileID: 5284158304818018841, guid: 93850b19780fc4d4ab47d040f47a5e1e, type: 3}
+  splashArt: {fileID: 4577701271450381375, guid: 045561c586e37f54fab1e1e73291bf90, type: 3}
   waifuName: Airi - Economy Specialist
   waifuDescription: "Airi siempre est\xE1 pensando en c\xF3mo mejorar las ganancias
     del caf\xE9. Controla gastos, optimiza recursos y encuentra oportunidades donde

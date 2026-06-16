@@ -202,8 +202,9 @@ MonoBehaviour:
   contorno: {fileID: 3961984743424037803}
   cardImage: {fileID: 6446482217693141476}
   cardName: {fileID: 521972207881149815}
-  cardSprite: {fileID: 7884721200830804124, guid: 650050f62876e0549af79278cc7ecb1e, type: 3}
-  splash: {fileID: -5748092536624241300, guid: 57bf96d46f0ffad4e917a111f91ec316, type: 3}
+  cardSprite: {fileID: -1437637737313607033, guid: 3b4325c77750e1b40ab0f478b6ba1cc8, type: 3}
+  cardArt: {fileID: -7368591059534055548, guid: 13e886f4318483746b2ab39bf64996fc, type: 3}
+  splashArt: {fileID: -8242887993134216970, guid: 2f6eeb8806609ee4d88588acb71c8560, type: 3}
   waifuName: Sora - Combo Specialist
   waifuDescription: "Sora ve el servicio como una coreograf\xEDa perfecta. Le encanta
     encadenar pedidos similares para mantener un ritmo impecable."

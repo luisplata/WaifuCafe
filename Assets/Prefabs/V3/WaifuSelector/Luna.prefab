@@ -202,8 +202,9 @@ MonoBehaviour:
   contorno: {fileID: 3961984743424037803}
   cardImage: {fileID: 6446482217693141476}
   cardName: {fileID: 521972207881149815}
-  cardSprite: {fileID: -2468174199312881550, guid: 7ba6a9912f8c0d84ab1cdc6fa86753b6, type: 3}
-  splash: {fileID: 8766145445468149329, guid: 490c9178e9edefa4cbfed36936809f1b, type: 3}
+  cardSprite: {fileID: -5916251948307425712, guid: 0af1d405627fe6345942fde7b0aefc13, type: 3}
+  cardArt: {fileID: -5406290836339037792, guid: 3b3c7a5bb11cf0b41b769ee5db0e4993, type: 3}
+  splashArt: {fileID: -3351679096527806955, guid: 574c1dbbdaad1f94ea62a4905548850b, type: 3}
   waifuName: "Luna \u2014 Lunch Specialist"
   waifuDescription: "Luna domina las horas m\xE1s ocupadas del restaurante. Nadie
     entiende c\xF3mo puede coordinar tantos pedidos simult\xE1neamente sin perder

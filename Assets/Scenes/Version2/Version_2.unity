@@ -883,25 +883,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StaffFactory
   staffPrefabs:
   - StaffName: 0
-    StaffSprite: {fileID: -1978027901758831722, guid: aef302fc72b4ada4c84ed02dc6df5df3, type: 3}
+    StaffSprite: {fileID: -1791703644402727757, guid: b4c915de952c21042b5e258a8e903be4, type: 3}
   - StaffName: 1
-    StaffSprite: {fileID: 6672463683007520127, guid: c0a703eb6f6929147a28c8f69e4d5bcb, type: 3}
+    StaffSprite: {fileID: -9024277342914232377, guid: 4f66a58d4409604499120116f9f4de3b, type: 3}
   - StaffName: 2
-    StaffSprite: {fileID: 4751386297217743694, guid: 1f4a05e1ca33b3049a5cf5b497ee38ee, type: 3}
+    StaffSprite: {fileID: -7579036353684815341, guid: e5c8a27a9a9a1c646807d803e39dd451, type: 3}
   - StaffName: 3
-    StaffSprite: {fileID: 5350769754350432577, guid: 47c2eab1fe88a624c820b362634ab1d7, type: 3}
+    StaffSprite: {fileID: 5357811417028453251, guid: 6f5c10c9e62cd8545b17dd1d8b25c93c, type: 3}
   - StaffName: 4
-    StaffSprite: {fileID: 3953189837751567947, guid: 94fa151a5d2b6cb449cec5772b63085d, type: 3}
+    StaffSprite: {fileID: 3573832043039204689, guid: 48976d69d5400b7438a5faa0712d60bd, type: 3}
   - StaffName: 5
-    StaffSprite: {fileID: -755952535651798241, guid: 082e283c6fa2e9b419ef1540e3715a7a, type: 3}
+    StaffSprite: {fileID: -740671824173950942, guid: 59e3da7932949c145a30e3cfb22cafe0, type: 3}
   - StaffName: 6
-    StaffSprite: {fileID: -2218525244689790349, guid: 58859945ead636b4881f11696c3408e7, type: 3}
+    StaffSprite: {fileID: -171057933033140536, guid: a661a8c322886e54caaa19919f911447, type: 3}
   - StaffName: 7
-    StaffSprite: {fileID: -7295960579960719121, guid: 7f2a5c9ac7415da4eb8a31b76c363553, type: 3}
+    StaffSprite: {fileID: 3017362251084858137, guid: db1ab7e4c753fe34ca35dd096e463539, type: 3}
   - StaffName: 8
-    StaffSprite: {fileID: -3229323532422905222, guid: 7eeb20c4907285744aa000f85cdb3f55, type: 3}
+    StaffSprite: {fileID: -4687454246086934593, guid: 9393fd31b6e96e74bbce1ce049716874, type: 3}
   - StaffName: 9
-    StaffSprite: {fileID: 3435432789577861712, guid: e76132f09fca73b439ec5022a6957b13, type: 3}
+    StaffSprite: {fileID: 5984689282590521648, guid: 6cf3d0820c430d148b12a188fe71200f, type: 3}
 --- !u!114 &547633252
 MonoBehaviour:
   m_ObjectHideFlags: 0

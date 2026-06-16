@@ -202,8 +202,9 @@ MonoBehaviour:
   contorno: {fileID: 3961984743424037803}
   cardImage: {fileID: 6446482217693141476}
   cardName: {fileID: 521972207881149815}
-  cardSprite: {fileID: 7469003092561213922, guid: 22bfa2e61531be54e86fc59789254e78, type: 3}
-  splash: {fileID: 3259140794655417313, guid: 1d9e072162e968345842409e2d41e51e, type: 3}
+  cardSprite: {fileID: -6916701679428805915, guid: 573bad446b34ede45afc0293a89ba234, type: 3}
+  cardArt: {fileID: 3426225975782351822, guid: 9ebb8468cf2433f40b5d0cea70842fa3, type: 3}
+  splashArt: {fileID: 5057083236575539431, guid: 2e8f43b9159d86346ab2f87ce7913d38, type: 3}
   waifuName: "Alice \u2014 VIP Specialist"
   waifuDescription: "Alice fue educada para tratar con nobles y celebridades. Cuando
     un cliente VIP entra al caf\xE9, ella aparece inmediatamente para ofrecer una

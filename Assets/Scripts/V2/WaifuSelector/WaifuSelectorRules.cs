@@ -11,10 +11,12 @@ public class WaifuSelectorRules : MonoBehaviour
     [SerializeField] private List<CardOfWaifu> cards;
     [SerializeField] private Transform parentoToCard;
     [SerializeField] [Range(1, 4)] private int maxCardSelected;
+    [SerializeField] private Image cardArt;
     [SerializeField] private Image splashArt;
     [SerializeField] private TextMeshProUGUI sinopsis;
     [SerializeField] private TextMeshProUGUI waifuname;
     [SerializeField] private Button continuar;
+    [SerializeField] private Sprite bg, cardbg;
 
     [SerializeField] private CardOfWaifu[] cardSelected;
 
@@ -39,6 +41,10 @@ public class WaifuSelectorRules : MonoBehaviour
             SaveGame.Instance.SaveWaifusSelected(cardSelected);
             SceneManager.LoadScene(1);
         });
+        sinopsis.text = string.Empty;
+        waifuname.text = string.Empty;
+        splashArt.sprite = bg;
+        cardArt.sprite = cardbg;
     }
 
     private void OnCardDeselected(CardOfWaifu obj)
@@ -49,6 +55,9 @@ public class WaifuSelectorRules : MonoBehaviour
             if (card == obj)
             {
                 cardSelected[index] = null;
+
+                splashArt.sprite = bg;
+                cardArt.sprite = cardbg;
                 break;
             }
         }
@@ -62,9 +71,10 @@ public class WaifuSelectorRules : MonoBehaviour
             if (cardOfWaifu == null)
             {
                 cardSelected[index] = obj;
-                splashArt.sprite = obj.SplashArt;
+                cardArt.sprite = obj.CardArtArt;
                 sinopsis.text = obj.WaifuDescription;
                 waifuname.text = obj.WaifuName;
+                splashArt.sprite = obj.SplashArt;
                 return;
             }
         }
