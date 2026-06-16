@@ -46,26 +46,74 @@ Expression:
 
 ```text
 @comfyanonymous,
+masterpiece, ultra detailed anime splash art, premium gacha game character illustration, official mobile game artwork,
 
-masterpiece, best quality, ultra detailed anime illustration, premium gacha game artwork, professional character design, highly detailed clothing, expressive eyes, painterly rendering, beautiful lighting, clean composition, vibrant colors, fantasy anime café setting, mobile game character artwork, character-focused composition, visually distinct silhouette, strong shape language, memorable character design, polished illustration, consistent art style, high-end anime game quality
+Yuki, Breakfast Specialist Maid,
 
-Beautiful anime illustration of Yuki, the breakfast specialist maid, standing inside a cozy café during the early morning hours. Warm golden sunlight streams through large windows behind her, illuminating floating dust particles and creating a peaceful atmosphere that captures the beginning of a perfect day.
+petite young woman,
+long golden-blonde hair,
+thick side braid resting over her shoulder,
+bright amber eyes,
+gentle confident smile,
 
-Yuki is a young woman with a petite build, long golden-blonde hair styled into a large side braid draped over her shoulder, bright amber eyes, and a proud yet warm smile. Her appearance radiates kindness, reliability, and optimism.
+full body character,
+center composition,
+character focus,
+high visual readability,
+clean silhouette,
 
-She wears an elegant breakfast-themed maid uniform featuring cream-white fabrics, golden ribbons, delicate lace decorations, soft orange accents, and subtle sun-shaped ornaments embroidered throughout her outfit. A decorative sun-shaped brooch is attached near her collar, reinforcing her association with mornings and breakfast.
+wearing an elegant breakfast-themed maid uniform,
+cream-white dress,
+gold ribbons,
+soft orange accents,
+delicate lace,
+sun-shaped accessories,
+golden sun brooch at the collar,
+refined fantasy café aesthetic,
 
-In her hands she proudly presents a large breakfast tray filled with fluffy pancakes topped with fruit, toasted bread, croissants, steaming coffee, fresh orange juice, and other delicious breakfast dishes. The tray should be clearly visible and immediately communicate her role.
+holding a large breakfast serving tray with both hands,
+beautiful breakfast presentation,
+stack of fluffy pancakes with berries,
+golden croissants,
+buttered toast,
+steaming coffee,
+fresh orange juice,
+food clearly visible,
+tray prominently displayed,
 
-The composition focuses heavily on Yuki as the central figure. Her upper body occupies most of the image while the café environment frames her naturally. The perspective is slightly low-angle to give her presence and importance.
+inside a cozy fantasy anime café,
+large windows,
+warm sunrise light,
+golden morning atmosphere,
+sun rays entering through the windows,
+floating dust particles,
+soft steam from coffee,
 
-Golden morning light creates soft highlights across her hair, face, and clothing. Warm steam rises from the coffee while the atmosphere feels inviting, comforting, and wholesome.
+heroic welcoming pose,
+slightly low camera angle,
+hair illuminated by sunlight,
+subtle motion in hair and ribbons,
 
-The color palette uses gold, cream white, soft orange, and warm brown tones.
+cinematic lighting,
+warm golden highlights,
+soft shadows,
+high contrast focal lighting,
+vibrant colors,
 
-The most important visual elements are her large side braid, breakfast tray, sun motifs, and warm golden palette, ensuring she remains recognizable even at small sizes.
+premium gacha rendering,
+detailed fabric textures,
+polished materials,
+high-end mobile game illustration,
+character reveal artwork
 
-Highly detailed anime illustration, professional character splash art, mobile game character artwork, premium gacha game artwork.
+dynamic gacha splash art,
+character marketing illustration,
+game banner quality,
+clean anime rendering,
+high-end character design sheet quality,
+light bloom,
+rim lighting,
+illustration by top anime game artist
 ```
 
 ## Card Prompt
@@ -98,9 +146,6 @@ Highly detailed anime illustration, premium gacha card artwork.
 
 ```text
 @comfyanonymous,
-
-masterpiece, best quality, ultra detailed anime illustration, premium gacha game artwork, polished character design
-
 Cute super-deformed anime chibi version of Yuki, the breakfast specialist maid.
 
 Large head, small body, adorable proportions, full body view, front-facing pose.
@@ -109,13 +154,17 @@ Yuki has a huge golden-blonde side braid exaggerated for visual readability, lar
 
 She wears a simplified cream-white maid uniform with oversized golden ribbons and a visible sun-shaped brooch.
 
-She proudly carries an oversized breakfast tray containing giant pancakes, toast, croissants, and a steaming coffee cup.
+Empty hands, no objects, no tray, no food.
 
-The pose is energetic and welcoming, as if she is happily serving breakfast to customers.
+Hands visible and relaxed at her sides.
+
+Energetic welcoming pose, cheerful idle stance.
 
 The color palette uses gold, cream white, and soft orange.
 
-The side braid, breakfast tray, and sun motif are intentionally oversized so the character remains recognizable even at very small sprite sizes.
+The side braid and sun motif are intentionally oversized so the character remains recognizable even at very small sprite sizes.
+
+Character-only design, mascot-style presentation, no props.
 
 Clean silhouette, game-ready character design, highly readable shape language, premium mobile game mascot artwork.
 ```
