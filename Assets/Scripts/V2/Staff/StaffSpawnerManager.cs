@@ -8,7 +8,6 @@ public class StaffSpawnerManager : MonoBehaviour
     [SerializeField] private StaffSelected staffSelected;
     [SerializeField] private StaffFactory staffFactory;
     [SerializeField] private StaffClient staffPrefab;
-    [SerializeField] private int countOfStaff;
     [SerializeField] private StaffPositions staffPositions;
     [SerializeField] private GameObject spawnPosition;
     private readonly List<StaffClient> _staffClientsInstantiated = new();
@@ -17,7 +16,7 @@ public class StaffSpawnerManager : MonoBehaviour
     public void Configure(IGameRules gameRules)
     {
         _gameRules = gameRules;
-        for (int i = 0; i < countOfStaff; i++)
+        for (int i = 0; i < staffSelected.GetCountToSelected(); i++)
         {
             try
             {

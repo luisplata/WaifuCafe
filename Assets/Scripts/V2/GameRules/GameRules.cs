@@ -12,9 +12,6 @@ public class GameRules : MonoBehaviour, IGameRules
     [SerializeField] private StaffSpawnerManager staffManager;
     [SerializeField] private float timeToRun;
     [SerializeField] private Slider timeSlider;
-    [SerializeField] private TextMeshProUGUI pointsText;
-    [SerializeField] private TextMeshProUGUI comboText;
-    [SerializeField] private TextMeshProUGUI acumuladoText;
     [SerializeField] private ComboManager comboManager;
     [SerializeField] private float percentOfGame;
     public float Percent => percentOfGame;
@@ -52,9 +49,6 @@ public class GameRules : MonoBehaviour, IGameRules
         endGame.Pause().Add(timeToIntro).Add(() => { SceneManager.LoadScene(0); });
 
         intro.Play();
-        pointsText.text = $"Points: {0}";
-        comboText.text = $"Combo: x{0}";
-        acumuladoText.text = $"Acumulado: {0}";
         comboManager.Configure(this);
         comboManager.onComboFinished += OnComboFinished;
     }
@@ -62,14 +56,11 @@ public class GameRules : MonoBehaviour, IGameRules
     private void OnComboFinished(int obj)
     {
         totalPoints += obj;
-        pointsText.text = $"Points: {totalPoints}";
     }
 
     public void CustomerAttended(CustomerClientModel customer, FoodModel food)
     {
-        var comboCount = comboManager.RegisterServedFood(food, customer);
-        acumuladoText.text = $"Acumulado: {comboCount.Item3}";
-        comboText.text = $"Combo: x{comboCount.Item1} , {comboCount.Item2}";
+        comboManager.RegisterServed(food, customer);
     }
 
     public bool IsPatienceAltered()

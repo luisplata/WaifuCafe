@@ -88,11 +88,11 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
         _seat.Release();
 
 
-        if (
-            _staffModel.StaffEspeciality == StaffEspeciality.VipSpecialist ||
-            _staffModel.StaffEspeciality == StaffEspeciality.CasualSpecialist ||
-            _staffModel.StaffEspeciality == StaffEspeciality.RushSpecialist
-        )
+        if (_staffModel is { StaffEspeciality: StaffEspeciality.VipSpecialist
+                or StaffEspeciality.CasualSpecialist
+                or StaffEspeciality.RushSpecialist
+            }
+           )
         {
             customerData.pointsToAttend *= 1 + _staffModel.GetIncrementOfPoints();
         }

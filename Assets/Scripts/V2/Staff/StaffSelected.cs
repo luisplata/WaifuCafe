@@ -19,4 +19,9 @@ public class StaffSelected : MonoBehaviour
 
         return listOfStaffsSelected[index];
     }
+
+    public int GetCountToSelected()
+    {
+        return listOfStaffsSelected.Count;
+    }
 }

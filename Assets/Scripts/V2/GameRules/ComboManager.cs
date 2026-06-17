@@ -1,71 +1,83 @@
 ﻿using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using V2.Customer;
 using V2.Food;
 
-public class ComboManager : MonoBehaviour
+public class ComboManager : MonoBehaviour, IComboManager
 {
-    [SerializeField] private List<ComboResolution> comboResolutions;
+    [SerializeField] private CustomerComboManager customerComboManager;
+    [SerializeField] private FoodComboManager foodComboManager;
+    [SerializeField] private TextMeshProUGUI pointsText;
+    [SerializeField] private TextMeshProUGUI comboFood;
+    [SerializeField] private TextMeshProUGUI ComboCustomer;
+
     public Action<int> onComboFinished;
-    private FoodModelType currentComboType = FoodModelType.None;
-    private int currentComboCount;
-    private int currentReward;
     private IGameRules _gameRules;
+    private List<ICustomComboManager> comboManagers = new();
 
-    public (int, FoodModelType, int) RegisterServedFood(FoodModel food, CustomerClientModel customer)
+    public void RegisterServed(FoodModel food, CustomerClientModel customer)
     {
-        if (currentComboType == FoodModelType.None)
+        var comboInput = new ComboInput
         {
-            currentComboType = food.foodModelType;
-        }
+            food = food,
+            customer = customer
+        };
 
-        if (currentComboType == food.foodModelType)
+        foreach (var customComboManager in comboManagers)
         {
-            currentComboCount++;
+            UpdateUi(customComboManager.RegisterServed(comboInput));
         }
-        else
-        {
-            if (_gameRules.IsComboBreaker())
-            {
-                FinishCurrentCombo();
-
-                currentComboType = food.foodModelType;
-                currentComboCount = 1;
-            }
-        }
-
-        currentReward += Mathf.RoundToInt(food.pointsToAttend + customer.pointsToAttend);
-
-        Debug.Log($"Combo {food.foodModelType}: x{currentComboCount}");
-        return (currentComboCount, currentComboType, CalculateReward(currentComboCount));
     }
 
-    private void FinishCurrentCombo()
+    private void UpdateUi(ComboData comboData)
     {
-        int reward = CalculateReward(currentComboCount);
+        switch (comboData.comboType)
+        {
+            case ComboType.Vip or ComboType.Casual or ComboType.Rush:
+                ComboCustomer.text = $"Combo: x{comboData.comboSize} de {comboData.comboType}";
+                break;
+            case ComboType.Breakfast or ComboType.Drink or ComboType.Lunch:
+                comboFood.text = $"Combo: x{comboData.comboSize} de {comboData.comboType}";
+                break;
+            case ComboType.CustomerMatch:
+                ComboCustomer.text = $"Match! Combo: x{comboData.comboSize} de {comboData.comboType}";
+                break;
+            case ComboType.FoodMatch:
+                comboFood.text = $"Match! Combo: x{comboData.comboSize} de {comboData.comboType}";
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
 
-        currentReward = 0;
-
-        Debug.Log($"Combo terminado x{currentComboCount}. Reward: {reward}");
-
-        onComboFinished?.Invoke(reward);
-
-        // Agregar oro
-        // Agregar score
-        // Mostrar popup
+    private void OnMatch(ComboData comboData)
+    {
+        Debug.Log($"Combo Matched! {comboData.comboSize} de {comboData.comboType}");
     }
 
     private int CalculateReward(int comboSize)
     {
-        float multiplier = comboResolutions
-            .Find(r => r.count == comboSize)?.multiplier ?? 1f;
-
-        return Mathf.RoundToInt(currentReward * multiplier);
+        return foodComboManager.GetReward(comboSize) + customerComboManager.GetReward(comboSize);
     }
 
     public void Configure(IGameRules gameRules)
     {
         _gameRules = gameRules;
+        customerComboManager.Configure(this);
+        foodComboManager.Configure(this);
+
+        comboManagers.Add(customerComboManager);
+        comboManagers.Add(foodComboManager);
+
+        foreach (var comboManager in comboManagers)
+        {
+            comboManager.OnMatch += OnMatch;
+        }
+
+        pointsText.text = $"Points: {0}";
+        comboFood.text = $"Combo: x{0}";
+        ComboCustomer.text = $"Acumulado: {0}";
     }
 }
