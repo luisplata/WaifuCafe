@@ -159,6 +159,8 @@ MonoBehaviour:
   stateMachine: {fileID: 7350010057770849910}
   draggableSprite: {fileID: -8870345951138774766}
   staffRenderer: {fileID: 3168889525322893958}
+  goToKichen: {fileID: 8300000, guid: f1331fbb34d91a8409f57340e2775599, type: 3}
+  goToClient: {fileID: 8300000, guid: 7219964a45d3e5f4bb3b3604556162e3, type: 3}
 --- !u!114 &-8870345951138774766
 MonoBehaviour:
   m_ObjectHideFlags: 0

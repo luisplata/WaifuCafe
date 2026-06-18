@@ -46,7 +46,7 @@ public class GameRules : MonoBehaviour, IGameRules
         }).Add(() => { endGame.Play(); });
 
         endGame = this.tt();
-        endGame.Pause().Add(timeToIntro).Add(() => { SceneManager.LoadScene(0); });
+        endGame.Pause().Add(30).Add(() => { SceneManager.LoadScene(0); });
 
         intro.Play();
         comboManager.Configure(this);

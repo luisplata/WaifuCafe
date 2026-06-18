@@ -297,6 +297,10 @@ MonoBehaviour:
     customerIdentify: 2
     pointsToAttend: 3
   stateMachine: {fileID: 3758838135751519930}
+  onDropSound: {fileID: 8300000, guid: f6ab8fb912fe92d4eafc57078cb46b39, type: 3}
+  clienteLlega: {fileID: 8300000, guid: 69a95331d65254947a2b7fc2d88c39ec, type: 3}
+  clientePerdido: {fileID: 8300000, guid: a2cb13e572a6b39408899732b78c54de, type: 3}
+  clienteBienAtendido: {fileID: 8300000, guid: aca69fe6fc1f69b4382e05c62d8c422c, type: 3}
 --- !u!61 &8932739410114764712
 BoxCollider2D:
   m_ObjectHideFlags: 0

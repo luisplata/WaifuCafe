@@ -9,6 +9,17 @@ public class FoodComboManager : MonoBehaviour, ICustomComboManager
     private FoodModelType currentFood;
     private int countOfCombo;
 
+    public Action<ComboData> OnMatch { get; set; }
+
+    public void Configure(IComboManager comboManager)
+    {
+        _comboManager = comboManager;
+    }
+
+    public int GetReward(int comboSize)
+    {
+        return 0;
+    }
 
     public ComboData RegisterServed(ComboInput input)
     {
@@ -32,21 +43,18 @@ public class FoodComboManager : MonoBehaviour, ICustomComboManager
         currentComboData = new ComboData
         {
             comboSize = countOfCombo,
-            comboType = GetComboType(currentFood)
+            comboType = GetComboType(currentFood),
+            matched = false
         };
 
         if (countOfCombo >= 3)
         {
+            currentComboData.matched = true;
+
             OnMatch?.Invoke(currentComboData);
-            // Match!
+
             countOfCombo = 0;
             currentFood = FoodModelType.None;
-
-            currentComboData = new ComboData
-            {
-                comboSize = countOfCombo,
-                comboType = GetComboType(currentFood)
-            };
         }
 
         return currentComboData;
@@ -57,26 +65,14 @@ public class FoodComboManager : MonoBehaviour, ICustomComboManager
         return currentComboData;
     }
 
-    public Action<ComboData> OnMatch { get; set; }
-
-    public ComboType GetComboType(FoodModelType customerIdentify)
+    private ComboType GetComboType(FoodModelType foodType)
     {
-        return customerIdentify switch
+        return foodType switch
         {
             FoodModelType.Almuerzo => ComboType.Lunch,
             FoodModelType.Bebida => ComboType.Drink,
             FoodModelType.Desayuno => ComboType.Breakfast,
             _ => ComboType.None
         };
-    }
-
-    public void Configure(IComboManager comboManager)
-    {
-        _comboManager = comboManager;
-    }
-
-    public int GetReward(int comboSize)
-    {
-        return 0;
     }
 }

@@ -11,4 +11,9 @@ public class FoodFactory : MonoBehaviour
     {
         return foods[Random.Range(0, foods.Count)].Food;
     }
+
+    public FoodModel GetFoodByType(FoodModelType currentStepFoodModelType)
+    {
+        return foods.Find(food => food.Food.foodModelType == currentStepFoodModelType).Food;
+    }
 }

@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using V2.Audio;
 
 public class WaifuSelectorRules : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class WaifuSelectorRules : MonoBehaviour
     [SerializeField] private TextMeshProUGUI waifuname;
     [SerializeField] private Button continuar;
     [SerializeField] private Sprite bg, cardbg;
+    [SerializeField] private AudioClip onWaifuSelected, OnWaifuUnselected, startGame;
 
     [SerializeField] private CardOfWaifu[] cardSelected;
 
@@ -38,6 +40,7 @@ public class WaifuSelectorRules : MonoBehaviour
 
         continuar.onClick.AddListener(() =>
         {
+            AudioService.Instance.StartSfx(startGame);
             SaveGame.Instance.SaveWaifusSelected(cardSelected);
             SceneManager.LoadScene(1);
         });
@@ -58,6 +61,7 @@ public class WaifuSelectorRules : MonoBehaviour
 
                 splashArt.sprite = bg;
                 cardArt.sprite = cardbg;
+                AudioService.Instance.StartSfx(OnWaifuUnselected);
                 break;
             }
         }
@@ -75,6 +79,7 @@ public class WaifuSelectorRules : MonoBehaviour
                 sinopsis.text = obj.WaifuDescription;
                 waifuname.text = obj.WaifuName;
                 splashArt.sprite = obj.SplashArt;
+                AudioService.Instance.StartSfx(onWaifuSelected);
                 return;
             }
         }

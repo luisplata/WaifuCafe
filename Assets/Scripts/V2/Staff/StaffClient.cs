@@ -2,6 +2,7 @@ using DragAndDrop;
 using Staff;
 using StateMachines;
 using UnityEngine;
+using V2.Audio;
 using V2.Food;
 
 namespace V2.Staff
@@ -11,6 +12,7 @@ namespace V2.Staff
         [SerializeField] private StaffStateMachine stateMachine;
         [SerializeField] private DraggableSprite draggableSprite;
         [SerializeField] private SpriteRenderer staffRenderer;
+        [SerializeField] private AudioClip goToKichen, goToClient;
         private StaffModel _staff;
         private GameObject _spawnPosition;
         private ICustomerClient _customerClient;
@@ -36,7 +38,7 @@ namespace V2.Staff
 
         private void OnFinishDrag(IDropReceiver obj)
         {
-            if(obj != null)
+            if (obj != null)
             {
                 Debug.Log($"StaffClient: recibí drop desde {gameObject.name} sobre {obj.GetGameObject().name}");
             }
@@ -69,11 +71,13 @@ namespace V2.Staff
 
         public void GoToKichen(float tiempoDeMoverseEntreCocinaCliente)
         {
+            AudioService.Instance.StartSfx(goToKichen);
             PrimeTween.Tween.Position(transform, _spawnPosition.transform.position, tiempoDeMoverseEntreCocinaCliente);
         }
 
         public void GoToClient(float tiempoDeMoverseEntreCocinaCliente)
         {
+            AudioService.Instance.StartSfx(goToClient);
             PrimeTween.Tween.Position(transform, _customerClient.GetGameObject().transform.position,
                 tiempoDeMoverseEntreCocinaCliente);
         }

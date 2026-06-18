@@ -16,6 +16,7 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
     private float localTime;
     private IGameRules _gameRules;
     private bool isConfigured;
+    private StepsOfRun currentStep;
 
 
     private void FixedUpdate()
@@ -28,6 +29,7 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
             if (_gameRules.Percent >= stepsOfRun.percente)
             {
                 timeToSpawn = stepsOfRun.spawnPerSecond;
+                currentStep = stepsOfRun;
                 stepsOfRuns.Remove(stepsOfRun);
                 break;
             }
@@ -40,20 +42,38 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
 
     private void SpawnCustomers()
     {
-        for (int i = 0; i < countOfCustomerByStep; i++)
+        for (int i = 0; i < currentStep.countOfCustomer; i++)
         {
             if (!customerPositions.GetNextSeat(out var seat))
             {
                 break;
             }
 
+            var customerModel =
+                currentStep.isRandomCustomer ||
+                !ShouldSpawnSpecific(currentStep.specificCustomerProbability)
+                    ? customerFactory.GetCustomerByRandom()
+                    : customerFactory.GetCustomerById(currentStep.customerIdentify);
+
             var customer = Instantiate(
-                customerFactory.GetCustomerByRandom(),
+                customerModel,
                 customerSpawnPosition.transform.position,
                 Quaternion.identity
             );
-            customer.Configure(seat, customerSpawnPosition, foodFactory.GetFoodByRandom(), GetModificadorDePaciencia(),
-                this);
+
+            var food =
+                currentStep.isRandomFood ||
+                !ShouldSpawnSpecific(currentStep.specificFoodProbability)
+                    ? foodFactory.GetFoodByRandom()
+                    : foodFactory.GetFoodByType(currentStep.foodModelType);
+
+            customer.Configure(
+                seat,
+                customerSpawnPosition,
+                food,
+                GetModificadorDePaciencia(),
+                this
+            );
             customer.OnCustomerAttended += OnCustomerAttended;
             customer.OnLeftGo += () => { customer.OnCustomerAttended -= OnCustomerAttended; };
         }
@@ -89,5 +109,10 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
     public IGameRules GetGameRules()
     {
         return _gameRules;
+    }
+
+    private bool ShouldSpawnSpecific(float probability)
+    {
+        return Random.value <= probability;
     }
 }

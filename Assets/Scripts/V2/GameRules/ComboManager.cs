@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using PrimeTween;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using V2.Audio;
 using V2.Customer;
 using V2.Food;
 
@@ -12,10 +15,23 @@ public class ComboManager : MonoBehaviour, IComboManager
     [SerializeField] private TextMeshProUGUI pointsText;
     [SerializeField] private TextMeshProUGUI comboFood;
     [SerializeField] private TextMeshProUGUI ComboCustomer;
+    [SerializeField] private AudioClip[] comboClips;
+    [SerializeField] private AudioClip superCombo;
+    [SerializeField] private Sprite start;
+
+    [SerializeField] private Image[] startsFood;
+    [SerializeField] private Image[] startsCustomers;
+
+    [SerializeField] private VfxMatch vfxMatch;
+
+    private readonly Dictionary<Image, Tween> _pulseTweens = new();
 
     public Action<int> onComboFinished;
     private IGameRules _gameRules;
     private List<ICustomComboManager> comboManagers = new();
+
+    private bool _foodMatch, _customerMatch;
+    private ComboData _comboData;
 
     public void RegisterServed(FoodModel food, CustomerClientModel customer)
     {
@@ -24,11 +40,76 @@ public class ComboManager : MonoBehaviour, IComboManager
             food = food,
             customer = customer
         };
+        _foodMatch = false;
+        _customerMatch = false;
 
         foreach (var customComboManager in comboManagers)
         {
-            UpdateUi(customComboManager.RegisterServed(comboInput));
+            var comboData = customComboManager.RegisterServed(comboInput);
+
+            UpdateUi(comboData);
+
+            if (comboData.matched)
+            {
+                if (comboData.comboType is ComboType.Vip or ComboType.Casual or ComboType.Rush)
+                    _customerMatch = true;
+
+                if (comboData.comboType is ComboType.Breakfast or ComboType.Lunch or ComboType.Drink)
+                    _foodMatch = true;
+            }
+
+            _comboData = comboData;
         }
+
+        var playOtherSounds = true;
+
+        //Validamos si hay doble match
+        if (_foodMatch && _customerMatch)
+        {
+            playOtherSounds = false;
+            AudioService.Instance.StartSfx(superCombo);
+            vfxMatch.PlayDoubleMatchVfx();
+        }
+
+        if ((_foodMatch || _customerMatch) && playOtherSounds)
+        {
+            AudioService.Instance.StartSfx(comboClips[2]);
+            vfxMatch.PlayMatchVfx(_comboData.comboType);
+        }
+        else
+        {
+            AudioService.Instance.StartSfx(
+                comboClips[_comboData.comboSize - 1]);
+        }
+
+        _foodMatch = false;
+        _customerMatch = false;
+    }
+
+    private void PulseStar(Image star)
+    {
+        if (_pulseTweens.ContainsKey(star))
+            return;
+
+        _pulseTweens[star] = Tween.Scale(
+            star.rectTransform,
+            Vector3.one * 1.15f,
+            0.5f,
+            cycles: -1,
+            cycleMode: CycleMode.Yoyo
+        );
+    }
+
+    private void StopPulse(Image star)
+    {
+        if (!_pulseTweens.TryGetValue(star, out var tween))
+            return;
+
+        tween.Stop();
+
+        star.rectTransform.localScale = Vector3.one;
+
+        _pulseTweens.Remove(star);
     }
 
     private void UpdateUi(ComboData comboData)
@@ -36,16 +117,46 @@ public class ComboManager : MonoBehaviour, IComboManager
         switch (comboData.comboType)
         {
             case ComboType.Vip or ComboType.Casual or ComboType.Rush:
-                ComboCustomer.text = $"Combo: x{comboData.comboSize} de {comboData.comboType}";
+
+                foreach (var image in startsCustomers)
+                {
+                    image.sprite = null;
+                    StopPulse(image);
+                }
+
+                for (int i = 0; i < comboData.comboSize; i++)
+                {
+                    startsCustomers[i].sprite = start;
+                }
+
+                ComboCustomer.text = $"{comboData.comboType}";
+
+                if (comboData.comboSize == 2)
+                {
+                    PulseStar(startsCustomers[2]);
+                }
+
                 break;
             case ComboType.Breakfast or ComboType.Drink or ComboType.Lunch:
-                comboFood.text = $"Combo: x{comboData.comboSize} de {comboData.comboType}";
-                break;
-            case ComboType.CustomerMatch:
-                ComboCustomer.text = $"Match! Combo: x{comboData.comboSize} de {comboData.comboType}";
-                break;
-            case ComboType.FoodMatch:
-                comboFood.text = $"Match! Combo: x{comboData.comboSize} de {comboData.comboType}";
+
+                foreach (var image in startsFood)
+                {
+                    image.sprite = null;
+                    StopPulse(image);
+                }
+
+                for (int i = 0; i < comboData.comboSize; i++)
+                {
+                    startsFood[i].sprite = start;
+                }
+
+                comboFood.text = $"{comboData.comboType}";
+
+                if (comboData.comboSize == 2)
+                {
+                    PulseStar(startsFood[2]);
+                }
+
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -76,7 +187,7 @@ public class ComboManager : MonoBehaviour, IComboManager
             comboManager.OnMatch += OnMatch;
         }
 
-        pointsText.text = $"Points: {0}";
+        // pointsText.text = $"Points: {0}";
         comboFood.text = $"Combo: x{0}";
         ComboCustomer.text = $"Acumulado: {0}";
     }

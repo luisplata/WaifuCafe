@@ -6,7 +6,5 @@
     None,
     Lunch,
     Drink,
-    Breakfast,
-    CustomerMatch,
-    FoodMatch
+    Breakfast
 }

@@ -3,6 +3,7 @@ using Customers;
 using DragAndDrop;
 using PrimeTween;
 using UnityEngine;
+using V2.Audio;
 using V2.Customer;
 using V2.Food;
 using V2.Staff;
@@ -15,6 +16,7 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
     [SerializeField] private CustomerFoodClient foodClient;
     [SerializeField] private CustomerClientModel customerData;
     [SerializeField] private CustomerStateMachine stateMachine;
+    [SerializeField] private AudioClip onDropSound, clienteLlega, clientePerdido, clienteBienAtendido;
     private CustomerSeat _seat;
     private GameObject _pointToSpawn;
     private bool isAttended = false;
@@ -37,6 +39,7 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
             stateMachine.SetState(CustomerPhase.ListoParaPedir);
             stateMachine.ListoParaPedir();
             foodClient.Show();
+            AudioService.Instance.StartSfx(clienteLlega);
         });
         stateMachine.Configure(this, customerData, _foodByRandom);
         _pointToSpawn = pointToSpawn;
@@ -57,6 +60,10 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
                 .PedirPedido(customerData.tiempoDeEntregaDePedido, this, _foodByRandom);
             foodClient.Hide();
             _staffModel = payload.origin.GetStaffModel();
+
+            OnCustomerAttended?.Invoke(customerData, _foodByRandom);
+
+            // AudioService.Instance.StartSfx(onDropSound);
         }
     }
 
@@ -86,9 +93,11 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
     {
         foodClient.Hide();
         _seat.Release();
+        AudioService.Instance.StartSfx(!isAttended ? clientePerdido : clienteBienAtendido);
 
-
-        if (_staffModel is { StaffEspeciality: StaffEspeciality.VipSpecialist
+        if (_staffModel is
+            {
+                StaffEspeciality: StaffEspeciality.VipSpecialist
                 or StaffEspeciality.CasualSpecialist
                 or StaffEspeciality.RushSpecialist
             }
@@ -101,11 +110,6 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
         {
             customerData.pointsToAttend *= 1 + _customerSpawnerCoroutine.GetGameRules().GetAlteredEconomy();
             _foodByRandom.pointsToAttend *= 1 + _customerSpawnerCoroutine.GetGameRules().GetAlteredEconomy();
-        }
-
-        if (isAttended)
-        {
-            OnCustomerAttended?.Invoke(customerData, _foodByRandom);
         }
 
         Tween.Position(transform, _pointToSpawn.transform.position, customerData.moveToSeatTime).OnComplete(() =>

@@ -8,6 +8,8 @@ public class CustomerComboManager : MonoBehaviour, ICustomComboManager
     private CustomerIdentify currentCustomerIdentify;
     private int countOfCombo;
 
+    public Action<ComboData> OnMatch { get; set; }
+
     public void Configure(IComboManager comboManager)
     {
         _comboManager = comboManager;
@@ -40,21 +42,18 @@ public class CustomerComboManager : MonoBehaviour, ICustomComboManager
         currentComboData = new ComboData
         {
             comboSize = countOfCombo,
-            comboType = GetComboType(currentCustomerIdentify)
+            comboType = GetComboType(currentCustomerIdentify),
+            matched = false
         };
 
         if (countOfCombo >= 3)
         {
+            currentComboData.matched = true;
+
             OnMatch?.Invoke(currentComboData);
-            // Match!
+
             countOfCombo = 0;
             currentCustomerIdentify = CustomerIdentify.None;
-
-            currentComboData = new ComboData
-            {
-                comboSize = countOfCombo,
-                comboType = GetComboType(currentCustomerIdentify)
-            };
         }
 
         return currentComboData;
@@ -67,7 +66,7 @@ public class CustomerComboManager : MonoBehaviour, ICustomComboManager
             CustomerIdentify.Casual => ComboType.Casual,
             CustomerIdentify.Apurado => ComboType.Rush,
             CustomerIdentify.VIP => ComboType.Vip,
-            _ => ComboType.CustomerMatch
+            _ => ComboType.None
         };
     }
 
@@ -75,6 +74,4 @@ public class CustomerComboManager : MonoBehaviour, ICustomComboManager
     {
         return currentComboData;
     }
-
-    public Action<ComboData> OnMatch { get; set; }
 }
