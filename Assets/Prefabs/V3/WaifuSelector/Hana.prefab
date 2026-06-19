@@ -205,10 +205,10 @@ MonoBehaviour:
   cardSprite: {fileID: 4825321804654087343, guid: be732d1b132eb784b9faa9595952abc0, type: 3}
   cardArt: {fileID: 2661547004076748139, guid: 1ff123e3ae9a0654cb7e8076b386778c, type: 3}
   splashArt: {fileID: -4012836159186315625, guid: cfb2233a291387147b11498da72b852f, type: 3}
-  waifuName: Hana - Rush Specialist
-  waifuDescription: "Cuando llega la hora punta, Hana parece multiplicarse. Siempre
-    aparece donde m\xE1s se la necesita y mantiene el caf\xE9 funcionando incluso
-    en los d\xEDas m\xE1s ca\xF3ticos."
+  waifuName: Hana - Especista en apresurados
+  waifuDescription: "Hiperactiva e impaciente. Su ritmo acelerado atrae a clientes
+    que siempre tienen prisa. +30% aparici\xF3n de clientes Rush. Ideal para completar
+    desaf\xEDos relacionados con clientes Rush y generar patrones espec\xEDficos."
   staffEspeciality: 5
 --- !u!1 &7234534810990549535
 GameObject:

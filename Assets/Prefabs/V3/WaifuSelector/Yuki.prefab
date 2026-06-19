@@ -205,10 +205,11 @@ MonoBehaviour:
   cardSprite: {fileID: -4138000097175163489, guid: c19d908c34b727c4b8bb00d8808cc5d4, type: 3}
   cardArt: {fileID: 7472493827890220536, guid: 0908752f6d050b548899f305f7ea9e24, type: 3}
   splashArt: {fileID: -3150093726244749019, guid: 5a85bc2a434c5da469a735e2af90f1ef, type: 3}
-  waifuName: "Yuki \u2014 Breakfast Specialist"
-  waifuDescription: "Yuki es la primera en llegar al caf\xE9 cada ma\xF1ana. Conoce
-    los pedidos habituales de los clientes madrugadores y considera que un buen desayuno
-    puede mejorar cualquier d\xEDa."
+  waifuName: Yuki - Especialista en Desayunos
+  waifuDescription: "La maid m\xE1s madrugadora del caf\xE9. Siempre sabe qu\xE9
+    desayunos ser\xE1n populares antes de que lleguen los clientes. +30% aparici\xF3n
+    de pedidos Breakfast. Ideal para crear cadenas de Breakfast y completar objetivos
+    relacionados con desayunos."
   staffEspeciality: 0
 --- !u!1 &7234534810990549535
 GameObject:

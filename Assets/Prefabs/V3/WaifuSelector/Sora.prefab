@@ -205,9 +205,10 @@ MonoBehaviour:
   cardSprite: {fileID: -1437637737313607033, guid: 3b4325c77750e1b40ab0f478b6ba1cc8, type: 3}
   cardArt: {fileID: -7368591059534055548, guid: 13e886f4318483746b2ab39bf64996fc, type: 3}
   splashArt: {fileID: -8242887993134216970, guid: 2f6eeb8806609ee4d88588acb71c8560, type: 3}
-  waifuName: Sora - Combo Specialist
-  waifuDescription: "Sora ve el servicio como una coreograf\xEDa perfecta. Le encanta
-    encadenar pedidos similares para mantener un ritmo impecable."
+  waifuName: Sora - Especialista en Combos
+  waifuDescription: "Met\xF3dica y observadora. Tiene un talento especial para detectar
+    patrones donde nadie m\xE1s los ve. +50% recompensa de Match y Double Match.
+    Ideal para maximizar la puntuaci\xF3n y las recompensas de los combos."
   staffEspeciality: 8
 --- !u!1 &7234534810990549535
 GameObject:

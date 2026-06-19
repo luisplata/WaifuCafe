@@ -205,9 +205,10 @@ MonoBehaviour:
   cardSprite: {fileID: -8657028285809663063, guid: c456ffc2ce665f247b0b6fecfc962dbf, type: 3}
   cardArt: {fileID: -8609752399534411149, guid: 5b899b8aa795f4a409bc8b0b6b0ea153, type: 3}
   splashArt: {fileID: 4357704733175849912, guid: ffefc4e54eae6cc498e5acd883851a6c, type: 3}
-  waifuName: "Emi \u2014 Casual Specialist"
-  waifuDescription: "Emi trata a cada cliente como si fuera un fan. Su energ\xEDa
-    convierte incluso una visita com\xFAn en una experiencia memorable."
+  waifuName: Emi - Especialista en Casuales
+  waifuDescription: "Amigable y cercana. Hace que cualquier cliente se sienta bienvenido
+    desde el primer momento. +30% aparici\xF3n de clientes Casual. Ideal para partidas
+    estables y objetivos relacionados con clientes Casual."
   staffEspeciality: 4
 --- !u!1 &7234534810990549535
 GameObject:

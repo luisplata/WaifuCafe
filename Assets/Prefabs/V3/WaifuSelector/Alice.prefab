@@ -205,10 +205,10 @@ MonoBehaviour:
   cardSprite: {fileID: -6916701679428805915, guid: 573bad446b34ede45afc0293a89ba234, type: 3}
   cardArt: {fileID: 3426225975782351822, guid: 9ebb8468cf2433f40b5d0cea70842fa3, type: 3}
   splashArt: {fileID: 5057083236575539431, guid: 2e8f43b9159d86346ab2f87ce7913d38, type: 3}
-  waifuName: "Alice \u2014 VIP Specialist"
-  waifuDescription: "Alice fue educada para tratar con nobles y celebridades. Cuando
-    un cliente VIP entra al caf\xE9, ella aparece inmediatamente para ofrecer una
-    experiencia exclusiva."
+  waifuName: Alice - Especialista en VIP
+  waifuDescription: "Elegante y refinada. Su presencia atrae a los clientes m\xE1s
+    exclusivos del caf\xE9. +30% aparici\xF3n de clientes VIP. Ideal para crear cadenas
+    VIP y conseguir recompensas de alto valor."
   staffEspeciality: 3
 --- !u!1 &7234534810990549535
 GameObject:

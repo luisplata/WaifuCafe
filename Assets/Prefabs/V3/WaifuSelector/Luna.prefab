@@ -205,10 +205,10 @@ MonoBehaviour:
   cardSprite: {fileID: -5916251948307425712, guid: 0af1d405627fe6345942fde7b0aefc13, type: 3}
   cardArt: {fileID: -5406290836339037792, guid: 3b3c7a5bb11cf0b41b769ee5db0e4993, type: 3}
   splashArt: {fileID: -3351679096527806955, guid: 574c1dbbdaad1f94ea62a4905548850b, type: 3}
-  waifuName: "Luna \u2014 Lunch Specialist"
-  waifuDescription: "Luna domina las horas m\xE1s ocupadas del restaurante. Nadie
-    entiende c\xF3mo puede coordinar tantos pedidos simult\xE1neamente sin perder
-    la calma."
+  waifuName: Luna Especialista en Almuerzos
+  waifuDescription: "Responsable y trabajadora. Mantiene la cocina funcionando incluso
+    durante las horas m\xE1s ocupadas. +30% aparici\xF3n de pedidos Lunch. Ideal
+    para estrategias centradas en Lunch y para construir matches consistentes."
   staffEspeciality: 1
 --- !u!1 &7234534810990549535
 GameObject:

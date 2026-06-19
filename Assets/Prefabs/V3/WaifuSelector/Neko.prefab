@@ -205,10 +205,10 @@ MonoBehaviour:
   cardSprite: {fileID: 403749973857221504, guid: 5fbb99f5bdf87ec4bbbe24f86909fe6d, type: 3}
   cardArt: {fileID: 2467319145190556368, guid: 85913179dd9deca408e57b847d9e7776, type: 3}
   splashArt: {fileID: -6098531640184580459, guid: 34272ea4c4b59134594703fd2344497b, type: 3}
-  waifuName: "Neko \u2014 Drink Specialist"
-  waifuDescription: "Neko pasa m\xE1s tiempo en la barra de bebidas que en cualquier
-    otro lugar. Su memoria para recetas es sorprendente, aunque a veces a\xF1ade
-    decoraciones innecesarias solo por diversi\xF3n."
+  waifuName: Neko - Especialista en Bebidas
+  waifuDescription: "Traviesa y llena de energ\xEDa. Sus bebidas son tan populares
+    que los clientes no dejan de pedirlas. +30% aparici\xF3n de pedidos Drink. Ideal
+    para generar matches r\xE1pidos y frecuentes."
   staffEspeciality: 2
 --- !u!1 &7234534810990549535
 GameObject:

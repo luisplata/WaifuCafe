@@ -205,10 +205,11 @@ MonoBehaviour:
   cardSprite: {fileID: -2982363571009223471, guid: 687c7db53f2d88d44ad479e176fba1cd, type: 3}
   cardArt: {fileID: -1094110052816025306, guid: 17f888a6e63687b48b65ca24ed6de475, type: 3}
   splashArt: {fileID: 6731388071024281006, guid: 9d1e2ab664bf6d34486bfb3c80addaf0, type: 3}
-  waifuName: Rika - Speed Specialist
-  waifuDescription: "Rika convierte cada pedido en una competici\xF3n. Est\xE1 convencida
-    de que siempre puede moverse m\xE1s r\xE1pido y busca constantemente superar
-    sus propios r\xE9cords."
+  waifuName: Rika - Super Rapida
+  waifuDescription: "Competitiva y obsesionada con superar r\xE9cords. Siempre encuentra
+    la forma de encadenar un combo m\xE1s. Cada 5 combos, el siguiente requiere una
+    coincidencia menos para completarse. Ideal para jugadores que buscan generar
+    la mayor cantidad posible de combos."
   staffEspeciality: 6
 --- !u!1 &7234534810990549535
 GameObject:

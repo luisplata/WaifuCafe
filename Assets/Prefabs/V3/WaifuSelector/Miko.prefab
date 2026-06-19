@@ -205,9 +205,10 @@ MonoBehaviour:
   cardSprite: {fileID: 416806467177320415, guid: f2458a1a5f5e07a4fbadbcb78c1b88ba, type: 3}
   cardArt: {fileID: -2255871778245631490, guid: 855787f630c674c418d10cf30602873e, type: 3}
   splashArt: {fileID: -7972551964711971843, guid: 873414d06d5900947a347673293b34d9, type: 3}
-  waifuName: Miko - Patience Specialist
-  waifuDescription: "Miko tiene una presencia tan tranquila que incluso los clientes
-    m\xE1s impacientes terminan relaj\xE1ndose al hablar con ella."
+  waifuName: Miko - Llamado a la Calma
+  waifuDescription: "Tranquila y maternal. Incluso cuando el caf\xE9 se vuelve ca\xF3tico,
+    ayuda a mantener el orden. Una vez por cadena, un error no rompe el progreso
+    actual del match. Ideal para estrategias que dependen de construir patrones largos."
   staffEspeciality: 7
 --- !u!1 &7234534810990549535
 GameObject:

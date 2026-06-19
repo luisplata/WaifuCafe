@@ -205,10 +205,10 @@ MonoBehaviour:
   cardSprite: {fileID: 1585623328901404273, guid: f77462a55abeacf41b882a9bee817009, type: 3}
   cardArt: {fileID: 5284158304818018841, guid: 93850b19780fc4d4ab47d040f47a5e1e, type: 3}
   splashArt: {fileID: 4577701271450381375, guid: 045561c586e37f54fab1e1e73291bf90, type: 3}
-  waifuName: Airi - Economy Specialist
-  waifuDescription: "Airi siempre est\xE1 pensando en c\xF3mo mejorar las ganancias
-    del caf\xE9. Controla gastos, optimiza recursos y encuentra oportunidades donde
-    nadie m\xE1s las ve."
+  waifuName: Airi - Especialista en Economia
+  waifuDescription: "Inteligente y calculadora. Siempre encuentra la forma m\xE1s
+    rentable de administrar el caf\xE9. +15% Gold al finalizar la run. Ideal para
+    progresar m\xE1s r\xE1pido y desbloquear contenido antes."
   staffEspeciality: 9
 --- !u!1 &7234534810990549535
 GameObject:
