@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using V2.Customer;
 using V2.Food;
+using V2.Helpers;
 
 public class GameRules : MonoBehaviour, IGameRules
 {
@@ -14,6 +15,7 @@ public class GameRules : MonoBehaviour, IGameRules
     [SerializeField] private Slider timeSlider;
     [SerializeField] private ComboManager comboManager;
     [SerializeField] private float percentOfGame;
+    [SerializeField] private IntroMediator endGameCinematic;
     public float Percent => percentOfGame;
 
     private float localTime;
@@ -46,7 +48,22 @@ public class GameRules : MonoBehaviour, IGameRules
         }).Add(() => { endGame.Play(); });
 
         endGame = this.tt();
-        endGame.Pause().Add(30).Add(() => { SceneManager.LoadScene(0); });
+        endGame.Pause().Add(() => { customerManager.Stop(); }).Add(20).Add(() =>
+        {
+            //Aqui es donde validamos si cumple o no con el objetivo del dia
+            if (SaveManager.Instance.IsShowTutorial())
+            {
+                TutorialProgress.NextDay();
+                endGameCinematic.PlayIntro();
+                endGameCinematic.OnFinish += () =>
+                {
+                    SceneManager.LoadScene(0);
+                };
+                return;
+            }
+
+            SceneManager.LoadScene(0);
+        });
 
         intro.Play();
         comboManager.Configure(this);

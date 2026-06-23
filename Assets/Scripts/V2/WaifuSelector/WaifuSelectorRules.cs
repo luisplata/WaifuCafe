@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using V2.Audio;
+using V2.Helpers;
 
 public class WaifuSelectorRules : MonoBehaviour
 {
@@ -24,6 +25,8 @@ public class WaifuSelectorRules : MonoBehaviour
 
     private List<CardOfWaifu> _cardsInstantiated = new();
 
+    private string nextScene;
+
     private void Awake()
     {
         cardSelected = new CardOfWaifu[maxCardSelected];
@@ -31,6 +34,11 @@ public class WaifuSelectorRules : MonoBehaviour
 
     private void Start()
     {
+        if (SaveManager.Instance.IsShowTutorial())
+        {
+            nextScene = $"TutorialDay_{TutorialProgress.CurrentDay}";
+        }
+
         foreach (var cardInstantiate in cards.Select(card => Instantiate(card, parentoToCard)))
         {
             cardInstantiate.OnCardSelected += OnCardSelected;
@@ -42,7 +50,7 @@ public class WaifuSelectorRules : MonoBehaviour
         {
             AudioService.Instance.StartSfx(startGame);
             SaveGame.Instance.SaveWaifusSelected(cardSelected);
-            SceneManager.LoadScene(1);
+            SceneManager.LoadScene(nextScene);
         });
         sinopsis.text = string.Empty;
         waifuname.text = string.Empty;

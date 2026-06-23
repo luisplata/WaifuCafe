@@ -115,4 +115,9 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
     {
         return Random.value <= probability;
     }
+
+    public void Stop()
+    {
+        isConfigured = false;
+    }
 }

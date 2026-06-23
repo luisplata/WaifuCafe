@@ -49,16 +49,20 @@ public class ComboManager : MonoBehaviour, IComboManager
 
             UpdateUi(comboData);
 
+            _comboData = comboData;
+
             if (comboData.matched)
             {
                 if (comboData.comboType is ComboType.Vip or ComboType.Casual or ComboType.Rush)
+                {
                     _customerMatch = true;
+                }
 
                 if (comboData.comboType is ComboType.Breakfast or ComboType.Lunch or ComboType.Drink)
+                {
                     _foodMatch = true;
+                }
             }
-
-            _comboData = comboData;
         }
 
         var playOtherSounds = true;
@@ -73,6 +77,15 @@ public class ComboManager : MonoBehaviour, IComboManager
 
         if ((_foodMatch || _customerMatch) && playOtherSounds)
         {
+            if (_foodMatch)
+            {
+                _comboData = foodComboManager.GetComboData();
+            }
+            else if (_customerMatch)
+            {
+                _comboData = customerComboManager.GetComboData();
+            }
+
             AudioService.Instance.StartSfx(comboClips[2]);
             vfxMatch.PlayMatchVfx(_comboData.comboType);
         }
