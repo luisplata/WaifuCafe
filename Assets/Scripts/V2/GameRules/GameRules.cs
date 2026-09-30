@@ -72,7 +72,7 @@ public class GameRules : MonoBehaviour, IGameRules
                 return;
             }
 
-            SceneManager.LoadScene(0);
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         });
 
         intro.Play();

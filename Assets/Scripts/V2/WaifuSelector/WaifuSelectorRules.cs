@@ -38,6 +38,7 @@ public class WaifuSelectorRules : MonoBehaviour
         {
             nextScene = $"TutorialDay_{TutorialProgress.CurrentDay}";
         }
+        nextScene ??= "TutorialDay_3";
 
         foreach (var cardInstantiate in cards.Select(card => Instantiate(card, parentoToCard)))
         {

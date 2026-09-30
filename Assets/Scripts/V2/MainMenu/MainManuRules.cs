@@ -43,15 +43,7 @@ public class MainManuRules : MonoBehaviour
                 else
                 {
                     //Ya vamos por aqui cuando ya no es tutorial.
-                    if (TutorialProgress.CurrentDay >= 3)
-                    {
-                        tutorialDia4.PlayIntro();
-                        tutorialDia4.OnFinish += () =>
-                        {
-                            TutorialProgress.NextDay();
-                            _mainMenuStates.Play();
-                        };
-                    }
+                    SceneManager.LoadScene("WaifuSelector");
                 }
             });
         _mainMenuStates.Play();
