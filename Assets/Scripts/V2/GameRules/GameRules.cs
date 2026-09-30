@@ -16,6 +16,8 @@ public class GameRules : MonoBehaviour, IGameRules
     [SerializeField] private ComboManager comboManager;
     [SerializeField] private float percentOfGame;
     [SerializeField] private IntroMediator endGameCinematic;
+    [SerializeField] private TextMeshProUGUI scoreText;
+    [SerializeField] private float timeToEndGame = 4f;
     public float Percent => percentOfGame;
 
     private float localTime;
@@ -48,7 +50,15 @@ public class GameRules : MonoBehaviour, IGameRules
         }).Add(() => { endGame.Play(); });
 
         endGame = this.tt();
-        endGame.Pause().Add(() => { customerManager.Stop(); }).Add(20).Add(() =>
+        endGame.Pause().Add(() =>
+        {
+            customerManager.Stop();
+
+            int best = Mathf.Max(totalPoints, PlayerPrefs.GetInt("BestScore", 0));
+            PlayerPrefs.SetInt("BestScore", best);
+            PlayerPrefs.Save();
+            if (scoreText) scoreText.text = $"Puntos: {totalPoints} · Récord: {best}";
+        }).Add(timeToEndGame).Add(() =>
         {
             //Aqui es donde validamos si cumple o no con el objetivo del dia
             if (SaveManager.Instance.IsShowTutorial())
@@ -73,6 +83,18 @@ public class GameRules : MonoBehaviour, IGameRules
     private void OnComboFinished(int obj)
     {
         totalPoints += obj;
+        UpdateScoreText();
+    }
+
+    public void AddPoints(int points)
+    {
+        totalPoints += points;
+        UpdateScoreText();
+    }
+
+    private void UpdateScoreText()
+    {
+        if (scoreText) scoreText.text = $"Puntos: {totalPoints}";
     }
 
     public void CustomerAttended(CustomerClientModel customer, FoodModel food)

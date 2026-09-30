@@ -17,7 +17,7 @@ public class CustomerComboManager : MonoBehaviour, ICustomComboManager
 
     public int GetReward(int comboSize)
     {
-        return 0;
+        return comboSize * 50;
     }
 
     public ComboData RegisterServed(ComboInput input)

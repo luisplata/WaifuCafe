@@ -76,6 +76,7 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
             );
             customer.OnCustomerAttended += OnCustomerAttended;
             customer.OnLeftGo += () => { customer.OnCustomerAttended -= OnCustomerAttended; };
+            customer.OnServedPoints += OnServedPoints;
         }
     }
 
@@ -92,6 +93,11 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
     private void OnCustomerAttended(CustomerClientModel customer, FoodModel food)
     {
         _gameRules.CustomerAttended(customer, food);
+    }
+
+    private void OnServedPoints(float points)
+    {
+        _gameRules.AddPoints(Mathf.RoundToInt(points));
     }
 
     public void Configure(IGameRules gameRules)

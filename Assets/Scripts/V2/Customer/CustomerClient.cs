@@ -13,6 +13,7 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
 {
     public Action<CustomerClientModel, FoodModel> OnCustomerAttended;
     public Action OnLeftGo;
+    public Action<float> OnServedPoints;
     [SerializeField] private CustomerFoodClient foodClient;
     [SerializeField] private CustomerClientModel customerData;
     [SerializeField] private CustomerStateMachine stateMachine;
@@ -111,6 +112,8 @@ public class CustomerClient : MonoBehaviour, IDropReceiver, ICustomerClient
             customerData.pointsToAttend *= 1 + _customerSpawnerCoroutine.GetGameRules().GetAlteredEconomy();
             _foodByRandom.pointsToAttend *= 1 + _customerSpawnerCoroutine.GetGameRules().GetAlteredEconomy();
         }
+
+        if (isAttended) OnServedPoints?.Invoke(customerData.pointsToAttend);
 
         Tween.Position(transform, _pointToSpawn.transform.position, customerData.moveToSeatTime).OnComplete(() =>
         {

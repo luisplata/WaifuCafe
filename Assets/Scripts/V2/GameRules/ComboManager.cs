@@ -95,6 +95,10 @@ public class ComboManager : MonoBehaviour, IComboManager
                 comboClips[_comboData.comboSize - 1]);
         }
 
+        // Bonus real: cada manager que matcheó aporta su reward (3 iguales = 3×50; doble match = 300)
+        if (_foodMatch) onComboFinished?.Invoke(foodComboManager.GetReward(_comboData.comboSize));
+        if (_customerMatch) onComboFinished?.Invoke(customerComboManager.GetReward(_comboData.comboSize));
+
         _foodMatch = false;
         _customerMatch = false;
     }
