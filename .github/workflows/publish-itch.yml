@@ -79,11 +79,6 @@ jobs:
           androidExportType: androidPackage
           buildsPath: build
           versioning: None
-          androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          androidKeystoreName: release.keystore
-          androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
-          androidKeyaliasName: ${{ secrets.ANDROID_KEYALIAS_NAME }}
-          androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
 
       - name: Normalize APK
         shell: pwsh
