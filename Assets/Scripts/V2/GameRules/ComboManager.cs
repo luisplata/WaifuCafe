@@ -27,6 +27,8 @@ public class ComboManager : MonoBehaviour, IComboManager
     private readonly Dictionary<Image, Tween> _pulseTweens = new();
 
     public Action<int> onComboFinished;
+    public Action<ComboType> onMatchCompleted;
+    public Action onDoubleMatchCompleted;
     private IGameRules _gameRules;
     private List<ICustomComboManager> comboManagers = new();
 
@@ -98,6 +100,21 @@ public class ComboManager : MonoBehaviour, IComboManager
         // Bonus real: cada manager que matcheó aporta su reward (3 iguales = 3×50; doble match = 300)
         if (_foodMatch) onComboFinished?.Invoke(foodComboManager.GetReward(_comboData.comboSize));
         if (_customerMatch) onComboFinished?.Invoke(customerComboManager.GetReward(_comboData.comboSize));
+
+        // Objetivo del día: reporta qué tipo de match ocurrió (tras las rewards).
+        // El double match dispara SOLO onDoubleMatchCompleted (nunca los eventos simples).
+        if (_foodMatch && _customerMatch)
+        {
+            onDoubleMatchCompleted?.Invoke();
+        }
+        else if (_foodMatch)
+        {
+            onMatchCompleted?.Invoke(_comboData.comboType);
+        }
+        else if (_customerMatch)
+        {
+            onMatchCompleted?.Invoke(_comboData.comboType);
+        }
 
         _foodMatch = false;
         _customerMatch = false;
