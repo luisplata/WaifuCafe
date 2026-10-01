@@ -106,17 +106,15 @@ jobs:
         env:
           BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
           CHANNEL: webgl
-          ITCH_USER: YOUR_ITCH_USERNAME          # ⚠ PLACEHOLDER — username real del owner
-          ITCH_GAME: YOUR_ITCH_GAME_SLUG         # ⚠ PLACEHOLDER — slug del juego en itch
+          ITCH_USER: PeryLoth
+          ITCH_GAME: maid-cafe-combo-manager
           PACKAGE: artifacts/webgl-build/WaifuCafe-webgl.zip
-          VERSION: ${{ vars.VERSION }}           # ⚠ debe coincidir con bundleVersion (1.0.10)
 
       - name: Publish Android to itch.io
         uses: yeslayla/butler-publish-itchio-action@master
         env:
           BUTLER_CREDENTIALS: ${{ secrets.BUTLER_CREDENTIALS }}
           CHANNEL: android
-          ITCH_USER: YOUR_ITCH_USERNAME          # ⚠ PLACEHOLDER — username real del owner
-          ITCH_GAME: YOUR_ITCH_GAME_SLUG         # ⚠ PLACEHOLDER — slug del juego en itch
+          ITCH_USER: PeryLoth
+          ITCH_GAME: maid-cafe-combo-manager
           PACKAGE: artifacts/android-build/WaifuCafe.apk
-          VERSION: ${{ vars.VERSION }}           # ⚠ debe coincidir con bundleVersion (1.0.10)
