@@ -78,7 +78,7 @@ public class GameRules : MonoBehaviour, IGameRules
         }).Add(timeToEndGame).Add(() =>
         {
             //Aqui es donde validamos si cumple o no con el objetivo del dia
-            if (SaveManager.Instance.IsShowTutorial())
+            if (SaveManager.Instance != null && SaveManager.Instance.IsShowTutorial())
             {
                 if (dayObjective == DayObjective.None || objectiveMet)
                 {

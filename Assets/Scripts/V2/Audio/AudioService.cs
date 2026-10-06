@@ -7,7 +7,7 @@ namespace V2.Audio
         [SerializeField] private AudioSource audioSource;
         public static AudioService Instance;
 
-        private void Start()
+        private void Awake()
         {
             if (Instance != null && Instance != this)
             {
@@ -17,6 +17,10 @@ namespace V2.Audio
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
+                if (audioSource == null)
+                {
+                    audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
+                }
             }
         }
 

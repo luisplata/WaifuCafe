@@ -47,6 +47,8 @@ public class ComboManager : MonoBehaviour, IComboManager
 
         foreach (var customComboManager in comboManagers)
         {
+            var behaviour = customComboManager as MonoBehaviour;
+            if (behaviour != null && !behaviour.gameObject.activeInHierarchy) continue;
             var comboData = customComboManager.RegisterServed(comboInput);
 
             UpdateUi(comboData);

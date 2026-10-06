@@ -4,10 +4,18 @@ using UnityEngine;
 public class StaffSelected : MonoBehaviour
 {
     [SerializeField] private List<StaffNames> listOfStaffsSelected;
+    [SerializeField] private List<StaffNames> fallbackStaff = new() { StaffNames.Rika, StaffNames.Rika, StaffNames.Rika };
 
     private void Awake()
     {
-        listOfStaffsSelected = SaveGame.Instance.GetWaifusSelected();
+        if (SaveGame.Instance != null && SaveGame.Instance.GetWaifusSelected().Count > 0)
+        {
+            listOfStaffsSelected = SaveGame.Instance.GetWaifusSelected();
+        }
+        else
+        {
+            listOfStaffsSelected = new List<StaffNames>(fallbackStaff);
+        }
     }
 
     public StaffNames GetNextStaff(int index)

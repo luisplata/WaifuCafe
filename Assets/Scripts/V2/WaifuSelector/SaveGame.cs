@@ -35,4 +35,12 @@ public class SaveGame : MonoBehaviour
     {
         return waifusSelected;
     }
+
+    public void EnsureDefaults(List<StaffNames> defaults)
+    {
+        if (waifusSelected.Count == 0 && defaults != null && defaults.Count > 0)
+        {
+            waifusSelected.AddRange(defaults);
+        }
+    }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using V2.Customer;
@@ -18,6 +19,21 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
     private bool isConfigured;
     private StepsOfRun currentStep;
 
+    [Header("Prototype: previsión y oleadas")]
+    [SerializeField] private int previewCount = 3;
+    [SerializeField] private float waveRate = 1f;
+    private readonly List<NextSpawn> preview = new();
+    public event Action OnPreviewChanged;
+    public IReadOnlyList<NextSpawn> Preview => preview;
+    public float WaveRate { get => waveRate; set => waveRate = Mathf.Max(0.05f, value); }
+
+    [Serializable]
+    public class NextSpawn
+    {
+        public CustomerClient customerPrefab;
+        public FoodModel food;
+    }
+
 
     private void FixedUpdate()
     {
@@ -35,7 +51,9 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
             }
         }
 
-        if (!(localTime >= timeToSpawn)) return;
+        if (currentStep == null) return;
+        RefillPreview();
+        if (!(localTime >= timeToSpawn / waveRate)) return;
         SpawnCustomers();
         localTime = 0f;
     }
@@ -44,33 +62,26 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
     {
         for (int i = 0; i < currentStep.countOfCustomer; i++)
         {
+            if (preview.Count == 0) RefillPreview();
+            if (preview.Count == 0) break;
             if (!customerPositions.GetNextSeat(out var seat))
             {
                 break;
             }
 
-            var customerModel =
-                currentStep.isRandomCustomer ||
-                !ShouldSpawnSpecific(currentStep.specificCustomerProbability)
-                    ? customerFactory.GetCustomerByRandom()
-                    : customerFactory.GetCustomerById(currentStep.customerIdentify);
+            var next = preview[0];
+            preview.RemoveAt(0);
 
             var customer = Instantiate(
-                customerModel,
+                next.customerPrefab,
                 customerSpawnPosition.transform.position,
                 Quaternion.identity
             );
 
-            var food =
-                currentStep.isRandomFood ||
-                !ShouldSpawnSpecific(currentStep.specificFoodProbability)
-                    ? foodFactory.GetFoodByRandom()
-                    : foodFactory.GetFoodByType(currentStep.foodModelType);
-
             customer.Configure(
                 seat,
                 customerSpawnPosition,
-                food,
+                next.food,
                 GetModificadorDePaciencia(),
                 this
             );
@@ -78,6 +89,33 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
             customer.OnLeftGo += () => { customer.OnCustomerAttended -= OnCustomerAttended; };
             customer.OnServedPoints += OnServedPoints;
         }
+        RefillPreview();
+        OnPreviewChanged?.Invoke();
+    }
+
+    private void RefillPreview()
+    {
+        if (currentStep == null) return;
+        while (preview.Count < previewCount)
+        {
+            preview.Add(new NextSpawn { customerPrefab = RollCustomer(), food = RollFood() });
+        }
+    }
+
+    private CustomerClient RollCustomer()
+    {
+        return currentStep.isRandomCustomer ||
+               !ShouldSpawnSpecific(currentStep.specificCustomerProbability)
+            ? customerFactory.GetCustomerByRandom()
+            : customerFactory.GetCustomerById(currentStep.customerIdentify);
+    }
+
+    private FoodModel RollFood()
+    {
+        return currentStep.isRandomFood ||
+               !ShouldSpawnSpecific(currentStep.specificFoodProbability)
+            ? foodFactory.GetFoodByRandom()
+            : foodFactory.GetFoodByType(currentStep.foodModelType);
     }
 
     private float GetModificadorDePaciencia()
@@ -119,7 +157,7 @@ public class CustomerSpawnerCoroutine : MonoBehaviour, ICustomerSpawn
 
     private bool ShouldSpawnSpecific(float probability)
     {
-        return Random.value <= probability;
+        return UnityEngine.Random.value <= probability;
     }
 
     public void Stop()
