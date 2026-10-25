@@ -20,6 +20,7 @@ namespace V2.Board
         private float _shake, _shakeDuration, _shakeTime;
         private bool _muted;
         private float _volume = 0.3f;
+        private Sequence _pulse;
 
         private void Awake()
         {
@@ -169,8 +170,10 @@ namespace V2.Board
 
         public void PulseBoard(Transform board, float factor, float duration)
         {
-            Tween.StopAll(board);
-            Sequence.Create()
+            // El pulse anterior es una Sequence propia: se frena el handle padre.
+            // Tween.StopAll(board) intentaria frenar tweens anidados y PrimeTween lo prohibe.
+            _pulse.Stop();
+            _pulse = Sequence.Create()
                 .Chain(Tween.Scale(board, Vector3.one * factor, duration * 0.35f, Ease.OutQuad))
                 .Chain(Tween.Scale(board, Vector3.one, duration * 0.65f, Ease.InOutQuad));
         }

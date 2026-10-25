@@ -24,6 +24,9 @@ namespace V2.Board
         private Color _color = Color.white;
         private Tween _loop;
         private Sequence _sequence;
+        private Tween _scale;
+        private Tween _move;
+        private Sequence _flash;
 
         public BoardPos Pos { get; private set; }
         public Vector3 Home { get; private set; }
@@ -89,8 +92,6 @@ namespace V2.Board
         public void PrepareTravel()
         {
             CancelAnimations();
-            if (_renderer != null) Tween.StopAll(_renderer);
-            _loop = default;
             transform.position = Home;
             transform.localScale = _baseScale;
             _renderer.color = _color;
@@ -100,18 +101,28 @@ namespace V2.Board
             if (_halo != null) _halo.color = new Color(1f, 1f, 1f, 0f);
         }
 
+        /// <summary>
+        /// Frena solo handles propios. Nunca StopAll sobre el target: si un tween vive
+        /// dentro de una Sequence, PrimeTween prohibe manipularlo por separado.
+        /// </summary>
         private void CancelAnimations()
         {
+            _loop.Stop();
             _sequence.Stop();
+            _scale.Stop();
+            _move.Stop();
+            _flash.Stop();
+            _loop = default;
             _sequence = default;
-            Tween.StopAll(transform);
+            _scale = default;
+            _move = default;
+            _flash = default;
         }
 
         // ---- Seleccion / hint / lift ------------------------------------------------
 
         public void SetSelected(bool selected, float scale)
         {
-            _loop.Stop();
             CancelAnimations();
             if (!selected)
             {
@@ -120,13 +131,12 @@ namespace V2.Board
                 return;
             }
 
-            Tween.Scale(transform, _baseScale * scale, 0.14f, Ease.OutBack);
+            _scale = Tween.Scale(transform, _baseScale * scale, 0.14f, Ease.OutBack);
             if (_halo != null) _loop = Tween.Alpha(_halo, 0.5f, 0.55f, Ease.InOutSine, -1, CycleMode.Yoyo);
         }
 
         public void SetHint(bool active, float pulse)
         {
-            _loop.Stop();
             CancelAnimations();
             if (!active)
             {
@@ -140,7 +150,7 @@ namespace V2.Board
         public void BeginGrab(float scale)
         {
             CancelAnimations();
-            Tween.Scale(transform, _baseScale * scale, 0.1f, Ease.OutBack);
+            _scale = Tween.Scale(transform, _baseScale * scale, 0.1f, Ease.OutBack);
             if (_halo != null) _halo.color = new Color(1f, 1f, 1f, 0.16f);
         }
 
@@ -148,8 +158,8 @@ namespace V2.Board
 
         public void ReleaseGrab(float time)
         {
-            Tween.Scale(transform, _baseScale, time, Ease.OutQuad);
-            Tween.Position(transform, Home, time, Ease.OutQuad);
+            _scale = Tween.Scale(transform, _baseScale, time, Ease.OutQuad);
+            _move = Tween.Position(transform, Home, time, Ease.OutQuad);
             if (_halo != null) _halo.color = new Color(1f, 1f, 1f, 0f);
         }
 
@@ -158,14 +168,14 @@ namespace V2.Board
         public void PlaySwap(Vector3 to, float duration, Action done)
         {
             PrepareTravel();
-            Tween.Position(transform, to, duration, Ease.OutBack).OnComplete(done);
+            _move = Tween.Position(transform, to, duration, Ease.OutBack).OnComplete(done);
         }
 
         public void PlayReject(Vector3 dir, float cell, float duration, float push, float shake, Action done)
         {
             PrepareTravel();
             Vector3 side = new Vector3(-dir.y, dir.x, 0f);
-            Tween.Custom(transform, 0f, 1f, duration, (tr, k) =>
+            _move = Tween.Custom(transform, 0f, 1f, duration, (tr, k) =>
             {
                 float e = (float)k;
                 float offset = e < 0.35f
@@ -184,8 +194,9 @@ namespace V2.Board
 
         public void FlashInvalid()
         {
-            Tween.Color(_renderer, new Color(0.95f, 0.34f, 0.40f), 0.07f)
-                .OnComplete(() => Tween.Color(_renderer, _color, 0.16f));
+            _flash = Sequence.Create()
+                .Chain(Tween.Color(_renderer, new Color(0.95f, 0.34f, 0.40f), 0.07f))
+                .Chain(Tween.Color(_renderer, _color, 0.16f));
         }
 
         public void PlayPop(float delay, float duration)
