@@ -5,9 +5,9 @@ namespace WaifuCafe.Core
 {
     /// <summary>
     /// Grilla pura de match-3. No conoce sprites, pedidos ni tiempo.
-    /// PR1 cubre: generacion sin matches, validacion de swap adyacente y deteccion de
-    /// lineas de 3+ (horizontales, verticales y cruces). La gravedad, el refill y la
-    /// cascada se enganchan en <see cref="TryResolveSwap"/> cuando llegue PR2.
+    /// Cubre generacion sin matches, validacion de swap adyacente, deteccion de lineas
+    /// de 3+ (horizontales, verticales y cruces), gravedad, refill por <see cref="IRandom"/>
+    /// y cascadas encadenadas. La fila Y = 0 es la inferior: la gravedad empuja hacia abajo.
     /// </summary>
     public sealed class BoardModel
     {
@@ -15,6 +15,10 @@ namespace WaifuCafe.Core
         public const int MaxUnitsPerMatch = 5;
 
         private const int CreateAttempts = 100;
+        private const int DishCount = 5;
+
+        /// <summary>Tope de pasadas encadenadas: evita un loop con un IRandom degenerado.</summary>
+        private const int MaxCascades = 64;
 
         private readonly Dish[,] _cells;
         private readonly bool[,] _filled;
@@ -54,9 +58,38 @@ namespace WaifuCafe.Core
             throw new InvalidOperationException("No se pudo generar un tablero con jugada valida.");
         }
 
+        /// <summary>
+        /// Construye un tablero desde celdas conocidas (tests y herramientas). No valida
+        /// que la grilla ya tenga matches: eso lo decide quien llama.
+        /// </summary>
+        public static BoardModel CreateFromGrid(Dish[,] cells, IRandom rng, int tileTypes = DishCount)
+        {
+            if (cells == null) throw new ArgumentNullException(nameof(cells));
+            if (rng == null) throw new ArgumentNullException(nameof(rng));
+
+            int width = cells.GetLength(0);
+            int height = cells.GetLength(1);
+            if (width < 3 || height < 3)
+                throw new ArgumentOutOfRangeException(nameof(cells), "El tablero necesita al menos 3x3.");
+            if (tileTypes < 3 || tileTypes > DishCount)
+                throw new ArgumentOutOfRangeException(nameof(tileTypes), "Los tipos de ficha van de 3 a 5.");
+
+            var board = new BoardModel(width, height, tileTypes, rng);
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    board._cells[x, y] = cells[x, y];
+                    board._filled[x, y] = true;
+                }
+            }
+
+            return board;
+        }
+
         public Dish At(int x, int y) => _cells[x, y];
 
-        /// <summary>Celda vacia: quedo pendiente de la gravedad/refill de PR2.</summary>
+        /// <summary>Celda vacia. Es transitorio: al terminar una resolucion no quedan huecos.</summary>
         public bool IsEmpty(int x, int y) => !_filled[x, y];
 
         /// <summary>Hay al menos una linea de 3+ pendiente en la grilla.</summary>
@@ -95,8 +128,8 @@ namespace WaifuCafe.Core
 
         /// <summary>
         /// Transaccional: si el swap no forma ninguna linea, la grilla queda identica (rebote).
-        /// Si la forma, deja el resultado y limpia las celdas (quedan vacias hasta PR2).
-        /// Los swaps diagonales y los pares no adyacentes se rechazan.
+        /// Si la forma, resuelve limpieza + gravedad + refill + cascadas hasta que no queden
+        /// lineas. Los swaps diagonales y los pares no adyacentes se rechazan.
         /// </summary>
         public bool TryResolveSwap(int ax, int ay, int bx, int by, out ResolveResult result)
         {
@@ -115,10 +148,7 @@ namespace WaifuCafe.Core
                 return false;
             }
 
-            result = BuildResult(groups);
-            ClearCells(groups);
-
-            // PR2 engancha aca gravedad + refill + cascada, y actualiza Cascades.
+            result = Resolve(groups);
             return true;
         }
 
@@ -215,11 +245,31 @@ namespace WaifuCafe.Core
             pending.Push(y * Width + x);
         }
 
-        private static ResolveResult BuildResult(List<MatchGroup> groups)
+        /// <summary>
+        /// Limpia el primer grupo y encadena mientras el refill genere lineas nuevas.
+        /// Las unidades se acumulan por grupo conectado y NO llevan multiplicador.
+        /// </summary>
+        private ResolveResult Resolve(List<MatchGroup> firstGroups)
         {
+            int cascades = 0;
             int cleared = 0;
             var units = new Dictionary<Dish, int>();
+            var groups = firstGroups;
 
+            while (groups.Count > 0 && cascades < MaxCascades)
+            {
+                cascades++;
+                Accumulate(groups, units, ref cleared);
+                ClearCells(groups);
+                ApplyGravityAndRefill();
+                groups = CollectGroups();
+            }
+
+            return new ResolveResult(cascades, cleared, units);
+        }
+
+        private static void Accumulate(List<MatchGroup> groups, Dictionary<Dish, int> units, ref int cleared)
+        {
             foreach (var group in groups)
             {
                 cleared += group.Cells.Count;
@@ -227,8 +277,36 @@ namespace WaifuCafe.Core
                 units.TryGetValue(group.Dish, out int current);
                 units[group.Dish] = current + unitsInGroup;
             }
+        }
 
-            return new ResolveResult(1, cleared, units);
+        /// <summary>
+        /// Compacta cada columna hacia Y = 0 y rellena los huecos de arriba desde el RNG.
+        /// El orden de refill es por columna y, dentro de la columna, de abajo hacia arriba.
+        /// </summary>
+        private void ApplyGravityAndRefill()
+        {
+            for (int x = 0; x < Width; x++)
+            {
+                int writeY = 0;
+                for (int y = 0; y < Height; y++)
+                {
+                    if (!_filled[x, y]) continue;
+
+                    if (writeY != y)
+                    {
+                        _cells[x, writeY] = _cells[x, y];
+                        _filled[x, writeY] = true;
+                    }
+
+                    writeY++;
+                }
+
+                for (int y = writeY; y < Height; y++)
+                {
+                    _cells[x, y] = (Dish)_rng.Next(_tileTypes);
+                    _filled[x, y] = true;
+                }
+            }
         }
 
         private void ClearCells(List<MatchGroup> groups)

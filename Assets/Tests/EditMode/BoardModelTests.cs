@@ -5,8 +5,8 @@ using WaifuCafe.Core;
 namespace WaifuCafe.Tests
 {
     /// <summary>
-    /// PR1: modelo puro del tablero. T1 = tablero inicial (RF-4), T4 = swap invalido (RF-1).
-    /// Gravedad/refill/cascada se testean en PR2 (T2/T3/T5).
+    /// Modelo puro del tablero.
+    /// PR1: T1 (RF-4) y T4 (RF-1). PR2: T2 (RF-2), T3 (RF-3) y T5 (RF-3 cascadas).
     /// </summary>
     public class BoardModelTests
     {
@@ -49,6 +49,54 @@ namespace WaifuCafe.Tests
             CollectionAssert.AreEqual(pristine, Snapshot(board), "el swap invalido muto la grilla");
         }
 
+        [Test]
+        public void T2_LineSizes_EmitUnitsCappedAtFive()
+        {
+            var three = Board(Grid(5, 5, (0, 2), (1, 2), (2, 3)));
+            Assert.IsTrue(three.TryResolveSwap(2, 3, 2, 2, out var r3), "el swap deberia formar la linea de 3");
+            Assert.AreEqual(3, UnitsOf(r3, Dish.Snack), "3 en linea deben emitir 3 unidades");
+
+            var four = Board(Grid(5, 5, (0, 2), (1, 2), (2, 2), (3, 3)));
+            Assert.IsTrue(four.TryResolveSwap(3, 3, 3, 2, out var r4), "el swap deberia formar la linea de 4");
+            Assert.AreEqual(4, UnitsOf(r4, Dish.Snack), "4 en linea deben emitir 4 unidades");
+
+            var six = Board(Grid(6, 6, (0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (5, 3)));
+            Assert.IsTrue(six.TryResolveSwap(5, 3, 5, 2, out var r6), "el swap deberia formar la linea de 6");
+            Assert.AreEqual(5, UnitsOf(r6, Dish.Snack), "6 en linea deben emitir 5 unidades (tope)");
+        }
+
+        [Test]
+        public void T3_GravityAndRefill_LeaveNoHolesOrResidualMatches()
+        {
+            for (int seed = 1; seed <= 10; seed++)
+            {
+                var board = Board(Grid(5, 5, (0, 2), (1, 2), (2, 3)), new SystemRandom(seed));
+
+                Assert.IsTrue(board.TryResolveSwap(2, 3, 2, 2, out var result), $"seed {seed}: el swap deberia resolver");
+                Assert.GreaterOrEqual(result.Cascades, 1, $"seed {seed}: deberia haber al menos un eslabon");
+
+                AssertNoHoles(board, seed);
+                Assert.IsFalse(board.HasAnyMatch(), $"seed {seed}: quedaron lineas pendientes");
+            }
+        }
+
+        [Test]
+        public void T5_Cascade_DoesNotMultiplyUnits_AndExposesCoinMultiplier()
+        {
+            // Cascada 1: linea de 3 Snack; el refill [2,2,2] arma una linea de 3 Bebida arriba.
+            // Cascada 2: linea de 3 Bebida; el refill [0,1,3] no forma ninguna linea nueva.
+            var rng = new QueueRandom(0, 2, 2, 2, 0, 1, 3);
+            var board = Board(Grid(5, 5, (0, 0), (1, 0), (2, 1)), rng);
+
+            Assert.IsTrue(board.TryResolveSwap(2, 1, 2, 0, out var result), "el swap deberia resolver");
+
+            Assert.AreEqual(2, result.Cascades, "deberian contarse 2 eslabones");
+            Assert.AreEqual(6, result.Cleared, "3 Snack + 3 Bebida limpiadas");
+            Assert.AreEqual(3, UnitsOf(result, Dish.Snack), "la cascada NO multiplica las unidades");
+            Assert.AreEqual(3, UnitsOf(result, Dish.Bebida), "las unidades de la cascada se acumulan");
+            Assert.AreEqual(result.Cascades, result.CoinMultiplier, "el multiplicador de monedas es la cascada");
+        }
+
         private static bool FindRejectedAdjacentSwap(out int ax, out int ay, out int bx, out int by)
         {
             ax = ay = bx = by = 0;
@@ -84,6 +132,58 @@ namespace WaifuCafe.Tests
                     cells.Add(board.At(x, y));
 
             return cells;
+        }
+
+        /// <summary>
+        /// Grilla de fondo sin lineas: (x + y) % 4 nunca repite 3 seguidos en fila ni columna.
+        /// Los Snack sembrados son los unicos del tablero; con tileTypes = 4 el refill nunca
+        /// devuelve Snack, asi las unidades de ese plato quedan aisladas de las cascadas.
+        /// </summary>
+        private static BoardModel Board(Dish[,] grid, IRandom rng = null, int tileTypes = 4)
+            => BoardModel.CreateFromGrid(grid, rng ?? new SystemRandom(Seed), tileTypes);
+
+        private static Dish[,] Grid(int width, int height, params (int X, int Y)[] snacks)
+        {
+            var cells = new Dish[width, height];
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                    cells[x, y] = (Dish)((x + y) % 4);
+
+            foreach (var (x, y) in snacks)
+                cells[x, y] = Dish.Snack;
+
+            return cells;
+        }
+
+        private static int UnitsOf(ResolveResult result, Dish dish)
+            => result.Units.TryGetValue(dish, out int units) ? units : 0;
+
+        private static void AssertNoHoles(BoardModel board, int seed)
+        {
+            for (int y = 0; y < board.Height; y++)
+                for (int x = 0; x < board.Width; x++)
+                    Assert.IsFalse(board.IsEmpty(x, y), $"seed {seed}: hueco en ({x},{y})");
+        }
+
+        /// <summary>IRandom con valores prefijados para forzar un refill concreto.</summary>
+        private sealed class QueueRandom : IRandom
+        {
+            private readonly Queue<int> _queued;
+            private readonly int _fallback;
+
+            public QueueRandom(int fallback, params int[] values)
+            {
+                _fallback = fallback;
+                _queued = new Queue<int>(values);
+            }
+
+            public int Next(int maxExclusive)
+            {
+                if (maxExclusive <= 1) return 0;
+
+                int value = _queued.Count > 0 ? _queued.Dequeue() : _fallback;
+                return value % maxExclusive;
+            }
         }
     }
 }

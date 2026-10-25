@@ -19,6 +19,12 @@ namespace WaifuCafe.Core
         /// <summary>Unidades por plato (tope 5 por grupo de linea).</summary>
         public readonly Dictionary<Dish, int> Units;
 
+        /// <summary>
+        /// Multiplicador que corresponde a las monedas (1 = sin cascada). Es SOLO un dato:
+        /// la economia vive fuera del core y no entra en este PR; las unidades no lo usan.
+        /// </summary>
+        public int CoinMultiplier => Cascades;
+
         public ResolveResult(int cascades, int cleared, Dictionary<Dish, int> units)
         {
             Cascades = cascades;
