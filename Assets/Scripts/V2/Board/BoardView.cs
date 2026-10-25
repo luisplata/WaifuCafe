@@ -310,24 +310,22 @@ namespace V2.Board
                 _tiles[b.X, b.Y] = ta;
             }
 
-            Dish[,] swapped = Snapshot();
-            bool[,] firstWave = FindMatches(swapped);
+            Dish[,] before = Snapshot();
             var cleared = new bool[Width, Height];
-            Dish[,] final = FinalGrid();
-            int waves = Mathf.Max(1, result.Cascades);
-            var rest = new List<BoardPos>();
-            for (int y = 0; y < Height; y++)
+            IReadOnlyList<IReadOnlyList<BoardPos>> waves = result.Waves;
+
+            if (waves.Count == 0)
             {
-                for (int x = 0; x < Width; x++)
-                {
-                    if (!firstWave[x, y] && !final[x, y].Equals(swapped[x, y]))
-                        rest.Add(new BoardPos(x, y));
-                }
+                SyncAll();
+                _animating = false;
+                onDone?.Invoke();
+                yield break;
             }
 
-            for (int wave = 1; wave <= waves; wave++)
+            for (int w = 0; w < waves.Count; w++)
             {
-                List<BoardPos> cells = wave == 1 ? CellsOf(firstWave) : TakeSlice(rest, wave, waves);
+                int wave = w + 1;
+                IReadOnlyList<BoardPos> cells = waves[w];
                 float speed = Mathf.Pow(cascadeSpeed, wave - 1);
                 float duration = popTime * speed;
                 float maxDelay = 0f;
@@ -354,8 +352,10 @@ namespace V2.Board
                     Vector3 center = Centroid(cells);
                     float boardTop = transform.position.y + (Height - 1) * 0.5f * tileSize;
                     center.y = Mathf.Min(center.y, boardTop - 0.5f) + 0.15f;
-                    Color tint = dishColors[(int)swapped[cells[0].X, cells[0].Y]];
-                    _juice.FloatText(center, "+" + UnitsInWave(cells, swapped, result), tint, 1f);
+                    TileView first = Get(cells[0]);
+                    Color tint = first != null ? first.Color : Color.white;
+                    int units = w < result.WaveUnits.Count ? result.WaveUnits[w] : cells.Count;
+                    _juice.FloatText(center, "+" + Mathf.Max(1, units), tint, 1f);
                     if (wave > 1) _juice.FloatText(center + Vector3.up * 0.45f, "x" + wave, Color.white, 0.8f);
                 }
 
@@ -367,7 +367,7 @@ namespace V2.Board
                 yield return new WaitForSeconds(maxDelay + duration + 0.01f);
             }
 
-            yield return FallPhase(swapped, final, cleared);
+            yield return FallPhase(before, FinalGrid(), cleared);
 
             SyncAll();
             _animating = false;
@@ -447,6 +447,7 @@ namespace V2.Board
 
         // ---- Deteccion solo para presentacion ---------------------------------------
 
+        /// <summary>Grilla visible antes de la resolucion: base para decidir que ficha cae.</summary>
         private Dish[,] Snapshot()
         {
             var grid = new Dish[Width, Height];
@@ -469,76 +470,7 @@ namespace V2.Board
             return grid;
         }
 
-        /// <summary>Lineas de 3+ en una grilla (solo para ubicar la primera ola de pop).</summary>
-        private bool[,] FindMatches(Dish[,] grid)
-        {
-            var hit = new bool[Width, Height];
-            for (int y = 0; y < Height; y++)
-            {
-                for (int x = 0; x < Width; x++)
-                {
-                    Dish dish = grid[x, y];
-                    int run = 1;
-                    while (x + run < Width && grid[x + run, y].Equals(dish)) run++;
-                    if (run >= 3) for (int i = 0; i < run; i++) hit[x + i, y] = true;
-
-                    run = 1;
-                    while (y + run < Height && grid[x, y + run].Equals(dish)) run++;
-                    if (run >= 3) for (int i = 0; i < run; i++) hit[x, y + i] = true;
-                }
-            }
-
-            return hit;
-        }
-
-        private List<BoardPos> CellsOf(bool[,] flags)
-        {
-            var cells = new List<BoardPos>();
-            for (int y = 0; y < Height; y++)
-            {
-                for (int x = 0; x < Width; x++)
-                {
-                    if (flags[x, y]) cells.Add(new BoardPos(x, y));
-                }
-            }
-
-            return cells;
-        }
-
-        /// <summary>Reparte las celdas restantes entre los eslabones 2..N de la cascada.</summary>
-        private static List<BoardPos> TakeSlice(List<BoardPos> rest, int wave, int waves)
-        {
-            var cells = new List<BoardPos>();
-            if (rest.Count == 0 || waves <= 1) return cells;
-
-            int links = waves - 1;
-            int perLink = Mathf.CeilToInt(rest.Count / (float)links);
-            int start = (wave - 2) * perLink;
-            int end = Mathf.Min(rest.Count, start + perLink);
-            for (int i = start; i < end; i++) cells.Add(rest[i]);
-            return cells;
-        }
-
-        private int UnitsInWave(List<BoardPos> cells, Dish[,] grid, ResolveResult result)
-        {
-            var counts = new Dictionary<Dish, int>();
-            foreach (BoardPos p in cells)
-            {
-                Dish dish = grid[p.X, p.Y];
-                counts.TryGetValue(dish, out int n);
-                counts[dish] = n + 1;
-            }
-
-            int units = 0;
-            foreach (KeyValuePair<Dish, int> pair in counts)
-            {
-                if (result.Units.TryGetValue(pair.Key, out int total)) units += Mathf.Min(pair.Value, total);
-            }
-
-            return Mathf.Max(1, units);
-        }
-
-        private Vector3 Centroid(List<BoardPos> cells)
+        private Vector3 Centroid(IReadOnlyList<BoardPos> cells)
         {
             Vector3 sum = Vector3.zero;
             foreach (BoardPos p in cells) sum += CellToWorld(p);

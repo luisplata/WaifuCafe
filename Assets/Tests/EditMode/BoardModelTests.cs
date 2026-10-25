@@ -97,6 +97,30 @@ namespace WaifuCafe.Tests
             Assert.AreEqual(result.Cascades, result.CoinMultiplier, "el multiplicador de monedas es la cascada");
         }
 
+        [Test]
+        public void T6_Waves_ExposeExactCellsOfEachCascadeStep()
+        {
+            // Misma cascada que T5: ola 1 = linea de Snack abajo; ola 2 = los 3 Bebida del refill.
+            var rng = new QueueRandom(0, 2, 2, 2, 0, 1, 3);
+            var board = Board(Grid(5, 5, (0, 0), (1, 0), (2, 1)), rng);
+
+            Assert.IsTrue(board.TryResolveSwap(2, 1, 2, 0, out var result), "el swap deberia resolver");
+
+            Assert.AreEqual(result.Cascades, result.Waves.Count, "debe haber una ola por eslabon");
+            Assert.AreEqual(result.Waves.Count, result.WaveUnits.Count, "cada ola declara sus unidades");
+
+            CollectionAssert.AreEquivalent(
+                new[] { new BoardPos(0, 0), new BoardPos(1, 0), new BoardPos(2, 0) },
+                new List<BoardPos>(result.Waves[0]),
+                "la ola 1 debe ser exactamente el primer match");
+            Assert.AreEqual(3, result.WaveUnits[0], "la ola 1 emite 3 unidades de Snack");
+
+            CollectionAssert.AreEquivalent(
+                new[] { new BoardPos(0, 4), new BoardPos(1, 4), new BoardPos(2, 4) },
+                new List<BoardPos>(result.Waves[1]),
+                "la ola 2 debe ser exactamente la linea del refill, no celdas repartidas");
+        }
+
         private static bool FindRejectedAdjacentSwap(out int ax, out int ay, out int bx, out int by)
         {
             ax = ay = bx = by = 0;

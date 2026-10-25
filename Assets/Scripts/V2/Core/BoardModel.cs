@@ -248,35 +248,58 @@ namespace WaifuCafe.Core
         /// <summary>
         /// Limpia el primer grupo y encadena mientras el refill genere lineas nuevas.
         /// Las unidades se acumulan por grupo conectado y NO llevan multiplicador.
+        /// Cada eslabon deja su ola con las celdas exactas que limpio.
         /// </summary>
         private ResolveResult Resolve(List<MatchGroup> firstGroups)
         {
             int cascades = 0;
             int cleared = 0;
             var units = new Dictionary<Dish, int>();
+            var waves = new List<IReadOnlyList<BoardPos>>();
+            var waveUnits = new List<int>();
             var groups = firstGroups;
 
             while (groups.Count > 0 && cascades < MaxCascades)
             {
                 cascades++;
-                Accumulate(groups, units, ref cleared);
+                waves.Add(CellsOf(groups));
+                waveUnits.Add(Accumulate(groups, units, ref cleared));
                 ClearCells(groups);
                 ApplyGravityAndRefill();
                 groups = CollectGroups();
             }
 
-            return new ResolveResult(cascades, cleared, units);
+            return new ResolveResult(cascades, cleared, units, waves, waveUnits);
         }
 
-        private static void Accumulate(List<MatchGroup> groups, Dictionary<Dish, int> units, ref int cleared)
+        /// <summary>Celdas de todos los grupos como coordenadas de tablero (para la vista).</summary>
+        private List<BoardPos> CellsOf(List<MatchGroup> groups)
         {
+            var cells = new List<BoardPos>();
+            foreach (var group in groups)
+            {
+                foreach (int index in group.Cells)
+                    cells.Add(new BoardPos(index % Width, index / Width));
+            }
+
+            return cells;
+        }
+
+        /// <summary>Acumula la ola y devuelve cuantas unidades emitio.</summary>
+        private static int Accumulate(List<MatchGroup> groups, Dictionary<Dish, int> units, ref int cleared)
+        {
+            int waveUnits = 0;
+
             foreach (var group in groups)
             {
                 cleared += group.Cells.Count;
                 int unitsInGroup = Math.Min(group.Cells.Count, MaxUnitsPerMatch);
                 units.TryGetValue(group.Dish, out int current);
                 units[group.Dish] = current + unitsInGroup;
+                waveUnits += unitsInGroup;
             }
+
+            return waveUnits;
         }
 
         /// <summary>
