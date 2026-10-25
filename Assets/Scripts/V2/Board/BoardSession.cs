@@ -54,7 +54,7 @@ namespace V2.Board
             }
 
             IsResolving = true;
-            view.PlayResolve(a, b, () => CompleteMove(result));
+            view.PlayResolve(a, b, result, () => CompleteMove(result));
             return true;
         }
 

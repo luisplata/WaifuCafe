@@ -14,12 +14,87 @@ namespace V2.Board
 
         private static readonly Sprite[] Cache = new Sprite[5];
         private static Sprite _solid;
+        private static Sprite _roundRect;
+        private static Sprite _roundFrame;
+        private static Sprite _glow;
 
         public static Sprite For(Dish dish)
         {
             int index = (int)dish;
             if (Cache[index] == null) Cache[index] = Build(dish);
             return Cache[index];
+        }
+
+        /// <summary>Panel redondeado blanco (fondo del tablero y relleno de fichas).</summary>
+        public static Sprite RoundRect()
+        {
+            if (_roundRect == null) _roundRect = BuildRounded(0.22f, 0f);
+            return _roundRect;
+        }
+
+        /// <summary>Marco redondeado: solo el borde interno, para el contorno claro de cada ficha.</summary>
+        public static Sprite RoundFrame()
+        {
+            if (_roundFrame == null) _roundFrame = BuildRounded(0.22f, 3f);
+            return _roundFrame;
+        }
+
+        /// <summary>Punto radial suave: particulas y halo de seleccion.</summary>
+        public static Sprite Glow()
+        {
+            if (_glow != null) return _glow;
+
+            var texture = NewTexture(Size);
+            var pixels = new Color32[Size * Size];
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    float nx = (x + 0.5f) / Size * 2f - 1f;
+                    float ny = (y + 0.5f) / Size * 2f - 1f;
+                    float alpha = Mathf.Clamp01(1f - Mathf.Sqrt(nx * nx + ny * ny));
+                    alpha *= alpha;
+                    pixels[y * Size + x] = new Color32(255, 255, 255, (byte)(alpha * 255f));
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(false, false);
+            _glow = Sprite.Create(texture, new Rect(0, 0, Size, Size), new Vector2(0.5f, 0.5f), Size);
+            return _glow;
+        }
+
+        /// <summary>Rectangulo de esquinas redondeadas con signed distance field barato.</summary>
+        private static Sprite BuildRounded(float radius01, float border)
+        {
+            var texture = NewTexture(Size);
+            var pixels = new Color32[Size * Size];
+            var white = new Color32(255, 255, 255, 255);
+            var clear = new Color32(255, 255, 255, 0);
+
+            float center = Size * 0.5f;
+            float half = center - 1f;
+            float radius = Size * radius01;
+            bool borderOnly = border > 0f;
+
+            for (int y = 0; y < Size; y++)
+            {
+                for (int x = 0; x < Size; x++)
+                {
+                    float dx = Mathf.Abs(x + 0.5f - center) - (half - radius);
+                    float dy = Mathf.Abs(y + 0.5f - center) - (half - radius);
+                    float outside = Mathf.Sqrt(Mathf.Max(dx, 0f) * Mathf.Max(dx, 0f) +
+                                               Mathf.Max(dy, 0f) * Mathf.Max(dy, 0f)) +
+                                    Mathf.Min(Mathf.Max(dx, dy), 0f) - radius;
+                    bool inside = outside <= 0f;
+                    bool edge = outside > -border;
+                    pixels[y * Size + x] = inside && (!borderOnly || edge) ? white : clear;
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(false, false);
+            return Sprite.Create(texture, new Rect(0, 0, Size, Size), new Vector2(0.5f, 0.5f), Size);
         }
 
         /// <summary>Cuadrado blanco de 1x1 unidad: backdrop y relleno generico.</summary>
