@@ -129,6 +129,21 @@ namespace V2.Board
             _selected = null;
         }
 
+        /// <summary>
+        /// El tablero se movio entero (A/B de lado): los Home son world-space, hay que
+        /// recalcularlos para que swap, rebote y caida sigan usando la posicion nueva.
+        /// Las celdas locales no cambian.
+        /// </summary>
+        public void RefreshHomes()
+        {
+            if (_tiles == null) return;
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                    _tiles[x, y].Rebind(new BoardPos(x, y), CellToWorld(new BoardPos(x, y)));
+            }
+        }
+
         private void Update()
         {
             if (!hintEnabled || _session == null || _hintA != null) return;
