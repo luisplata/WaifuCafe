@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using WaifuCafe.Core;
 
 namespace V2.Board
 {
@@ -8,6 +7,7 @@ namespace V2.Board
     /// Mockup visual del layout landscape 50/50: el tablero a un lado y la columna del
     /// cafe al otro. Todo procedural, sin logica ni colliders: no intercepta el input.
     /// El lado es un A/B de dato: <see cref="boardSide"/> espeja todo respecto de x=0.
+    /// Las cartas de waifu ya no las dibuja el mock: viven en <c>WaifuPartyView</c>.
     /// </summary>
     public sealed class BoardLayoutMock : MonoBehaviour
     {
@@ -24,21 +24,10 @@ namespace V2.Board
         private const float CenterX = Left + Width * 0.5f;
 
         private static readonly Color HudColor = new Color(0.15f, 0.12f, 0.19f, 0.95f);
-        private static readonly Color CardColor = new Color(0.18f, 0.15f, 0.24f, 0.95f);
-        private static readonly Color BarColor = new Color(0.06f, 0.05f, 0.08f, 1f);
         private static readonly Color TextColor = new Color(1f, 1f, 1f, 0.78f);
 
         // TextMesh: el alto visible ronda characterSize * 3.5; los labels piden altura en unidades.
         private const float TextHeightPerUnit = 3.5f;
-
-        private static readonly Color[] DishColors =
-        {
-            new Color(0.95f, 0.75f, 0.30f),
-            new Color(0.42f, 0.75f, 0.45f),
-            new Color(0.32f, 0.62f, 0.92f),
-            new Color(0.91f, 0.45f, 0.68f),
-            new Color(0.93f, 0.58f, 0.30f),
-        };
 
         private static Font _font;
         private Transform _root;
@@ -93,7 +82,6 @@ namespace V2.Board
                 _root.SetParent(transform, false);
 
                 BuildHud();
-                for (int i = 0; i < 4; i++) BuildWaifu(i);
                 BuildDivider();
             }
 
@@ -120,20 +108,6 @@ namespace V2.Board
         private void BuildHud()
         {
             Block("HUD", Mirror(CenterX), 7.15f, Width, 0.6f, HudColor, 1);
-        }
-
-        private void BuildWaifu(int i)
-        {
-            float x = CenterX - 6.375f + 1.5f + i * 3.25f; // 4 cartas de 3u con gap 0.25u
-            Block("Waifu_" + (i + 1), Mirror(x), -5f, 3.0f, 4.0f, CardColor, 1);
-            Label($"Waifu {i + 1} · 3x4u", Mirror(x - 1.35f), -3.32f, 0.20f);
-
-            // Retrato simulado (circulo) + barra de cooldown vacia.
-            Block("Retrato", Mirror(x), -4.85f, 1.7f, 1.7f, DishColors[i % 5], 2,
-                DishSprites.For(Dish.Almuerzo));
-            Block("Cooldown_bg", Mirror(x), -6.35f, 2.4f, 0.28f, BarColor, 2);
-            Block("Cooldown_frame", Mirror(x), -6.35f, 2.4f, 0.28f, new Color(1f, 1f, 1f, 0.35f), 3,
-                DishSprites.RoundFrame());
         }
 
         private void BuildDivider()
