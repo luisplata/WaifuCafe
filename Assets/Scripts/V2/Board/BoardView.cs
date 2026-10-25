@@ -340,9 +340,9 @@ namespace V2.Board
                 yield break;
             }
 
-            // Grilla que la vista muestra entre olas: la caida de cada ola la actualiza,
-            // asi el telegraph de la ola siguiente ilumina el grupo que de verdad existe.
-            Dish[,] sim = Snapshot();
+            // Estado visible entre olas: la foto que dejo la ola anterior. Nadie la reescribe,
+            // asi el telegraph ilumina las fichas que REALMENTE estan en la celda.
+            BoardSnapshot current = Snapshot();
 
             for (int w = 0; w < waves.Count; w++)
             {
@@ -359,20 +359,13 @@ namespace V2.Board
 
                 // 3) TELEGRAPH: todo el grupo se ilumina junto, antes de explotar.
                 t = Time.realtimeSinceStartup;
-                Dish dish = Dominant(sim, cells);
+                Dish dish = Dominant(cells);
                 for (int i = 0; i < cells.Count; i++)
                 {
-                    BoardPos p = cells[i];
-                    TileView tile = Get(p);
+                    TileView tile = Get(cells[i]);
                     if (tile == null) continue;
 
-                    if (!sim[p.X, p.Y].Equals(dish))
-                    {
-                        sim[p.X, p.Y] = dish;
-                        tile.SetDish(dish, DishSprites.For(dish), dishColors[(int)dish]);
-                    }
-
-                    tile.PlayTelegraph(telegraph, dishColors[(int)dish], glowColor, glowAlpha);
+                    tile.PlayTelegraph(telegraph, dishColors[(int)tile.Dish], glowColor, glowAlpha);
                 }
 
                 _juice.PlayTelegraph(1f + telegraphPitchStep * (wave - 1));
@@ -387,6 +380,15 @@ namespace V2.Board
 
                 yield return new WaitForSeconds(telegraph);
                 float telegraphMs = (Time.realtimeSinceStartup - t) * 1000f;
+
+                // Canario: entre el aviso y el pop ninguna ficha cambia de plato ni de celda.
+                for (int i = 0; i < cells.Count; i++)
+                {
+                    BoardPos p = cells[i];
+                    TileView tile = Get(p);
+                    if (tile != null && tile.Dish != current.At(p.X, p.Y))
+                        Debug.LogError($"[TELEGRAPH] wave={wave}: ficha cambiada en {p}");
+                }
 
                 // 4) POP: recien ahora explota, con flash blanco.
                 t = Time.realtimeSinceStartup;
@@ -415,11 +417,12 @@ namespace V2.Board
                 yield return new WaitForSeconds(maxDelay + pop + 0.01f);
                 float popMs = (Time.realtimeSinceStartup - t) * 1000f;
 
-                // 6) CAIDA: gravedad + refill. La ola siguiente no empieza hasta aterrizar.
+                // 6) CAIDA: cada ficha aterriza en la celda y el plato de la foto de esta ola.
+                // La ultima foto ES el tablero final, asi que el SyncAll de cierre no mueve nada.
                 t = Time.realtimeSinceStartup;
-                Dish[,] next = wave == waves.Count ? FinalGrid() : SimulateFall(sim, cells);
-                yield return LandPhase(sim, next, cells, speed);
-                sim = next;
+                BoardSnapshot next = result.Snapshots[w];
+                yield return LandPhase(current, next, cells, speed);
+                current = next;
                 float fallMs = (Time.realtimeSinceStartup - t) * 1000f;
 
                 Debug.Log($"[BEAT] wave={wave} settleMs={settleMs:F0} telegraphMs={telegraphMs:F0} " +
@@ -433,10 +436,14 @@ namespace V2.Board
         }
 
         /// <summary>Plato dominante del grupo: el color con el que se avisa el match.</summary>
-        private Dish Dominant(Dish[,] grid, IReadOnlyList<BoardPos> cells)
+        private Dish Dominant(IReadOnlyList<BoardPos> cells)
         {
             var count = new int[dishColors.Length];
-            for (int i = 0; i < cells.Count; i++) count[(int)grid[cells[i].X, cells[i].Y]]++;
+            for (int i = 0; i < cells.Count; i++)
+            {
+                TileView tile = Get(cells[i]);
+                if (tile != null) count[(int)tile.Dish]++;
+            }
 
             int best = 0;
             for (int d = 1; d < count.Length; d++)
@@ -444,34 +451,14 @@ namespace V2.Board
             return (Dish)best;
         }
 
-        /// <summary>Gravedad + refill visual de una ola, sin tocar el modelo.</summary>
-        private Dish[,] SimulateFall(Dish[,] grid, IReadOnlyList<BoardPos> cells)
-        {
-            var next = new Dish[Width, Height];
-            var gone = new bool[Width, Height];
-            for (int i = 0; i < cells.Count; i++) gone[cells[i].X, cells[i].Y] = true;
-
-            for (int x = 0; x < Width; x++)
-            {
-                int write = 0;
-                for (int y = 0; y < Height; y++)
-                {
-                    if (gone[x, y]) continue;
-                    next[x, write++] = grid[x, y];
-                }
-
-                for (int y = write; y < Height; y++)
-                    next[x, y] = (Dish)UnityEngine.Random.Range(0, dishColors.Length);
-            }
-
-            return next;
-        }
-
         /// <summary>Caida con gravedad real, stagger por columna y squash & stretch al aterrizar.</summary>
-        private IEnumerator LandPhase(Dish[,] from, Dish[,] to, IReadOnlyList<BoardPos> cells, float speed)
+        private IEnumerator LandPhase(BoardSnapshot from, BoardSnapshot to, IReadOnlyList<BoardPos> cleared,
+            float speed)
         {
+            // Las celdas limpiadas se animan siempre: su ficha desaparecio en el pop, aunque
+            // la foto les devuelva el mismo plato.
             var gone = new bool[Width, Height];
-            for (int i = 0; i < cells.Count; i++) gone[cells[i].X, cells[i].Y] = true;
+            for (int i = 0; i < cleared.Count; i++) gone[cleared[i].X, cleared[i].Y] = true;
 
             float maxArrival = 0f;
             bool any = false;
@@ -482,7 +469,7 @@ namespace V2.Board
                 int changedBelow = 0;
                 for (int y = 0; y < Height; y++)
                 {
-                    if (!gone[x, y] && to[x, y].Equals(from[x, y]))
+                    if (!gone[x, y] && to.At(x, y) == from.At(x, y))
                     {
                         changedBelow = 0;
                         continue;
@@ -495,7 +482,8 @@ namespace V2.Board
                         int distance = changedBelow + 1;
                         float duration = Mathf.Min(fallCap, fallTimePerCell * distance);
                         float delay = x * fallStagger;
-                        tile.SetDish(to[x, y], DishSprites.For(to[x, y]), dishColors[(int)to[x, y]]);
+                        Dish dish = to.At(x, y);
+                        tile.SetDish(dish, DishSprites.For(dish), dishColors[(int)dish]);
                         tile.PlayFall(tile.Home + Vector3.up * (distance * tileSize * 1.15f), duration, delay,
                             squash, squashTime);
                         maxArrival = Mathf.Max(maxArrival, delay + duration + squashTime);
@@ -542,8 +530,8 @@ namespace V2.Board
 
         // ---- Deteccion solo para presentacion ---------------------------------------
 
-        /// <summary>Grilla visible antes de la resolucion: base para decidir que ficha cae.</summary>
-        private Dish[,] Snapshot()
+        /// <summary>Foto del tablero visible: base para saber que ficha cae en cada celda.</summary>
+        private BoardSnapshot Snapshot()
         {
             var grid = new Dish[Width, Height];
             for (int y = 0; y < Height; y++)
@@ -551,18 +539,7 @@ namespace V2.Board
                 for (int x = 0; x < Width; x++) grid[x, y] = _tiles[x, y].Dish;
             }
 
-            return grid;
-        }
-
-        private Dish[,] FinalGrid()
-        {
-            var grid = new Dish[Width, Height];
-            for (int y = 0; y < Height; y++)
-            {
-                for (int x = 0; x < Width; x++) grid[x, y] = _session.Board.At(x, y);
-            }
-
-            return grid;
+            return BoardSnapshot.Capture(grid);
         }
 
         private Vector3 Centroid(IReadOnlyList<BoardPos> cells)

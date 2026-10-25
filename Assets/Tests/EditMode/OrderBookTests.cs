@@ -87,7 +87,7 @@ namespace WaifuCafe.Tests
             var units = new Dictionary<Dish, int> { { Dish.Snack, 3 }, { Dish.Desayuno, 1 } };
             var result = new ResolveResult(1, 4, units,
                 new List<IReadOnlyList<BoardPos>> { new List<BoardPos>() },
-                new List<int> { 4 });
+                new List<int> { 4 }, System.Array.Empty<BoardSnapshot>());
 
             Delivery delivery = book.Deliver(result);
 

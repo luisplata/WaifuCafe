@@ -248,7 +248,8 @@ namespace WaifuCafe.Core
         /// <summary>
         /// Limpia el primer grupo y encadena mientras el refill genere lineas nuevas.
         /// Las unidades se acumulan por grupo conectado y NO llevan multiplicador.
-        /// Cada eslabon deja su ola con las celdas exactas que limpio.
+        /// Cada eslabon deja su ola con las celdas exactas que limpio y la foto del tablero
+        /// ya caido: la ultima foto coincide con el estado final.
         /// </summary>
         private ResolveResult Resolve(List<MatchGroup> firstGroups)
         {
@@ -257,6 +258,7 @@ namespace WaifuCafe.Core
             var units = new Dictionary<Dish, int>();
             var waves = new List<IReadOnlyList<BoardPos>>();
             var waveUnits = new List<int>();
+            var snapshots = new List<BoardSnapshot>();
             var groups = firstGroups;
 
             while (groups.Count > 0 && cascades < MaxCascades)
@@ -266,10 +268,11 @@ namespace WaifuCafe.Core
                 waveUnits.Add(Accumulate(groups, units, ref cleared));
                 ClearCells(groups);
                 ApplyGravityAndRefill();
+                snapshots.Add(BoardSnapshot.Capture(_cells));
                 groups = CollectGroups();
             }
 
-            return new ResolveResult(cascades, cleared, units, waves, waveUnits);
+            return new ResolveResult(cascades, cleared, units, waves, waveUnits, snapshots);
         }
 
         /// <summary>Celdas de todos los grupos como coordenadas de tablero (para la vista).</summary>

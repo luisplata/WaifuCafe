@@ -15,7 +15,10 @@ namespace WaifuCafe.Core
 
         private static readonly IReadOnlyList<int> NoWaveUnits = Array.Empty<int>();
 
-        public static ResolveResult Empty => new ResolveResult(0, 0, new Dictionary<Dish, int>(), NoWaves, NoWaveUnits);
+        private static readonly IReadOnlyList<BoardSnapshot> NoSnapshots = Array.Empty<BoardSnapshot>();
+
+        public static ResolveResult Empty => new ResolveResult(0, 0, new Dictionary<Dish, int>(), NoWaves,
+            NoWaveUnits, NoSnapshots);
 
         /// <summary>Niveles de resolucion encadenada. Una sola pasada = 1. Igual a <c>Waves.Count</c>.</summary>
         public readonly int Cascades;
@@ -37,19 +40,28 @@ namespace WaifuCafe.Core
         public readonly IReadOnlyList<int> WaveUnits;
 
         /// <summary>
+        /// Tablero exacto al cerrar cada ola: ya limpio, con la gravedad aplicada y el refill
+        /// hecho. La vista anima la caida hacia esta foto, sin simular nada. La ultima foto es
+        /// el tablero final del modelo y <c>Snapshots.Count == Waves.Count</c>.
+        /// </summary>
+        public readonly IReadOnlyList<BoardSnapshot> Snapshots;
+
+        /// <summary>
         /// Multiplicador que corresponde a las monedas (1 = sin cascada). Es SOLO un dato:
         /// la economia vive fuera del core y no entra en este PR; las unidades no lo usan.
         /// </summary>
         public int CoinMultiplier => Cascades;
 
         public ResolveResult(int cascades, int cleared, Dictionary<Dish, int> units,
-            IReadOnlyList<IReadOnlyList<BoardPos>> waves, IReadOnlyList<int> waveUnits)
+            IReadOnlyList<IReadOnlyList<BoardPos>> waves, IReadOnlyList<int> waveUnits,
+            IReadOnlyList<BoardSnapshot> snapshots)
         {
             Cascades = cascades;
             Cleared = cleared;
             Units = units;
             Waves = waves ?? NoWaves;
             WaveUnits = waveUnits ?? NoWaveUnits;
+            Snapshots = snapshots ?? NoSnapshots;
         }
     }
 }

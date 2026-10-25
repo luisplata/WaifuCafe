@@ -121,6 +121,39 @@ namespace WaifuCafe.Tests
                 "la ola 2 debe ser exactamente la linea del refill, no celdas repartidas");
         }
 
+        [Test]
+        public void T7_Snapshots_OnePerWave_AndLastIsFinalGrid()
+        {
+            // Misma cascada que T5/T6: dos olas, refill conocido.
+            var rng = new QueueRandom(0, 2, 2, 2, 0, 1, 3);
+            var board = Board(Grid(5, 5, (0, 0), (1, 0), (2, 1)), rng);
+
+            Assert.IsTrue(board.TryResolveSwap(2, 1, 2, 0, out var result), "el swap deberia resolver");
+            Assert.GreaterOrEqual(result.Cascades, 2, "el fixture necesita una cascada de 2");
+
+            Assert.AreEqual(result.Waves.Count, result.Snapshots.Count, "debe haber una foto por ola");
+            Assert.AreEqual(result.Cascades, result.Snapshots.Count, "una foto por eslabon");
+
+            BoardSnapshot last = result.Snapshots[result.Snapshots.Count - 1];
+            for (int y = 0; y < board.Height; y++)
+                for (int x = 0; x < board.Width; x++)
+                    Assert.AreEqual(board.At(x, y), last.At(x, y), $"la ultima foto difiere del tablero final en ({x},{y})");
+
+            // Una foto intermedia NO puede ser la final: sino la vista no tendria caida propia.
+            CollectionAssert.AreNotEqual(Flatten(result.Snapshots[0]), Flatten(last),
+                "la foto de la ola 1 ya es el estado final: no es una foto por ola");
+        }
+
+        private static List<Dish> Flatten(BoardSnapshot snapshot)
+        {
+            var cells = new List<Dish>(snapshot.Width * snapshot.Height);
+            for (int y = 0; y < snapshot.Height; y++)
+                for (int x = 0; x < snapshot.Width; x++)
+                    cells.Add(snapshot.At(x, y));
+
+            return cells;
+        }
+
         private static bool FindRejectedAdjacentSwap(out int ax, out int ay, out int bx, out int by)
         {
             ax = ay = bx = by = 0;
