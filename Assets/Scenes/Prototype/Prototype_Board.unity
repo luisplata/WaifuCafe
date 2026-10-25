@@ -119,6 +119,51 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &88505029
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 88505031}
+  - component: {fileID: 88505030}
+  m_Layer: 0
+  m_Name: LayoutMock
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &88505030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 88505029}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b6723164e2d73445a2390565585a1ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Board.BoardLayoutMock
+  showMock: 1
+--- !u!4 &88505031
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 88505029}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &144921607
 GameObject:
   m_ObjectHideFlags: 0
@@ -166,13 +211,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d25bf66ca27a74540b9c9a8356d49e5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::V2.Board.BoardView
-  tileSize: 0.98
+  tileSize: 1.87
   dishColors:
   - {r: 0.95, g: 0.75, b: 0.3, a: 1}
   - {r: 0.42, g: 0.75, b: 0.45, a: 1}
   - {r: 0.32, g: 0.62, b: 0.92, a: 1}
   - {r: 0.91, g: 0.45, b: 0.68, a: 1}
   - {r: 0.93, g: 0.58, b: 0.3, a: 1}
+  grabScale: 1.12
+  grabFollow: 0.3
+  swapTime: 0.14
+  rejectTime: 0.18
+  rejectPush: 0.16
+  rejectShake: 0.04
+  popTime: 0.14
+  popStagger: 0.007
+  particlesPerTile: 5
+  cascadeSpeed: 0.85
+  cascadeShake: 0.03
+  cascadePulse: 1.02
+  cascadeParticleBonus: 3
+  fallTimePerCell: 0.05
+  fallMaxTime: 0.25
+  fallStagger: 0.01
+  squash: 0.12
+  squashTime: 0.08
+  selectedScale: 1.08
+  hintEnabled: 1
+  hintDelay: 5
+  hintPulse: 1.06
+  muteAudio: 0
+  volume: 0.3
+  tweenCapacity: 512
 --- !u!4 &144921610
 Transform:
   m_ObjectHideFlags: 0
@@ -182,7 +252,7 @@ Transform:
   m_GameObject: {fileID: 144921607}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -6.72, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -266,7 +336,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 4.2
+  orthographic size: 7.565625
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -383,3 +453,4 @@ SceneRoots:
   - {fileID: 607944350}
   - {fileID: 733866272}
   - {fileID: 144921610}
+  - {fileID: 88505031}
