@@ -11,16 +11,20 @@ namespace V2.Board
     internal sealed class BoardJuice : MonoBehaviour
     {
         private const int SampleRate = 22050;
+        private const int SparkPool = 64;
 
         private AudioSource _source;
         private AudioClip _swap, _invalid, _match, _cascade, _fall;
-        private Font _font;
         private UnityEngine.Camera _camera;
         private Vector3 _cameraHome;
         private float _shake, _shakeDuration, _shakeTime;
         private bool _muted;
         private float _volume = 0.3f;
         private Sequence _pulse;
+
+        private SpriteRenderer[] _sparks;
+        private Tween[] _sparkTweens;
+        private int _sparkCursor;
 
         private void Awake()
         {
@@ -38,6 +42,26 @@ namespace V2.Board
             _cascade = Make("bc_cascade", 0.22f, t =>
                 (Mathf.Sin(TwoPi * 1150f * t) + 0.45f * Mathf.Sin(TwoPi * 1725f * t)) * Mathf.Exp(-t * 15f) * 0.8f);
             _fall = Make("bc_fall", 0.12f, t => Noise(t) * 0.18f * Mathf.Exp(-t * 22f));
+
+            BuildSparkPool();
+        }
+
+        /// <summary>Pool fijo de chispas: cero Instantiate/Destroy por burst.</summary>
+        private void BuildSparkPool()
+        {
+            _sparks = new SpriteRenderer[SparkPool];
+            _sparkTweens = new Tween[SparkPool];
+
+            for (int i = 0; i < SparkPool; i++)
+            {
+                var go = new GameObject("Spark");
+                go.transform.SetParent(transform, false);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = DishSprites.Glow();
+                sr.sortingOrder = 10;
+                go.SetActive(false);
+                _sparks[i] = sr;
+            }
         }
 
         public void Configure(UnityEngine.Camera cam, bool muted, float volume)
@@ -88,32 +112,34 @@ namespace V2.Board
 
         public void Burst(Vector3 center, Color color, int count, float size)
         {
+            if (_sparks == null) return;
+
             for (int i = 0; i < count; i++)
             {
-                var go = new GameObject("Spark");
-                go.transform.SetParent(transform, false);
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = DishSprites.Glow();
-                sr.sortingOrder = 10;
-                sr.color = color;
+                int index = _sparkCursor++ % _sparks.Length;
+                SpriteRenderer sr = _sparks[index];
+                _sparkTweens[index].Stop();
 
                 float angle = Random.Range(0f, TwoPi);
                 var velocity = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * Random.Range(1.4f, 3.2f)
                                + Vector3.up * 0.6f;
                 float startScale = Random.Range(0.08f, 0.16f) * size;
                 float duration = Random.Range(0.3f, 0.5f);
-                go.transform.position = center;
-                go.transform.localScale = Vector3.one * startScale;
 
-                Tween.Custom(sr, 0f, 1f, duration, (target, k) =>
+                sr.gameObject.SetActive(true);
+                sr.color = color;
+                sr.transform.position = center;
+                sr.transform.localScale = Vector3.one * startScale;
+
+                _sparkTweens[index] = Tween.Custom(sr, 0f, 1f, duration, (spark, k) =>
                 {
                     float time = (float)k * duration;
-                    target.transform.position = center + velocity * time + Vector3.down * (4.5f * time * time);
-                    target.transform.localScale = Vector3.one * startScale * (1f - 0.65f * (float)k);
+                    spark.transform.position = center + velocity * time + Vector3.down * (4.5f * time * time);
+                    spark.transform.localScale = Vector3.one * startScale * (1f - 0.65f * (float)k);
                     var tint = color;
                     tint.a = 1f - (float)k;
-                    target.color = tint;
-                }, Ease.Linear).OnComplete(() => Destroy(go));
+                    spark.color = tint;
+                }, Ease.Linear).OnComplete(() => sr.gameObject.SetActive(false));
             }
         }
 
@@ -121,26 +147,15 @@ namespace V2.Board
 
         public void FloatText(Vector3 position, string text, Color color, float scale)
         {
-            if (_font == null) _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (_font == null) return;
-
             var go = new GameObject("FloatText");
             go.transform.SetParent(transform, false);
             go.transform.position = position;
-            var mesh = go.AddComponent<TextMesh>();
-            mesh.font = _font;
-            mesh.fontSize = 64;
-            mesh.characterSize = 0.075f;
-            mesh.anchor = TextAnchor.MiddleCenter;
-            mesh.alignment = TextAlignment.Center;
-            mesh.fontStyle = FontStyle.Bold;
-            mesh.text = text;
-            mesh.color = color;
-            var mr = go.GetComponent<MeshRenderer>();
-            if (mr != null)
+
+            var tmp = WorldText.Create(go.transform, text, color, 0.45f * Mathf.Max(0.2f, scale), 20);
+            if (tmp == null)
             {
-                mr.sharedMaterial = _font.material;
-                mr.sortingOrder = 20;
+                Destroy(go);
+                return;
             }
 
             Vector3 from = position;
@@ -153,7 +168,7 @@ namespace V2.Board
                 tr.localScale = Vector3.one * (scale * pop);
                 var tint = color;
                 tint.a = 1f - Mathf.Clamp01((e - 0.45f) / 0.55f);
-                mesh.color = tint;
+                tmp.color = tint;
             }, Ease.Linear).OnComplete(() => Destroy(go));
         }
 

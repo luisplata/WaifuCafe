@@ -621,5 +621,20 @@ namespace V2.Board
 
         private static bool AreAdjacent(BoardPos a, BoardPos b) =>
             Mathf.Abs(a.X - b.X) + Mathf.Abs(a.Y - b.Y) == 1;
+
+        // ---- API para el cafe -------------------------------------------------------
+
+        /// <summary>Color del plato, compartido con banco y platos que vuelan.</summary>
+        public Color DishColor(Dish dish) =>
+            dishColors[Mathf.Clamp((int)dish, 0, dishColors.Length - 1)];
+
+        /// <summary>Origen world de los platos que viajan del tablero al asiento.</summary>
+        public Vector3 BoardCenter => transform.position;
+
+        /// <summary>Texto flotante en world space (pago y feedback del suelo).</summary>
+        public void ShowFloatText(Vector3 position, string text, Color color, float scale)
+        {
+            if (_juice != null) _juice.FloatText(position, text, color, scale);
+        }
     }
 }

@@ -13,7 +13,7 @@ namespace V2.Board
     {
         public enum BoardSide { Left, Right }
 
-        [SerializeField] private BoardSide boardSide = BoardSide.Left;
+        [SerializeField] private BoardSide boardSide = BoardSide.Right;
         [SerializeField] private bool showMock = true;
         [Tooltip("Raiz del tablero. Si queda vacia se busca el BoardView de la escena.")]
         [SerializeField] private Transform board;
@@ -24,7 +24,6 @@ namespace V2.Board
         private const float CenterX = Left + Width * 0.5f;
 
         private static readonly Color HudColor = new Color(0.15f, 0.12f, 0.19f, 0.95f);
-        private static readonly Color RowColor = new Color(0.21f, 0.17f, 0.27f, 0.95f);
         private static readonly Color CardColor = new Color(0.18f, 0.15f, 0.24f, 0.95f);
         private static readonly Color BarColor = new Color(0.06f, 0.05f, 0.08f, 1f);
         private static readonly Color TextColor = new Color(1f, 1f, 1f, 0.78f);
@@ -49,6 +48,12 @@ namespace V2.Board
 
         private float Sign => boardSide == BoardSide.Left ? 1f : -1f;
         private float Mirror(float x) => x * Sign;
+
+        /// <summary>El tablero esta a la derecha (default del dueno).</summary>
+        public bool IsRight => boardSide == BoardSide.Right;
+
+        /// <summary>Cambio el lado: el cafe recoloca asientos y banco.</summary>
+        public event System.Action SideChanged;
 
         private void Start() => Apply();
 
@@ -81,15 +86,18 @@ namespace V2.Board
 
             if (_root != null) Destroy(_root.gameObject);
             _root = null;
-            if (!showMock) return;
 
-            _root = new GameObject("MockBlocks").transform;
-            _root.SetParent(transform, false);
+            if (showMock)
+            {
+                _root = new GameObject("MockBlocks").transform;
+                _root.SetParent(transform, false);
 
-            BuildHud();
-            for (int i = 0; i < 5; i++) BuildCustomer(i);
-            for (int i = 0; i < 4; i++) BuildWaifu(i);
-            BuildDivider();
+                BuildHud();
+                for (int i = 0; i < 4; i++) BuildWaifu(i);
+                BuildDivider();
+            }
+
+            SideChanged?.Invoke();
         }
 
         /// <summary>Espeja el tablero entero respecto de x=0 y refresca los Home de las fichas.</summary>
@@ -112,18 +120,6 @@ namespace V2.Board
         private void BuildHud()
         {
             Block("HUD", Mirror(CenterX), 7.15f, Width, 0.6f, HudColor, 1);
-            Label("HUD / cola de pedidos - 12.8 x 0.6u", Mirror(Left + 0.25f), 7.15f, 0.30f);
-        }
-
-        private void BuildCustomer(int i)
-        {
-            float y = 6.4f - 0.85f - i * 1.85f; // 5 filas de 1.7u con 0.15u de gap
-            Block("Cliente_" + (i + 1), Mirror(CenterX), y, 12.8f, 1.7f, RowColor, 1);
-            Label($"Cliente {i + 1} - 12.8 x 1.7u", Mirror(Left + 0.3f), y, 0.32f);
-
-            // Pedido simulado: 3 cuadraditos de colores de plato.
-            for (int k = 0; k < 3; k++)
-                Block("Pedido", Mirror(12.75f - k * 0.5f), y, 0.34f, 0.34f, DishColors[(i + k) % 5], 2);
         }
 
         private void BuildWaifu(int i)

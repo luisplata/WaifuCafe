@@ -148,7 +148,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b6723164e2d73445a2390565585a1ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::V2.Board.BoardLayoutMock
+  boardSide: 1
   showMock: 1
+  board: {fileID: 144921610}
 --- !u!4 &88505031
 Transform:
   m_ObjectHideFlags: 0
@@ -156,6 +158,62 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 88505029}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &112716485
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 112716487}
+  - component: {fileID: 112716486}
+  m_Layer: 0
+  m_Name: CafeFloor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &112716486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 112716485}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1d39dfa0a63ff54eb3383cbe20a8209, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Cafe.CafeFloor
+  seatCount: 5
+  arrivalInterval: 5.5
+  minArrivalInterval: 3.5
+  arrivalRampPerMinute: 0.25
+  orderPlatesMin: 1
+  orderPlatesMax: 2
+  orderUnitsMin: 3
+  orderUnitsMax: 6
+  seed: 0
+  coinsPerUnit: 1
+  retireDelay: 0.35
+  flyTime: 0.32
+--- !u!4 &112716487
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 112716485}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -252,7 +310,7 @@ Transform:
   m_GameObject: {fileID: 144921607}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.72, y: 0, z: 0}
+  m_LocalPosition: {x: 6.72, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -454,3 +512,4 @@ SceneRoots:
   - {fileID: 733866272}
   - {fileID: 144921610}
   - {fileID: 88505031}
+  - {fileID: 112716487}
