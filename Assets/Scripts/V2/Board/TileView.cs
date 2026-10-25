@@ -26,6 +26,7 @@ namespace V2.Board
         private Sequence _sequence;
         private Tween _scale;
         private Tween _move;
+        private Tween _glow;
         private Sequence _flash;
 
         public BoardPos Pos { get; private set; }
@@ -96,7 +97,12 @@ namespace V2.Board
             transform.localScale = _baseScale;
             _renderer.color = _color;
             _renderer.enabled = true;
-            if (_frame != null) _frame.enabled = true;
+            if (_frame != null)
+            {
+                _frame.enabled = true;
+                _frame.color = new Color(1f, 1f, 1f, 0.34f);
+            }
+
             if (_shadow != null) _shadow.enabled = true;
             if (_halo != null) _halo.color = new Color(1f, 1f, 1f, 0f);
         }
@@ -111,11 +117,13 @@ namespace V2.Board
             _sequence.Stop();
             _scale.Stop();
             _move.Stop();
+            _glow.Stop();
             _flash.Stop();
             _loop = default;
             _sequence = default;
             _scale = default;
             _move = default;
+            _glow = default;
             _flash = default;
         }
 
@@ -197,6 +205,23 @@ namespace V2.Board
             _flash = Sequence.Create()
                 .Chain(Tween.Color(_renderer, new Color(0.95f, 0.34f, 0.40f), 0.07f))
                 .Chain(Tween.Color(_renderer, _color, 0.16f));
+        }
+
+        /// <summary>
+        /// Aviso previo al pop: el plato se pone blanco-caliente y su halo toma el color
+        /// del grupo, subiendo el alpha con ease-out. Todas las celdas del grupo a la vez.
+        /// </summary>
+        public void PlayTelegraph(float duration, Color halo, Color hot, float alpha)
+        {
+            if (_halo != null)
+            {
+                _halo.enabled = true;
+                _halo.color = new Color(halo.r, halo.g, halo.b, 0f);
+                _loop = Tween.Alpha(_halo, alpha, duration, Ease.OutQuad);
+            }
+
+            _glow = Tween.Color(_renderer, hot, duration, Ease.OutQuad);
+            _scale = Tween.Scale(transform, _baseScale * 1.07f, duration, Ease.OutQuad);
         }
 
         public void PlayPop(float delay, float duration)

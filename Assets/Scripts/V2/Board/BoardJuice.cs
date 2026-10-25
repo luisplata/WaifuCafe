@@ -14,7 +14,7 @@ namespace V2.Board
         private const int SparkPool = 64;
 
         private AudioSource _source;
-        private AudioClip _swap, _invalid, _match, _cascade, _fall;
+        private AudioClip _swap, _invalid, _match, _cascade, _fall, _telegraph;
         private UnityEngine.Camera _camera;
         private Vector3 _cameraHome;
         private float _shake, _shakeDuration, _shakeTime;
@@ -42,6 +42,8 @@ namespace V2.Board
             _cascade = Make("bc_cascade", 0.22f, t =>
                 (Mathf.Sin(TwoPi * 1150f * t) + 0.45f * Mathf.Sin(TwoPi * 1725f * t)) * Mathf.Exp(-t * 15f) * 0.8f);
             _fall = Make("bc_fall", 0.12f, t => Noise(t) * 0.18f * Mathf.Exp(-t * 22f));
+            _telegraph = Make("bc_telegraph", 0.07f, t =>
+                (Mathf.Sin(TwoPi * 1320f * t) + 0.35f * Mathf.Sin(TwoPi * 2640f * t)) * Mathf.Exp(-t * 55f) * 0.6f);
 
             BuildSparkPool();
         }
@@ -82,6 +84,9 @@ namespace V2.Board
         public void PlayCascade(int wave) => Play(_cascade, 1f + 0.12f * (wave - 1), 0.75f);
 
         public void PlayFall() => Play(_fall, 1f, 0.5f);
+
+        /// <summary>Tick del telegraph: avisa antes del pop. El pitch sube por eslabon.</summary>
+        public void PlayTelegraph(float pitch) => Play(_telegraph, pitch, 0.55f);
 
         private void Play(AudioClip clip, float pitch, float gain)
         {
