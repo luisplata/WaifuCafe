@@ -49,6 +49,15 @@ namespace V2.Waifu.Animation
         public void Cast() { if (bridge != null) bridge.Cast(); }
         public void Activate() { if (bridge != null) bridge.Activate(); }
 
+        /// <summary>
+        /// Dispara un one-shot por nombre de trigger: cada modo de presentacion aporta el
+        /// suyo (grande = Activate, flash de READY = Cast) sin atarse a los nombres.
+        /// </summary>
+        public void PlayClip(string trigger)
+        {
+            if (bridge != null) bridge.PlayTrigger(trigger);
+        }
+
         /// <summary>Ajusta identidad y color de elemento (la cinematica la llama antes de Activate).</summary>
         public void ApplyIdentity(string name, Dish dishElement, Color color)
         {

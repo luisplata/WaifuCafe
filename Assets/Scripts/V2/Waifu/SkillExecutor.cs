@@ -38,23 +38,41 @@ namespace V2.Waifu
                 if (_cooldown[i] > 0) _cooldown[i]--;
         }
 
-        /// <summary>
-        /// Valida READY + cooldown + tablero libre, aplica el efecto, consume SOLO la carga
-        /// de ese slot y arranca el cooldown. Devuelve false sin efectos si no puede.
-        /// </summary>
-        public bool TryFire(int slot)
+        /// <summary>Valida READY + cooldown + tablero libre. No muta nada.</summary>
+        public bool CanFire(int slot)
         {
             WaifuDefinitionSO def = _party != null ? _party[slot] : null;
             if (def == null || _session == null || _session.Board == null) return false;
             if (_session.IsResolving || _session.Locked) return false;
-            if (CooldownLeft(slot) > 0 || !_party.IsReady(slot)) return false;
+            return CooldownLeft(slot) <= 0 && _party.IsReady(slot);
+        }
 
-            if (!Apply(def)) return false;
-
+        /// <summary>
+        /// Compromete el costo antes de la cinematica: gasta SOLO la carga de ese slot y
+        /// arranca su cooldown. Si no valida, no toca nada.
+        /// </summary>
+        public bool CommitFire(int slot)
+        {
+            if (!CanFire(slot)) return false;
             _party.Spend(slot);
-            _cooldown[slot] = Mathf.Max(0, def.CooldownMatches);
+            _cooldown[slot] = Mathf.Max(0, _party[slot].CooldownMatches);
             return true;
         }
+
+        /// <summary>
+        /// Aplica el efecto una sola vez. No valida ni cobra: el costo ya lo tomo
+        /// <see cref="CommitFire"/>. Se llama al cerrar la cinematica (natural o saltada).
+        /// </summary>
+        public bool ExecuteFire(int slot)
+        {
+            WaifuDefinitionSO def = _party != null ? _party[slot] : null;
+            if (def == null || _session == null || _session.Board == null) return false;
+            if (_session.IsResolving || _session.Locked) return false;
+            return Apply(def);
+        }
+
+        /// <summary>Sin cinemática: validar, comprometer y ejecutar. El costo no se devuelve.</summary>
+        public bool TryFire(int slot) => CanFire(slot) && CommitFire(slot) && ExecuteFire(slot);
 
         private bool Apply(WaifuDefinitionSO def)
         {

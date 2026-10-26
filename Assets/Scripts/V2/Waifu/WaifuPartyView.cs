@@ -114,23 +114,35 @@ namespace V2.Waifu
             Refresh(true);
         }
 
-        /// <summary>Click en la carta: dispara la skill si esta READY (sino, shake corto).</summary>
+        /// <summary>
+        /// Click en la carta: valida y compromete el costo, corre la cinematica completa y
+        /// ejecuta el efecto UNA sola vez al cerrarla (fin natural o skip). Si no puede,
+        /// solo hace el shake corto.
+        /// </summary>
         public bool Fire(int slot)
         {
             // Cinematica (o cualquier otro bloqueo global): la carta no dispara.
             if (GameplayLock.IsLocked) return false;
 
-            if (_executor != null && _executor.TryFire(slot))
+            Card card = CardOf(slot);
+            if (_executor == null || !_executor.CanFire(slot) || !_executor.CommitFire(slot))
             {
-                PlayFire(CardOf(slot));
-                // El cast sale recien cuando la skill se ejecuto con exito (no en el rechazo).
-                if (_cutscene != null) _cutscene.PlayCast(slot);
-                Refresh(false);
-                return true;
+                PlayDenied(card);
+                return false;
             }
 
-            PlayDenied(CardOf(slot));
-            return false;
+            Refresh(false);
+            PlayFire(card);
+            if (_cutscene != null) _cutscene.PlayFire(slot, () => ExecuteFire(slot));
+            else ExecuteFire(slot);
+            return true;
+        }
+
+        /// <summary>Cierra el disparo: aplica el efecto ya cobrado y refresca las cartas.</summary>
+        private void ExecuteFire(int slot)
+        {
+            if (_executor != null) _executor.ExecuteFire(slot);
+            Refresh(false);
         }
 
         private void Rebuild()
@@ -227,6 +239,8 @@ namespace V2.Waifu
 
                 ApplyFill(card, def.ChargeCost <= 0 ? 0f : Mathf.Clamp01(amount / (float)def.ChargeCost));
                 card.ReadyGlow.SetActive(available);
+                // Flash ambiental solo cuando la carta queda realmente disponible (READY + CD).
+                if (available && !card.WasReady && _cutscene != null) _cutscene.PlayReady(card.Slot);
 
                 if (animate && gained)
                 {

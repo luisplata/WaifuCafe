@@ -1,52 +1,53 @@
-using System.Collections.Generic;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using V2.Board;
-using V2.Helpers;
 using V2.Waifu.Animation;
 
 namespace V2.Waifu
 {
     /// <summary>
-    /// Dos cinemáticas sobre la misma escena: <b>Ready</b> (una vez por waifu, overlay
-    /// oscuro de 2 s, corta el input) y <b>Cast</b> (cada skill ejecutada con éxito, flash
-    /// translúcido del color del elemento de 0.7 s que deja ver el tablero resolviendo
-    /// debajo). El cast no interrumpe un Ready en curso: si ya corre, el pedido se ignora.
-    /// C dispara el slot de debug aunque ya se haya visto.
+    /// Fire = cinemática negra de 2 s skippable; el efecto corre al cerrarla. Ready =
+    /// flash ambiental de 0.7 s sin skip ni GameplayLock. Triggers por modo configurables.
+    /// Debug: C = cinemática grande; V = flash de READY.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class WaifuCutsceneDirector : MonoBehaviour
     {
         [Header("Referencias (si faltan se resuelven en la escena)")]
         [SerializeField] private WaifuPartyView party;
-        [SerializeField] private BoardSession session;
         [SerializeField] private BoardView boardView;
         [SerializeField] private RuntimeAnimatorController animatorController;
-        [Header("Cinematica")]
+
+        [Header("Cinematica de disparo (grande)")]
         [Tooltip("Duracion de respaldo si no hay PlayableDirector (s)")]
         [SerializeField] private float duration = 2f;
         [Tooltip("Ventana sin skip al arrancar (s)")]
         [SerializeField] private float skipGrace = 0.2f;
+        [Tooltip("Trigger one-shot del modo grande")]
+        [SerializeField] private string bigTrigger = "Activate";
         [Tooltip("Ortho de diseno del WaifuView: escala el actor al view real")]
         [SerializeField] private float designOrtho = 5.2f;
 
-        [Header("Cast (skill ejecutada)")]
-        [Tooltip("Duracion total del flash de skill (s)")]
-        [SerializeField] private float castDuration = 0.7f;
+        [Header("Flash de READY (ambiental)")]
+        [Tooltip("Duracion total del flash de 'quedo lista' (s)")]
+        [SerializeField] private float readyDuration = 0.7f;
         [Tooltip("Alpha maximo del flash del color del elemento (no es un blackout)")]
-        [SerializeField, Range(0.05f, 0.6f)] private float castAlpha = 0.34f;
+        [SerializeField, Range(0.05f, 0.6f)] private float readyAlpha = 0.34f;
+        [Tooltip("Trigger one-shot del modo rapido")]
+        [SerializeField] private string quickTrigger = "Cast";
         [Tooltip("Desde que costado entra el actor, en unidades de diseno")]
-        [SerializeField] private float castEnterFromX = 2.6f;
+        [SerializeField] private float readyEnterFromX = 2.6f;
         [Tooltip("Escala inicial del actor antes de asentar (1 = escala final)")]
-        [SerializeField] private float castScaleFrom = 0.8f;
-        [Tooltip("Escala final del actor: mas chico que el Ready para no tapar el tablero")]
-        [SerializeField] private float castActorScale = 0.72f;
+        [SerializeField] private float readyScaleFrom = 0.8f;
+        [Tooltip("Escala final del actor: chico para no tapar el tablero")]
+        [SerializeField] private float readyActorScale = 0.72f;
         [Tooltip("Cuanto del color del elemento se mezcla al texto (0 = blanco)")]
-        [SerializeField, Range(0f, 1f)] private float castTextColorFactor = 0.85f;
+        [SerializeField, Range(0f, 1f)] private float readyTextColorFactor = 0.85f;
 
         [Header("Debug")]
         [SerializeField] private Key debugKey = Key.C;
+        [SerializeField] private Key readyDebugKey = Key.V;
         [SerializeField] private int debugSlot;
         private const int OrderBackdrop = 500;
         private const int OrderActor = 502;
@@ -54,10 +55,9 @@ namespace V2.Waifu
         private const int OrderText = 520;
         private const int OrderCastFlash = 300;
         private const float TextHeightPerUnit = 3.5f;
-        private static readonly Vector3 CastHome = new Vector3(0f, -0.35f, 0f);
+        private static readonly Vector3 ReadyHome = new Vector3(0f, -0.35f, 0f);
 
-        private readonly HashSet<int> _seen = new HashSet<int>();
-        private readonly List<int> _pending = new List<int>();
+        private System.Action _fireFinished;
         private CutscenePlayer _player;
         private WaifuView _waifu;
         private TextMesh _title;
@@ -80,7 +80,6 @@ namespace V2.Waifu
         private void Awake()
         {
             if (party == null) party = FindFirstObjectByType<WaifuPartyView>();
-            if (session == null) session = FindFirstObjectByType<BoardSession>();
             if (boardView == null) boardView = FindFirstObjectByType<BoardView>();
             BuildOverlay();
             BuildCastOverlay();
@@ -90,32 +89,13 @@ namespace V2.Waifu
         {
             if (_player == null) return;
 
-            // Atajo de debug: muestra la activacion del slot 0 sin esperar la carga.
-            if (!_playing && Keyboard.current != null && Keyboard.current[debugKey].wasPressedThisFrame)
+            // Debug: C siempre muestra la cinematica de disparo; V el flash de lista.
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null)
             {
-                _seen.Add(debugSlot);
-                if (IsBoardBusy())
-                {
-                    if (!_pending.Contains(debugSlot)) _pending.Add(debugSlot);
-                }
-                else Activate(debugSlot);
+                if (keyboard[debugKey].wasPressedThisFrame) PlayFire(debugSlot);
+                if (keyboard[readyDebugKey].wasPressedThisFrame) PlayReady(debugSlot);
             }
-            // Primera vez READY por waifu en la partida: se encola; el tablero decide cuando sale.
-            if (!_playing && party != null && party.Runtime != null)
-            {
-                WaifuPartyRuntime runtime = party.Runtime;
-                for (int slot = 0; slot < runtime.SlotCount; slot++)
-                {
-                    if (_seen.Contains(slot) || !runtime.IsReady(slot)) continue;
-                    _seen.Add(slot);
-                    _pending.Add(slot);
-                }
-            }
-
-            if (_playing || _castPlaying || _pending.Count == 0 || IsBoardBusy()) return;
-            int next = _pending[0];
-            _pending.RemoveAt(0);
-            Activate(next);
         }
 
         private void LateUpdate()
@@ -124,13 +104,8 @@ namespace V2.Waifu
             if (_castPlaying) FitCast();
         }
 
-        /// <summary>
-        /// Flash corto de skill. Corre en paralelo a la resolucion (no la espera) y toma
-        /// GameplayLock mientras dura. Si el Ready esta corriendo, el cast se ignora:
-        /// interrumpirlo romperia su feel y el lock anidado. El lock se libera siempre
-        /// al cerrar (fin natural, error o destroy).
-        /// </summary>
-        public void PlayCast(int slot)
+        /// <summary>Flash de "quedo lista": 0.7 s, sin skip ni GameplayLock; no bloquea el disparo.</summary>
+        public void PlayReady(int slot)
         {
             if (_castPlaying || _playing || CutscenePlayer.IsPlaying) return;
             if (_castRoot == null || party == null || party.Runtime == null) return;
@@ -140,29 +115,28 @@ namespace V2.Waifu
 
             Color element = boardView != null ? boardView.DishColor(def.Element) : def.PortraitColor;
             _castPlaying = true;
-            GameplayLock.Hold();
             try
             {
                 _castWaifu.ApplyIdentity(def.DisplayName, def.Element, element);
-                _castWaifu.transform.localPosition = new Vector3(castEnterFromX, CastHome.y, 0f);
-                _castWaifu.transform.localScale = Vector3.one * castScaleFrom;
+                _castWaifu.transform.localPosition = new Vector3(readyEnterFromX, ReadyHome.y, 0f);
+                _castWaifu.transform.localScale = Vector3.one * readyScaleFrom;
                 _castBody = _castBody != null ? _castBody : _castWaifu.transform.Find("Body")
                     .GetComponent<SpriteRenderer>();
                 _castBody.color = element;
 
                 if (_castTitle != null)
                 {
-                    _castTitle.text = def.DisplayName + " · " + SkillLabel(def.SkillArchetype);
-                    _castTitle.color = Color.Lerp(Color.white, element, castTextColorFactor);
+                    _castTitle.text = def.DisplayName + " · LISTA";
+                    _castTitle.color = Color.Lerp(Color.white, element, readyTextColorFactor);
                 }
 
                 Color flash = element;
-                flash.a = castAlpha;
+                flash.a = readyAlpha;
                 _castFlashRenderer.color = flash;
 
                 _castRoot.gameObject.SetActive(true);
                 FitCast();
-                _castWaifu.Cast();
+                _castWaifu.PlayClip(quickTrigger);
                 StartCastSequence();
             }
             catch
@@ -174,14 +148,14 @@ namespace V2.Waifu
 
         private void StartCastSequence()
         {
-            float enter = castDuration * 0.32f;
-            float fade = castDuration * 0.30f;
-            float fadeDelay = Mathf.Max(0f, castDuration - fade);
+            float enter = readyDuration * 0.32f;
+            float fade = readyDuration * 0.30f;
+            float fadeDelay = Mathf.Max(0f, readyDuration - fade);
 
             _castSeq = Sequence.Create()
-                .Group(Tween.LocalPosition(_castWaifu.transform, CastHome, enter, Ease.OutCubic))
+                .Group(Tween.LocalPosition(_castWaifu.transform, ReadyHome, enter, Ease.OutCubic))
                 .Group(Tween.Scale(_castWaifu.transform, Vector3.one, enter, Ease.OutBack))
-                .Group(Tween.Alpha(_castFlashRenderer, 0f, castDuration, Ease.OutQuad))
+                .Group(Tween.Alpha(_castFlashRenderer, 0f, readyDuration, Ease.OutQuad))
                 .Group(Tween.Alpha(_castBody, 0f, fade, Ease.InQuad, startDelay: fadeDelay))
                 .Group(Tween.Custom(_castTitle, 1f, 0f, fade, FadeTitle, Ease.InQuad,
                     startDelay: fadeDelay))
@@ -195,38 +169,37 @@ namespace V2.Waifu
             title.color = color;
         }
 
-        /// <summary>Cierra el cast en cualquier salida y libera su Hold exacto.</summary>
+        /// <summary>Cierra el flash de READY en cualquier salida (no toca el lock).</summary>
         private void FinishCast()
         {
             if (!_castPlaying) return;
             _castPlaying = false;
             if (_castSeq.isAlive) _castSeq.Stop();
             if (_castRoot != null) _castRoot.gameObject.SetActive(false);
-            GameplayLock.Release();
         }
 
-        /// <summary>Nombre legible del arquetipo para el texto del cast (sin hardcodear waifus).</summary>
-        private static string SkillLabel(SkillArchetype archetype)
+        /// <summary>
+        /// Cinemática del disparo. El callback corre UNA vez: fin natural, skip o fallo de
+        /// arranque. El efecto nunca se ejecuta dentro de la cinemática, sino al cerrarla.
+        /// </summary>
+        public void PlayFire(int slot, System.Action onFinished = null)
         {
-            switch (archetype)
+            if (_castPlaying) FinishCast();
+            if (_playing || CutscenePlayer.IsPlaying || _player == null ||
+                party == null || party.Runtime == null)
             {
-                case SkillArchetype.ClearCross: return "Cruz";
-                case SkillArchetype.ConvertToElement: return "Conversión";
-                case SkillArchetype.InstantServeUnits: return "Servicio directo";
-                case SkillArchetype.ReshuffleBoard: return "Barajado";
-                case SkillArchetype.DelayEviction: return "Retención";
-                default: return archetype.ToString();
+                if (onFinished != null) onFinished();
+                return;
             }
-        }
-
-        /// <summary>Dispara la cinematica del slot con su nombre y color de elemento.</summary>
-        public void Activate(int slot)
-        {
-            if (_playing || _player == null || party == null || party.Runtime == null) return;
 
             WaifuDefinitionSO def = party.Runtime[slot];
-            if (def == null) return;
-            _seen.Add(slot);
+            if (def == null)
+            {
+                if (onFinished != null) onFinished();
+                return;
+            }
+
+            _fireFinished = onFinished;
             _playing = true;
 
             Color element = boardView != null ? boardView.DishColor(def.Element) : def.PortraitColor;
@@ -245,23 +218,22 @@ namespace V2.Waifu
             }
             finally
             {
-                // Si el player no arranco (o fallo), el overlay no puede quedar colgado.
-                if (!_player.IsPlayingNow)
-                {
-                    _playing = false;
-                    _visual.gameObject.SetActive(false);
-                }
+                // Si el player no arranco (o fallo), el overlay no puede quedar colgado
+                // ni el efecto comprometido puede perderse.
+                if (!_player.IsPlayingNow) CloseFire();
             }
         }
 
-        private bool IsBoardBusy() =>
-            (boardView != null && boardView.IsBusy) ||
-            (session != null && session.IsResolving);
+        private void OnFinished() => CloseFire();
 
-        private void OnFinished()
+        /// <summary>Unico cierre del disparo: apaga el overlay y entrega el callback una vez.</summary>
+        private void CloseFire()
         {
             _playing = false;
             if (_visual != null) _visual.gameObject.SetActive(false);
+            System.Action finished = _fireFinished;
+            _fireFinished = null;
+            if (finished != null) finished();
         }
 
         private void BuildOverlay()
@@ -283,31 +255,31 @@ namespace V2.Waifu
                 new Color(1f, 1f, 1f, 0.7f));
             // Sin PlayableDirector: CutscenePlayer usa su duracion de respaldo.
             _player = _root.gameObject.AddComponent<CutscenePlayer>();
-            _player.Bind(_waifu, help != null ? help.gameObject : null, duration, skipGrace);
+            _player.Bind(_waifu, help != null ? help.gameObject : null, duration, skipGrace,
+                bigTrigger);
             _player.Finished += OnFinished;
 
             _visual.gameObject.SetActive(false);
         }
 
         /// <summary>
-        /// Overlay del cast: flash full-screen del color del elemento (translúcido, muy por
-        /// debajo del backdrop del Ready) + un actor chico y un texto. Vive separado del
-        /// overlay del Ready para que ambos puedan convivir sin compartir estado.
+        /// Flash de READY (sorting 300, debajo del backdrop 500) con actor chico y texto.
         /// </summary>
         private void BuildCastOverlay()
         {
-            _castRoot = new GameObject("WaifuCastOverlay").transform;
+            _castRoot = new GameObject("WaifuReadyOverlay").transform;
             _castRoot.SetParent(transform, false);
 
-            SpriteRenderer flash = Block(_castRoot, "CastFlash", DishSprites.Solid(),
+            SpriteRenderer flash = Block(_castRoot, "ReadyFlash", DishSprites.Solid(),
                 new Color(1f, 1f, 1f, 0f), Vector3.one, OrderCastFlash);
             _castFlash = flash.transform;
             _castFlashRenderer = flash;
 
-            _castStage = new GameObject("CastStage").transform;
+            _castStage = new GameObject("ReadyStage").transform;
             _castStage.SetParent(_castRoot, false);
             _castWaifu = BuildWaifu(_castStage);
-            _castTitle = Label(_castStage, "CastTitle", "Nombre · Skill", -2.55f, 0.5f, Color.white);
+            _castTitle = Label(_castStage, "ReadyTitle", "Nombre · LISTA", -2.55f, 0.5f,
+                Color.white);
 
             _castRoot.gameObject.SetActive(false);
         }
@@ -347,7 +319,7 @@ namespace V2.Waifu
             _stage.localScale = Vector3.one * (cam.orthographicSize / Mathf.Max(0.01f, designOrtho));
         }
 
-        /// <summary>Mismo copiado del view real que el Ready, pero el actor del cast entra mas chico.</summary>
+        /// <summary>El flash copia el view real, con el actor chico para no tapar el tablero.</summary>
         private void FitCast()
         {
             UnityEngine.Camera cam = UnityEngine.Camera.main;
@@ -361,13 +333,17 @@ namespace V2.Waifu
             _castRoot.position = center;
             _castFlash.localScale = new Vector3(width * 1.02f, height * 1.02f, 1f);
             _castStage.localScale = Vector3.one *
-                (cam.orthographicSize / Mathf.Max(0.01f, designOrtho) * castActorScale);
+                (cam.orthographicSize / Mathf.Max(0.01f, designOrtho) * readyActorScale);
         }
 
-        /// <summary>Destroy a mitad del cast: el contador del lock no puede quedar tomado.</summary>
+        /// <summary>
+        /// Destroy: el flash no toca el lock; la cinematica grande lo libera en su propio
+        /// CutscenePlayer.OnDestroy. No se ejecuta un efecto a mitad de teardown.
+        /// </summary>
         private void OnDestroy()
         {
             if (_castPlaying) FinishCast();
+            _fireFinished = null;
         }
 
         private static SpriteRenderer Block(Transform parent, string name, Sprite sprite, Color color,

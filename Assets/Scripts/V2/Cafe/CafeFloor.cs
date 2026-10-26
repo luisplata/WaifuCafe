@@ -19,9 +19,11 @@ namespace V2.Cafe
         [SerializeField, Range(1, 5)] private int seatCount = 5;
 
         [Header("Spawner de pedidos")]
-        [SerializeField] private float arrivalInterval = 5.5f;
-        [SerializeField] private float minArrivalInterval = 3.5f;
-        [SerializeField] private float arrivalRampPerMinute = 0.25f;
+        [Tooltip("Tiempo de rampa (s): la dificultad normalizada 0..1 se completa aca")]
+        [SerializeField] private float rampDuration = 180f;
+        [Tooltip("X = dificultad 0..1 sobre rampDuration. Y = intervalo entre llegadas (s). " +
+                 "Despues de X = 1 se queda en el ultimo valor.")]
+        [SerializeField] private AnimationCurve arrivalCurve = DefaultArrivalCurve();
         [SerializeField, Range(1, 2)] private int orderPlatesMin = 1;
         [SerializeField, Range(1, 2)] private int orderPlatesMax = 2;
         [SerializeField, Range(1, 6)] private int orderUnitsMin = 3;
@@ -90,7 +92,7 @@ namespace V2.Cafe
 
             _rng = new System.Random(seed != 0 ? seed : System.Environment.TickCount);
             _book = new OrderBook();
-            _interval = arrivalInterval;
+            _interval = IntervalAt(0f);
 
             BuildSeats();
             _bank = gameObject.AddComponent<OverflowBankHud>();
@@ -123,14 +125,25 @@ namespace V2.Cafe
                 float dt = Time.deltaTime;
                 _arrivalClock += dt;
                 _rampClock += dt;
+                _interval = IntervalAt(_rampClock);
                 if (_arrivalClock < _interval) continue;
 
                 _arrivalClock -= _interval;
                 TrySpawn();
-                _interval = Mathf.Max(minArrivalInterval,
-                    arrivalInterval - _rampClock * (arrivalRampPerMinute / 60f));
             }
         }
+
+        /// <summary>X = dificultad (Clamp01: X = 1 queda fija); Y = segundos entre llegadas.</summary>
+        private float IntervalAt(float seconds)
+        {
+            if (arrivalCurve == null || arrivalCurve.length == 0) return 4f;
+            float t = rampDuration > 0f ? Mathf.Clamp01(seconds / rampDuration) : 1f;
+            return Mathf.Max(0.5f, arrivalCurve.Evaluate(t));
+        }
+
+        /// <summary>Curva por defecto: arranca tranquilo (9 s) y acelera hasta 4 s.</summary>
+        private static AnimationCurve DefaultArrivalCurve() =>
+            new AnimationCurve(new Keyframe(0f, 9f), new Keyframe(0.5f, 6f), new Keyframe(1f, 4f));
 
         private void TrySpawn()
         {

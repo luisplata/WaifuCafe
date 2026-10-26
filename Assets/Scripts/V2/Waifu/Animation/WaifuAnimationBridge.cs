@@ -54,6 +54,25 @@ namespace V2.Waifu.Animation
         public void Cast() => Fire(castTrigger, _hasCast);
         public void Activate() => Fire(activateTrigger, _hasActivate);
 
+        /// <summary>
+        /// Trigger por nombre configurable. Si el controller no lo declara, se ignora:
+        /// el mismo contrato tolerante que el resto del bridge.
+        /// </summary>
+        public void PlayTrigger(string trigger)
+        {
+            if (!IsReady || string.IsNullOrEmpty(trigger) || !DeclaresTrigger(trigger)) return;
+            animator.ResetTrigger(trigger);
+            animator.SetTrigger(trigger);
+        }
+
+        private bool DeclaresTrigger(string trigger)
+        {
+            foreach (AnimatorControllerParameter parameter in animator.parameters)
+                if (parameter.type == AnimatorControllerParameterType.Trigger &&
+                    parameter.name == trigger) return true;
+            return false;
+        }
+
         public void SetCooldown(bool on)
         {
             if (!_hasCooldown) return;

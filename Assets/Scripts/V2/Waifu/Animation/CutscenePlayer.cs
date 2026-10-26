@@ -26,6 +26,8 @@ namespace V2.Waifu.Animation
         [SerializeField] private bool playOnStart = true;
         [SerializeField] private float fallbackDuration = 2f;
         [SerializeField] private float skipGrace = 0.2f;
+        [Tooltip("Trigger one-shot del modo grande (lo define el director)")]
+        [SerializeField] private string activateTrigger = "Activate";
 
         [Header("Skip (Input System: mouse, touch o tecla)")]
         [SerializeField] private Key skipKey = Key.Escape;
@@ -72,12 +74,14 @@ namespace V2.Waifu.Animation
         }
 
         /// <summary>Cablea referencias cuando el overlay se arma por codigo (sin PlayableDirector).</summary>
-        public void Bind(WaifuView view, GameObject help, float duration, float grace)
+        public void Bind(WaifuView view, GameObject help, float duration, float grace,
+            string trigger = "Activate")
         {
             waifu = view;
             helpRoot = help;
             fallbackDuration = Mathf.Max(0.1f, duration);
             skipGrace = Mathf.Max(0f, grace);
+            if (!string.IsNullOrEmpty(trigger)) activateTrigger = trigger;
             playOnStart = false;
         }
 
@@ -94,7 +98,7 @@ namespace V2.Waifu.Animation
                 if (waifu != null)
                 {
                     waifu.SetCooldown(false);
-                    waifu.Activate();
+                    waifu.PlayClip(activateTrigger);
                 }
 
                 if (director != null && director.playableAsset != null) director.Play();
