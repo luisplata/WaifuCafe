@@ -27,6 +27,39 @@ DEMO_PATHS = [
     "Assets/Plugins/PrimeTween/Demo",
 ]
 
+# El Editor vuelve a poner estos flags en 1 cuando abre el proyecto, asi que
+# se fuerzan aca. Con m_Enabled: 1 el linker corre con EnableUnityConnect y
+# arrastra UnityConnectModule / UnityAnalyticsModule / UnityConsentModule al
+# player, ademas de telemetria de "engine diagnostics".
+CONNECT_SETTINGS = "ProjectSettings/UnityConnectSettings.asset"
+CONNECT_FLAGS = [
+    ("  m_Enabled: 1\n  m_TestMode: 0\n  m_EventOldUrl", "  m_Enabled: 0\n  m_TestMode: 0\n  m_EventOldUrl"),
+    ("  InsightsSettings:\n    m_EngineDiagnosticsEnabled: 1", "  InsightsSettings:\n    m_EngineDiagnosticsEnabled: 0"),
+    ("    m_CaptureEditorExceptions: 1", "    m_CaptureEditorExceptions: 0"),
+    (
+        "  UnityAnalyticsSettings:\n    m_Enabled: 0\n    m_TestMode: 0\n    m_InitializeOnStartup: 1",
+        "  UnityAnalyticsSettings:\n    m_Enabled: 0\n    m_TestMode: 0\n    m_InitializeOnStartup: 0",
+    ),
+    ("  UnityAdsSettings:\n    m_Enabled: 0\n    m_InitializeOnStartup: 1", "  UnityAdsSettings:\n    m_Enabled: 0\n    m_InitializeOnStartup: 0"),
+]
+
+
+def disable_unity_connect() -> None:
+    path = pathlib.Path(CONNECT_SETTINGS)
+    if not path.exists():
+        print(f"::warning::no existe {CONNECT_SETTINGS}")
+        return
+    text = path.read_text(encoding="utf-8")
+    changed = 0
+    for old, new in CONNECT_FLAGS:
+        if old in text:
+            text = text.replace(old, new, 1)
+            changed += 1
+        elif new not in text:
+            print(f"::warning::no se pudo forzar flag en {CONNECT_SETTINGS}: {old.splitlines()[-1].strip()}")
+    path.write_text(text, encoding="utf-8")
+    print(f"Unity Services: {changed} flag(s) apagados")
+
 
 def main() -> int:
     manifest_path = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "Packages/manifest.json")
@@ -51,6 +84,8 @@ def main() -> int:
             print(f"samples borrados: {raw}")
         if meta.exists():
             meta.unlink()
+
+    disable_unity_connect()
 
     print(f"paquetes removidos: {', '.join(removed) or '(ninguno)'}")
     if missing:
