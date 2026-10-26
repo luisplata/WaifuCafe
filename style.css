@@ -603,6 +603,76 @@ img {
   color: var(--text-muted);
 }
 
+/* ---- Acceso anticipado (itch.io) ---- */
+.early-access {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2rem;
+  align-items: center;
+  padding: 1.75rem 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.early-body .eyebrow {
+  margin-bottom: 0.5rem;
+}
+
+.early-body h2 {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.6vw, 1.75rem);
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.early-body > p {
+  margin: 0;
+  max-width: 54ch;
+  color: var(--text-muted);
+}
+
+.early-list {
+  margin: 0.9rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.early-list li {
+  margin-bottom: 0.3rem;
+}
+
+.early-note {
+  margin: 1rem 0 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.early-note a {
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.early-embed {
+  width: 100%;
+  max-width: 552px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.early-embed iframe {
+  display: block;
+  width: 100%;
+  height: 167px;
+  border: 0;
+}
+
 /* ---- Support ---- */
 .support-card {
   display: flex;
@@ -794,6 +864,11 @@ img {
   .feature-split {
     grid-template-columns: 1fr;
   }
+
+  .early-access {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
 }
 
 @media (max-width: 640px) {
@@ -855,6 +930,14 @@ img {
 
   .feature-split {
     padding: 1rem;
+  }
+
+  .early-access {
+    padding: 1.35rem 1.1rem;
+  }
+
+  .early-embed iframe {
+    height: 150px;
   }
 
   .support-card {
