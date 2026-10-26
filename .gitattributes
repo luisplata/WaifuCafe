@@ -169,3 +169,6 @@ Packages/packages-lock.json linguist-generated
 
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
+
+# GitHub Pages no resuelve Git LFS: los assets del sitio van como blobs normales
+site-assets/** -filter -diff -merge
