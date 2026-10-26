@@ -95,6 +95,26 @@ jobs:
       - name: Free disk space
         run: bash .github/workflows/scripts/free_disk_space.sh
 
+      - name: Preflight signing config
+        shell: bash
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          ALIAS_PASS: ${{ secrets.ANDROID_KEYALIAS_PASS }}
+          ALIAS_NAME: ${{ vars.ANDROID_KEYALIAS_NAME || 'waifucafe' }}
+        run: |
+          set -euo pipefail
+          missing=0
+          check() { if [ -z "${!1:-}" ]; then echo "::error::Falta configurar $2"; missing=1; fi; }
+          check KS_B64    "secret ANDROID_KEYSTORE_BASE64"
+          check KS_PASS   "secret ANDROID_KEYSTORE_PASS"
+          check ALIAS_PASS "secret ANDROID_KEYALIAS_PASS"
+          echo "Keystore alias: $ALIAS_NAME"
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::La firma no puede continuar sin keystore y passwords."
+            exit 1
+          fi
+
       - name: Build Android AAB
         uses: game-ci/unity-builder@v4
         env:
@@ -112,7 +132,7 @@ jobs:
           androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           androidKeystoreName: .github/release.keystore   # unity-builder escribe el keystore desde base64
           androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
-          androidKeyaliasName: ${{ vars.ANDROID_KEYALIAS_NAME }}
+          androidKeyaliasName: ${{ vars.ANDROID_KEYALIAS_NAME || 'waifucafe' }}
           androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
 
       - name: Verify and stage AAB
