@@ -116,7 +116,7 @@ namespace V2.Waifu
         public bool Fire(int slot)
         {
             // Cinematica (o cualquier otro bloqueo global): la carta no dispara.
-            if (InputLock.IsLocked) return false;
+            if (GameplayLock.IsLocked) return false;
 
             if (_executor != null && _executor.TryFire(slot))
             {

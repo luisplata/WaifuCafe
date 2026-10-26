@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using PrimeTween;
 using UnityEngine;
 using V2.Board;
+using V2.Helpers;
 using WaifuCafe.Core;
 
 namespace V2.Cafe
@@ -60,6 +61,8 @@ namespace V2.Cafe
 
         private System.Random _rng;
         private float _interval;
+        private float _arrivalClock;
+        private float _rampClock;
         private int _seq;
         private int _right = -1;
 
@@ -67,6 +70,14 @@ namespace V2.Cafe
         public int Coins { get; private set; }
 
         public OrderBook Book => _book;
+
+        /// <summary>Pedidos creados (diagnostico: sirve para probar que el reloj se pausa).</summary>
+        public int Arrived => _seq;
+
+        /// <summary>Segundos de rampa acumulados; solo avanza cuando el gameplay no esta bloqueado.</summary>
+        public float DifficultySeconds => _rampClock;
+
+        public float ArrivalInterval => _interval;
 
         private int Side => _right;
         private void Start()
@@ -101,19 +112,29 @@ namespace V2.Cafe
 
         private IEnumerator SpawnLoop()
         {
-            float elapsed = 0f;
             while (true)
             {
-                yield return new WaitForSeconds(_interval);
-                elapsed += _interval;
+                yield return null;
+
+                // Un solo concepto: si el gameplay esta bloqueado (resolucion o cinematica)
+                // el reloj de llegadas Y el de dificultad quedan congelados.
+                if (GameplayLock.IsLocked) continue;
+
+                float dt = Time.deltaTime;
+                _arrivalClock += dt;
+                _rampClock += dt;
+                if (_arrivalClock < _interval) continue;
+
+                _arrivalClock -= _interval;
                 TrySpawn();
                 _interval = Mathf.Max(minArrivalInterval,
-                    arrivalInterval - elapsed * (arrivalRampPerMinute / 60f));
+                    arrivalInterval - _rampClock * (arrivalRampPerMinute / 60f));
             }
         }
 
         private void TrySpawn()
         {
+            if (GameplayLock.IsLocked) return;
             Seat seat = FreeSeat();
             if (seat == null) return;
 

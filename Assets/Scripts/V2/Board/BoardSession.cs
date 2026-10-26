@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using V2.Helpers;
 using WaifuCafe.Core;
 
 namespace V2.Board
@@ -59,7 +60,7 @@ namespace V2.Board
                 return false;
             }
 
-            IsResolving = true;
+            BeginResolve();
             view.PlayResolve(a, b, result, () => CompleteMove(result));
             return true;
         }
@@ -90,7 +91,7 @@ namespace V2.Board
                 return true;
             }
 
-            IsResolving = true;
+            BeginResolve();
             view.PlaySkillResolve(result, () => CompleteSkill(result));
             return true;
         }
@@ -107,7 +108,7 @@ namespace V2.Board
         {
             EnsurePlayable();
             LastSource = ResolutionSource.Swap;
-            IsResolving = false;
+            EndResolve();
             Deliver(result);
             BoardChanged?.Invoke();
         }
@@ -116,9 +117,35 @@ namespace V2.Board
         {
             EnsurePlayable();
             LastSource = ResolutionSource.Skill;
-            IsResolving = false;
+            EndResolve();
             Deliver(result);
             BoardChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Un solo Hold por resolucion (swap, cascada y skill comparten camino). Mientras
+        /// dure, CafeFloor no acumula llegadas ni rampa; la vista sigue animando. El guard
+        /// evita un segundo Hold si el mismo evento entra dos veces.
+        /// </summary>
+        private void BeginResolve()
+        {
+            if (IsResolving) return;
+            IsResolving = true;
+            GameplayLock.Hold();
+        }
+
+        /// <summary>Contraparte exacta de <see cref="BeginResolve"/>: libera una sola vez.</summary>
+        private void EndResolve()
+        {
+            if (!IsResolving) return;
+            IsResolving = false;
+            GameplayLock.Release();
+        }
+
+        /// <summary>Destroy a mitad de una resolucion: el lock no puede quedar tomado.</summary>
+        private void OnDestroy()
+        {
+            if (IsResolving) EndResolve();
         }
 
         /// <summary>

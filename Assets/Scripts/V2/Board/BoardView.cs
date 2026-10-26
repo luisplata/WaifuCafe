@@ -105,7 +105,7 @@ namespace V2.Board
         private int Width => _tiles?.GetLength(0) ?? 0;
         private int Height => _tiles?.GetLength(1) ?? 0;
 
-        public bool IsInteractive => _session != null && !_animating && !_session.IsResolving && !InputLock.IsLocked;
+        public bool IsInteractive => _session != null && !_animating && !_session.IsResolving && !GameplayLock.IsLocked;
 
         /// <summary>Tablero ocupado: resolviendo o animando. La cinematica espera a que baje.</summary>
         public bool IsBusy => _animating || (_session != null && _session.IsResolving);

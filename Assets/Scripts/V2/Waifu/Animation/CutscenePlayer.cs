@@ -86,7 +86,7 @@ namespace V2.Waifu.Animation
         {
             if (_active != null) return;
             _active = this;
-            InputLock.Acquire();
+            GameplayLock.Hold();
             try
             {
                 _elapsed = 0f;
@@ -142,7 +142,7 @@ namespace V2.Waifu.Animation
             if (helpRoot != null) helpRoot.SetActive(false);
             if (director != null && director.state == PlayState.Playing) director.Stop();
             if (waifu != null) waifu.Idle();
-            InputLock.Release();
+            GameplayLock.Release();
         }
 
         private void OnDestroy()
