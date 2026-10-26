@@ -3,45 +3,260 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WaifuCafe — Un juego cozy de gestión de un café de waifus</title>
+  <title>WaifuCafe — El café cozy donde cada pedido cuenta una historia</title>
+  <meta name="description" content="WaifuCafe es un juego cozy de gestión de cafetería con combos de fichas, waifus con historias propias y pedidos contrarreloj. Disponible en Android.">
+  <meta name="theme-color" content="#fdf7f0">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="WaifuCafe — Café cozy con combos y waifus">
+  <meta property="og:description" content="Gestiona tu cafetería, encadena combos y desbloquea historias. Un cozy game para jugar en ratos cortos.">
+  <!-- TODO: reemplazar por {URL_PAGES}/site-assets/landing/og-image.webp cuando exista (1200x630) -->
+  <meta property="og:image" content="https://luisplata.github.io/WaifuCafe/site-assets/landing/og-image.webp">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" href="index.html">WaifuCafe</a>
-      <nav class="site-nav">
+    <div class="container container--wide header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">☕</span>
+        WaifuCafe
+      </a>
+      <nav class="site-nav" aria-label="Navegación principal">
         <a href="index.html" class="active">Home</a>
-        <a href="policy.html">Privacy Policy</a>
+        <a href="#novedades">Novedades</a>
+        <a href="#personajes">Personajes</a>
+        <a href="#galeria">Galería</a>
+        <a href="#soporte">Soporte</a>
+        <a href="policy.html">Privacy</a>
         <a href="terms.html">Terms</a>
       </nav>
     </div>
   </header>
 
-  <main class="content">
-    <section class="card hero">
-      <h1>WaifuCafe</h1>
-      <p class="tagline">Un juego cozy de gestión de un café de waifus</p>
-      <p>Prepara café, conoce personajes adorables y convierte tu cafetería en el rincón más acogedor del mundo.</p>
+  <main>
+    <!-- ============ HERO ============ -->
+    <section class="hero-banner" id="home">
+      <!-- TODO imagen: site-assets/landing/hero-keyart.webp (1920x1080) -->
+      <div class="hero-art media ph" aria-hidden="true">
+        <span>hero-keyart · 1920×1080</span>
+      </div>
+      <div class="hero-overlay" aria-hidden="true"></div>
+
+      <div class="container container--wide hero-inner">
+        <p class="eyebrow">Nuevo · Temporada de otoño</p>
+        <h1 class="hero-title">WaifuCafe</h1>
+        <p class="hero-tagline">El café cozy donde cada pedido cuenta una historia.</p>
+        <p class="hero-copy">
+          Gestiona tu cafetería, encadena combos de fichas y sirve a tiempo.
+          Cada waifu tiene su pasado, su turno y su pedido favorito.
+        </p>
+
+        <div class="hero-actions">
+          <!-- TODO: reemplazar REPLACE_ME por el package id real de Play Store -->
+          <a class="btn btn-primary" href="https://play.google.com/store/apps/details?id=REPLACE_ME">
+            <span class="btn-label">Jugar en</span>
+            <span class="btn-strong">Google Play</span>
+          </a>
+          <a class="btn btn-ghost" href="#personajes">Conocer el elenco</a>
+        </div>
+
+        <p class="hero-meta">Android · Próximamente en iOS · Gratis con compras opcionales</p>
+      </div>
     </section>
 
-    <section class="card links-card">
-      <h2>Información legal</h2>
-      <p>Consulta nuestras políticas antes de usar el juego:</p>
-      <ul class="link-list">
-        <li><a href="policy.html">Política de Privacidad</a></li>
-        <li><a href="terms.html">Términos y Condiciones</a></li>
-      </ul>
+    <!-- ============ NOVEDADES ============ -->
+    <section class="section" id="novedades">
+      <div class="container container--wide">
+        <div class="section-head">
+          <h2>Últimas novedades</h2>
+          <a class="section-link" href="#novedades">Ver todas</a>
+        </div>
+
+        <div class="grid grid-3">
+          <article class="news-card">
+            <!-- TODO imagen: site-assets/landing/news-01.webp (1280x720) -->
+            <figure class="media ratio-16x9 ph"><span>news-01 · 1280×720</span></figure>
+            <div class="news-body">
+              <p class="news-date">24 OCT 2026</p>
+              <h3><a href="#novedades">Temporada Otoño: menú de calabaza y nuevos pedidos</a></h3>
+              <p class="news-excerpt">Tres recetas de temporada, un cliente misterioso y un bonus de propinas por combo perfecto.</p>
+            </div>
+          </article>
+
+          <article class="news-card">
+            <!-- TODO imagen: site-assets/landing/news-02.webp (1280x720) -->
+            <figure class="media ratio-16x9 ph"><span>news-02 · 1280×720</span></figure>
+            <div class="news-body">
+              <p class="news-date">18 OCT 2026</p>
+              <h3><a href="#novedades">Nueva waifu: Camille, la barista nocturna</a></h3>
+              <p class="news-excerpt">Turno noche desbloqueado. Camille llega con una habilidad pasiva de enfriado y dos capítulos de historia.</p>
+            </div>
+          </article>
+
+          <article class="news-card">
+            <!-- TODO imagen: site-assets/landing/news-03.webp (1280x720) -->
+            <figure class="media ratio-16x9 ph"><span>news-03 · 1280×720</span></figure>
+            <div class="news-body">
+              <p class="news-date">10 OCT 2026</p>
+              <h3><a href="#novedades">Actualización 0.9: combos en cadena y pistas</a></h3>
+              <p class="news-excerpt">Las cascadas ahora se telegrafían por ola. Ajustes de dificultad y una pista nueva para pedidos imposibles.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ AVISOS ============ -->
+    <section class="section section--tight" id="avisos">
+      <div class="container container--wide">
+        <div class="section-head">
+          <h2>Últimos avisos</h2>
+          <a class="section-link" href="#avisos">Ver todos</a>
+        </div>
+
+        <ul class="notice-list">
+          <li>
+            <time datetime="2026-10-24">10/24/26</time>
+            <a href="#avisos">Mantenimiento programado: 26 de octubre, 03:00–05:00 UTC</a>
+          </li>
+          <li>
+            <time datetime="2026-10-20">10/20/26</time>
+            <a href="#avisos">Compatibilidad verificada con Android 14 y 15</a>
+          </li>
+          <li>
+            <time datetime="2026-10-15">10/15/26</time>
+            <a href="#avisos">Cambios en las recompensas diarias</a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============ EVENTO DESTACADO ============ -->
+    <section class="section" id="evento">
+      <div class="container container--wide">
+        <div class="feature-split">
+          <!-- TODO imagen: site-assets/landing/featured-event.webp (1600x900) -->
+          <figure class="media ratio-16x9 ph feature-media"><span>featured-event · 1600×900</span></figure>
+          <div class="feature-body">
+            <p class="eyebrow eyebrow--dark">Evento destacado</p>
+            <h2>Festival del Café de Medianoche</h2>
+            <p>
+              Del 15 de octubre al 1 de noviembre la cafetería abre de noche.
+              Sirve pedidos a clientes somnolientos, desbloquea la receta secreta
+              y consigue el delantal edición limitada.
+            </p>
+            <ul class="feature-list">
+              <li>3 recetas de evento y 1 decoración exclusiva</li>
+              <li>Jefa de turno: Camille (habilidad de enfriado)</li>
+              <li>Recompensa final: delantal «Medianoche»</li>
+            </ul>
+            <a class="btn btn-primary btn-small" href="#evento">Ver detalles del evento</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PERSONAJES ============ -->
+    <section class="section section--alt" id="personajes">
+      <div class="container container--wide">
+        <div class="section-head">
+          <h2>Conoce al elenco</h2>
+          <a class="section-link" href="#personajes">Ver todas</a>
+        </div>
+
+        <div class="grid grid-3">
+          <article class="cast-card">
+            <!-- TODO imagen: site-assets/landing/cast-aiko.webp (900x1200) -->
+            <figure class="media ratio-3x4 ph"><span>cast-aiko · 900×1200</span></figure>
+            <div class="cast-body">
+              <h3>Aiko</h3>
+              <p class="cast-role">Espresso · Turno mañana</p>
+              <p>Rápida, directa y adicta al primer café del día. Su habilidad acelera la barra.</p>
+            </div>
+          </article>
+
+          <article class="cast-card">
+            <!-- TODO imagen: site-assets/landing/cast-camille.webp (900x1200) -->
+            <figure class="media ratio-3x4 ph"><span>cast-camille · 900×1200</span></figure>
+            <div class="cast-body">
+              <h3>Camille</h3>
+              <p class="cast-role">Nocturna · Turno noche</p>
+              <p>Silenciosa y precisa. Mantiene los pedidos frescos más tiempo mientras la cafetería duerme.</p>
+            </div>
+          </article>
+
+          <article class="cast-card">
+            <!-- TODO imagen: site-assets/landing/cast-yuzu.webp (900x1200) -->
+            <figure class="media ratio-3x4 ph"><span>cast-yuzu · 900×1200</span></figure>
+            <div class="cast-body">
+              <h3>Yuzu</h3>
+              <p class="cast-role">Matcha · Turno tarde</p>
+              <p>Optimista y torpe. Sus combos dan propinas extra si no se le quema nada.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ GALERÍA ============ -->
+    <section class="section" id="galeria">
+      <div class="container container--wide">
+        <div class="section-head">
+          <h2>Galería</h2>
+          <a class="section-link" href="#galeria">Ver más</a>
+        </div>
+
+        <div class="grid grid-3">
+          <!-- TODO imagen: site-assets/landing/screenshot-01.webp (1600x900) -->
+          <figure class="media ratio-16x9 ph"><span>screenshot-01 · 1600×900</span></figure>
+          <!-- TODO imagen: site-assets/landing/screenshot-02.webp (1600x900) -->
+          <figure class="media ratio-16x9 ph"><span>screenshot-02 · 1600×900</span></figure>
+          <!-- TODO imagen: site-assets/landing/screenshot-03.webp (1600x900) -->
+          <figure class="media ratio-16x9 ph"><span>screenshot-03 · 1600×900</span></figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SOPORTE ============ -->
+    <section class="section" id="soporte">
+      <div class="container container--wide">
+        <div class="support-card">
+          <div>
+            <h2>¿Necesitas ayuda?</h2>
+            <p>Reporta un bug, pide una recuperación de progreso o cuéntanos qué receta falta.</p>
+          </div>
+          <!-- TODO: reemplazar por el correo real de soporte -->
+          <a class="btn btn-primary" href="mailto:support@example.com?subject=WaifuCafe%20—%20Soporte">
+            Escribir a soporte
+          </a>
+        </div>
+      </div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container footer-inner">
-      <span>© 2026 WaifuCafe. Todos los derechos reservados.</span>
-      <nav>
+    <div class="container container--wide footer-inner">
+      <div class="footer-brand">
+        <span class="brand"><span class="brand-mark" aria-hidden="true">☕</span> WaifuCafe</span>
+        <p class="footer-note">Un cozy game de cafetería hecho con cariño.</p>
+      </div>
+
+      <nav class="footer-nav" aria-label="Enlaces legales">
         <a href="policy.html">Privacy Policy</a>
-        <a href="terms.html">Terms</a>
+        <a href="terms.html">Terms &amp; Conditions</a>
+        <a href="#soporte">Soporte</a>
       </nav>
+
+      <div class="social-row" aria-label="Redes sociales">
+        <!-- TODO: reemplazar # por los enlaces reales -->
+        <a href="#" aria-label="Discord">Discord</a>
+        <a href="#" aria-label="X / Twitter">X</a>
+        <a href="#" aria-label="YouTube">YouTube</a>
+      </div>
+    </div>
+
+    <div class="container container--wide footer-legal">
+      <span>© 2026 WaifuCafe. Todos los derechos reservados.</span>
     </div>
   </footer>
 </body>
