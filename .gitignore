@@ -111,3 +111,6 @@ InitTestScene*.unity*
 .github/*.jks
 *.keystore
 !/**/debug.keystore
+
+# Arte candidato del landing (bake-off de checkpoints, no se publica)
+art-candidates/

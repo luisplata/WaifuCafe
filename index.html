@@ -9,9 +9,13 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="WaifuCafe — Café cozy con combos y waifus">
   <meta property="og:description" content="Gestiona tu cafetería, encadena combos y desbloquea historias. Un cozy game para jugar en ratos cortos.">
-  <!-- TODO: reemplazar por {URL_PAGES}/site-assets/landing/og-image.webp cuando exista (1200x630) -->
-  <meta property="og:image" content="https://luisplata.github.io/WaifuCafe/site-assets/landing/og-image.webp">
+  <!-- PRESET DE IMAGENES: pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2
+       Para cambiar de estilo, reemplaza este nombre de carpeta en todos los src/url de abajo. -->
+  <meta property="og:image" content="https://luisplata.github.io/WaifuCafe/site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/og-image.webp">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" href="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/app-icon.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -36,9 +40,8 @@
   <main>
     <!-- ============ HERO ============ -->
     <section class="hero-banner" id="home">
-      <!-- TODO imagen: site-assets/landing/hero-keyart.webp (1920x1080) -->
-      <div class="hero-art media ph" aria-hidden="true">
-        <span>hero-keyart · 1920×1080</span>
+      <div class="hero-art" aria-hidden="true">
+        <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/hero-keyart.webp" alt="" width="1536" height="864" fetchpriority="high">
       </div>
       <div class="hero-overlay" aria-hidden="true"></div>
 
@@ -74,7 +77,9 @@
         <div class="grid grid-3">
           <article class="news-card">
             <!-- TODO imagen: site-assets/landing/news-01.webp (1280x720) -->
-            <figure class="media ratio-16x9 ph"><span>news-01 · 1280×720</span></figure>
+            <figure class="media ratio-16x9">
+            <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/news-01.webp" alt="Menú de otoño con latte de calabaza y hojas de arce" width="1024" height="576" loading="lazy">
+          </figure>
             <div class="news-body">
               <p class="news-date">24 OCT 2026</p>
               <h3><a href="#novedades">Temporada Otoño: menú de calabaza y nuevos pedidos</a></h3>
@@ -84,7 +89,9 @@
 
           <article class="news-card">
             <!-- TODO imagen: site-assets/landing/news-02.webp (1280x720) -->
-            <figure class="media ratio-16x9 ph"><span>news-02 · 1280×720</span></figure>
+            <figure class="media ratio-16x9">
+            <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/news-02.webp" alt="Camille, la barista nocturna, en la cafetería de noche" width="1024" height="576" loading="lazy">
+          </figure>
             <div class="news-body">
               <p class="news-date">18 OCT 2026</p>
               <h3><a href="#novedades">Nueva waifu: Camille, la barista nocturna</a></h3>
@@ -94,7 +101,9 @@
 
           <article class="news-card">
             <!-- TODO imagen: site-assets/landing/news-03.webp (1280x720) -->
-            <figure class="media ratio-16x9 ph"><span>news-03 · 1280×720</span></figure>
+            <figure class="media ratio-16x9">
+            <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/news-03.webp" alt="Postres de temporada con croissant, fresas y café" width="1024" height="576" loading="lazy">
+          </figure>
             <div class="news-body">
               <p class="news-date">10 OCT 2026</p>
               <h3><a href="#novedades">Actualización 0.9: combos en cadena y pistas</a></h3>
@@ -135,7 +144,9 @@
       <div class="container container--wide">
         <div class="feature-split">
           <!-- TODO imagen: site-assets/landing/featured-event.webp (1600x900) -->
-          <figure class="media ratio-16x9 ph feature-media"><span>featured-event · 1600×900</span></figure>
+          <figure class="media ratio-16x9 feature-media">
+            <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/featured-event.webp" alt="Festival nocturno en la terraza de la cafetería con luces colgantes" width="1536" height="864" loading="lazy">
+          </figure>
           <div class="feature-body">
             <p class="eyebrow eyebrow--dark">Evento destacado</p>
             <h2>Festival del Café de Medianoche</h2>
@@ -166,7 +177,9 @@
         <div class="grid grid-3">
           <article class="cast-card">
             <!-- TODO imagen: site-assets/landing/cast-aiko.webp (900x1200) -->
-            <figure class="media ratio-3x4 ph"><span>cast-aiko · 900×1200</span></figure>
+            <figure class="media ratio-3x4">
+            <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/cast-aiko.webp" alt="Aiko, barista del turno mañana con delantal crema" width="768" height="1024" loading="lazy">
+          </figure>
             <div class="cast-body">
               <h3>Aiko</h3>
               <p class="cast-role">Espresso · Turno mañana</p>
@@ -176,7 +189,9 @@
 
           <article class="cast-card">
             <!-- TODO imagen: site-assets/landing/cast-camille.webp (900x1200) -->
-            <figure class="media ratio-3x4 ph"><span>cast-camille · 900×1200</span></figure>
+            <figure class="media ratio-3x4">
+            <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/cast-camille.webp" alt="Camille, barista del turno noche con delantal oscuro" width="768" height="1024" loading="lazy">
+          </figure>
             <div class="cast-body">
               <h3>Camille</h3>
               <p class="cast-role">Nocturna · Turno noche</p>
@@ -186,7 +201,9 @@
 
           <article class="cast-card">
             <!-- TODO imagen: site-assets/landing/cast-yuzu.webp (900x1200) -->
-            <figure class="media ratio-3x4 ph"><span>cast-yuzu · 900×1200</span></figure>
+            <figure class="media ratio-3x4">
+            <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/cast-yuzu.webp" alt="Yuzu, pastelera con delantal verde y batidor" width="768" height="1024" loading="lazy">
+          </figure>
             <div class="cast-body">
               <h3>Yuzu</h3>
               <p class="cast-role">Matcha · Turno tarde</p>
@@ -207,11 +224,17 @@
 
         <div class="grid grid-3">
           <!-- TODO imagen: site-assets/landing/screenshot-01.webp (1600x900) -->
-          <figure class="media ratio-16x9 ph"><span>screenshot-01 · 1600×900</span></figure>
+          <figure class="media ratio-16x9">
+            <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/screenshot-01.webp" alt="Interior de la cafetería al atardecer" width="1024" height="576" loading="lazy">
+          </figure>
           <!-- TODO imagen: site-assets/landing/screenshot-02.webp (1600x900) -->
-          <figure class="media ratio-16x9 ph"><span>screenshot-02 · 1600×900</span></figure>
+          <figure class="media ratio-16x9">
+            <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/screenshot-02.webp" alt="Salón de la cafetería con mesas, plantas y lámparas" width="1024" height="576" loading="lazy">
+          </figure>
           <!-- TODO imagen: site-assets/landing/screenshot-03.webp (1600x900) -->
-          <figure class="media ratio-16x9 ph"><span>screenshot-03 · 1600×900</span></figure>
+          <figure class="media ratio-16x9">
+            <img src="site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/screenshot-03.webp" alt="Retratos de los personajes del elenco" width="1024" height="576" loading="lazy">
+          </figure>
         </div>
       </div>
     </section>
