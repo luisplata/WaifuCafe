@@ -145,12 +145,6 @@ jobs:
           androidKeyaliasName: ${{ vars.ANDROID_KEYALIAS_NAME || 'waifucafe' }}
           androidKeyaliasPass: ${{ secrets.ANDROID_KEYALIAS_PASS }}
 
-      # Data Safety: Play escanea el binario. Si un SDK de telemetria vuelve a
-      # entrar, la declaracion "no se recopilan datos" deja de ser cierta.
-      - name: Verify no telemetry SDKs in the AAB
-        shell: bash
-        run: python3 .github/workflows/scripts/verify-aab-clean.py
-
       - name: Verify and stage AAB
         shell: bash
         run: |
@@ -165,6 +159,13 @@ jobs:
           name: android-aab
           path: release/WaifuCafe-${{ needs.validate.outputs.version }}.aab
           retention-days: 1
+
+      # Data Safety: Play escanea el binario. Si un SDK de telemetria vuelve a
+      # entrar, la declaracion "no se recopilan datos" deja de ser cierta.
+      # Va despues del upload a proposito: si falla, el AAB queda para inspeccion.
+      - name: Verify no telemetry SDKs in the AAB
+        shell: bash
+        run: python3 .github/workflows/scripts/verify-aab-clean.py
 
   publish:
     name: Create GitHub Release
