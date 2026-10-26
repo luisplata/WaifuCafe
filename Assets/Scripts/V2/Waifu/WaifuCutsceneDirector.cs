@@ -1,17 +1,19 @@
 using System.Collections.Generic;
+using PrimeTween;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using V2.Board;
+using V2.Helpers;
 using V2.Waifu.Animation;
 
 namespace V2.Waifu
 {
     /// <summary>
-    /// Conecta la party con la cinematica de activacion dentro del tablero. Construye un
-    /// overlay world-space (fondo oscuro + <see cref="WaifuView"/> + textos) por encima de
-    /// todo, dispara una vez por waifu cuando queda READY y encola si el tablero esta
-    /// resolviendo. La cinematica corta el input mientras corre. C dispara el slot de debug
-    /// aunque ya se haya visto.
+    /// Dos cinemáticas sobre la misma escena: <b>Ready</b> (una vez por waifu, overlay
+    /// oscuro de 2 s, corta el input) y <b>Cast</b> (cada skill ejecutada con éxito, flash
+    /// translúcido del color del elemento de 0.7 s que deja ver el tablero resolviendo
+    /// debajo). El cast no interrumpe un Ready en curso: si ya corre, el pedido se ignora.
+    /// C dispara el slot de debug aunque ya se haya visto.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class WaifuCutsceneDirector : MonoBehaviour
@@ -29,6 +31,20 @@ namespace V2.Waifu
         [Tooltip("Ortho de diseno del WaifuView: escala el actor al view real")]
         [SerializeField] private float designOrtho = 5.2f;
 
+        [Header("Cast (skill ejecutada)")]
+        [Tooltip("Duracion total del flash de skill (s)")]
+        [SerializeField] private float castDuration = 0.7f;
+        [Tooltip("Alpha maximo del flash del color del elemento (no es un blackout)")]
+        [SerializeField, Range(0.05f, 0.6f)] private float castAlpha = 0.34f;
+        [Tooltip("Desde que costado entra el actor, en unidades de diseno")]
+        [SerializeField] private float castEnterFromX = 2.6f;
+        [Tooltip("Escala inicial del actor antes de asentar (1 = escala final)")]
+        [SerializeField] private float castScaleFrom = 0.8f;
+        [Tooltip("Escala final del actor: mas chico que el Ready para no tapar el tablero")]
+        [SerializeField] private float castActorScale = 0.72f;
+        [Tooltip("Cuanto del color del elemento se mezcla al texto (0 = blanco)")]
+        [SerializeField, Range(0f, 1f)] private float castTextColorFactor = 0.85f;
+
         [Header("Debug")]
         [SerializeField] private Key debugKey = Key.C;
         [SerializeField] private int debugSlot;
@@ -36,7 +52,9 @@ namespace V2.Waifu
         private const int OrderActor = 502;
         private const int OrderFlash = 503;
         private const int OrderText = 520;
+        private const int OrderCastFlash = 300;
         private const float TextHeightPerUnit = 3.5f;
+        private static readonly Vector3 CastHome = new Vector3(0f, -0.35f, 0f);
 
         private readonly HashSet<int> _seen = new HashSet<int>();
         private readonly List<int> _pending = new List<int>();
@@ -49,12 +67,23 @@ namespace V2.Waifu
         private Transform _stage;
         private bool _playing;
 
+        private Transform _castRoot;
+        private Transform _castStage;
+        private Transform _castFlash;
+        private SpriteRenderer _castFlashRenderer;
+        private SpriteRenderer _castBody;
+        private WaifuView _castWaifu;
+        private TextMesh _castTitle;
+        private Sequence _castSeq;
+        private bool _castPlaying;
+
         private void Awake()
         {
             if (party == null) party = FindFirstObjectByType<WaifuPartyView>();
             if (session == null) session = FindFirstObjectByType<BoardSession>();
             if (boardView == null) boardView = FindFirstObjectByType<BoardView>();
             BuildOverlay();
+            BuildCastOverlay();
         }
 
         private void Update()
@@ -83,7 +112,7 @@ namespace V2.Waifu
                 }
             }
 
-            if (_playing || _pending.Count == 0 || IsBoardBusy()) return;
+            if (_playing || _castPlaying || _pending.Count == 0 || IsBoardBusy()) return;
             int next = _pending[0];
             _pending.RemoveAt(0);
             Activate(next);
@@ -92,6 +121,102 @@ namespace V2.Waifu
         private void LateUpdate()
         {
             if (_playing) FitToView();
+            if (_castPlaying) FitCast();
+        }
+
+        /// <summary>
+        /// Flash corto de skill. Corre en paralelo a la resolucion (no la espera) y toma
+        /// GameplayLock mientras dura. Si el Ready esta corriendo, el cast se ignora:
+        /// interrumpirlo romperia su feel y el lock anidado. El lock se libera siempre
+        /// al cerrar (fin natural, error o destroy).
+        /// </summary>
+        public void PlayCast(int slot)
+        {
+            if (_castPlaying || _playing || CutscenePlayer.IsPlaying) return;
+            if (_castRoot == null || party == null || party.Runtime == null) return;
+
+            WaifuDefinitionSO def = party.Runtime[slot];
+            if (def == null) return;
+
+            Color element = boardView != null ? boardView.DishColor(def.Element) : def.PortraitColor;
+            _castPlaying = true;
+            GameplayLock.Hold();
+            try
+            {
+                _castWaifu.ApplyIdentity(def.DisplayName, def.Element, element);
+                _castWaifu.transform.localPosition = new Vector3(castEnterFromX, CastHome.y, 0f);
+                _castWaifu.transform.localScale = Vector3.one * castScaleFrom;
+                _castBody = _castBody != null ? _castBody : _castWaifu.transform.Find("Body")
+                    .GetComponent<SpriteRenderer>();
+                _castBody.color = element;
+
+                if (_castTitle != null)
+                {
+                    _castTitle.text = def.DisplayName + " · " + SkillLabel(def.SkillArchetype);
+                    _castTitle.color = Color.Lerp(Color.white, element, castTextColorFactor);
+                }
+
+                Color flash = element;
+                flash.a = castAlpha;
+                _castFlashRenderer.color = flash;
+
+                _castRoot.gameObject.SetActive(true);
+                FitCast();
+                _castWaifu.Cast();
+                StartCastSequence();
+            }
+            catch
+            {
+                FinishCast();
+                throw;
+            }
+        }
+
+        private void StartCastSequence()
+        {
+            float enter = castDuration * 0.32f;
+            float fade = castDuration * 0.30f;
+            float fadeDelay = Mathf.Max(0f, castDuration - fade);
+
+            _castSeq = Sequence.Create()
+                .Group(Tween.LocalPosition(_castWaifu.transform, CastHome, enter, Ease.OutCubic))
+                .Group(Tween.Scale(_castWaifu.transform, Vector3.one, enter, Ease.OutBack))
+                .Group(Tween.Alpha(_castFlashRenderer, 0f, castDuration, Ease.OutQuad))
+                .Group(Tween.Alpha(_castBody, 0f, fade, Ease.InQuad, startDelay: fadeDelay))
+                .Group(Tween.Custom(_castTitle, 1f, 0f, fade, FadeTitle, Ease.InQuad,
+                    startDelay: fadeDelay))
+                .OnComplete(this, _ => FinishCast());
+        }
+
+        private static void FadeTitle(TextMesh title, float alpha)
+        {
+            Color color = title.color;
+            color.a = alpha;
+            title.color = color;
+        }
+
+        /// <summary>Cierra el cast en cualquier salida y libera su Hold exacto.</summary>
+        private void FinishCast()
+        {
+            if (!_castPlaying) return;
+            _castPlaying = false;
+            if (_castSeq.isAlive) _castSeq.Stop();
+            if (_castRoot != null) _castRoot.gameObject.SetActive(false);
+            GameplayLock.Release();
+        }
+
+        /// <summary>Nombre legible del arquetipo para el texto del cast (sin hardcodear waifus).</summary>
+        private static string SkillLabel(SkillArchetype archetype)
+        {
+            switch (archetype)
+            {
+                case SkillArchetype.ClearCross: return "Cruz";
+                case SkillArchetype.ConvertToElement: return "Conversión";
+                case SkillArchetype.InstantServeUnits: return "Servicio directo";
+                case SkillArchetype.ReshuffleBoard: return "Barajado";
+                case SkillArchetype.DelayEviction: return "Retención";
+                default: return archetype.ToString();
+            }
         }
 
         /// <summary>Dispara la cinematica del slot con su nombre y color de elemento.</summary>
@@ -164,6 +289,29 @@ namespace V2.Waifu
             _visual.gameObject.SetActive(false);
         }
 
+        /// <summary>
+        /// Overlay del cast: flash full-screen del color del elemento (translúcido, muy por
+        /// debajo del backdrop del Ready) + un actor chico y un texto. Vive separado del
+        /// overlay del Ready para que ambos puedan convivir sin compartir estado.
+        /// </summary>
+        private void BuildCastOverlay()
+        {
+            _castRoot = new GameObject("WaifuCastOverlay").transform;
+            _castRoot.SetParent(transform, false);
+
+            SpriteRenderer flash = Block(_castRoot, "CastFlash", DishSprites.Solid(),
+                new Color(1f, 1f, 1f, 0f), Vector3.one, OrderCastFlash);
+            _castFlash = flash.transform;
+            _castFlashRenderer = flash;
+
+            _castStage = new GameObject("CastStage").transform;
+            _castStage.SetParent(_castRoot, false);
+            _castWaifu = BuildWaifu(_castStage);
+            _castTitle = Label(_castStage, "CastTitle", "Nombre · Skill", -2.55f, 0.5f, Color.white);
+
+            _castRoot.gameObject.SetActive(false);
+        }
+
         private WaifuView BuildWaifu(Transform parent)
         {
             var go = new GameObject("WaifuView");
@@ -197,6 +345,29 @@ namespace V2.Waifu
             _root.position = center;
             _backdrop.localScale = new Vector3(width * 1.02f, height * 1.02f, 1f);
             _stage.localScale = Vector3.one * (cam.orthographicSize / Mathf.Max(0.01f, designOrtho));
+        }
+
+        /// <summary>Mismo copiado del view real que el Ready, pero el actor del cast entra mas chico.</summary>
+        private void FitCast()
+        {
+            UnityEngine.Camera cam = UnityEngine.Camera.main;
+            if (cam == null || !cam.orthographic || _castRoot == null) return;
+
+            float height = cam.orthographicSize * 2f;
+            float width = height * cam.aspect;
+            Vector3 center = cam.transform.position;
+            center.z = 0f;
+
+            _castRoot.position = center;
+            _castFlash.localScale = new Vector3(width * 1.02f, height * 1.02f, 1f);
+            _castStage.localScale = Vector3.one *
+                (cam.orthographicSize / Mathf.Max(0.01f, designOrtho) * castActorScale);
+        }
+
+        /// <summary>Destroy a mitad del cast: el contador del lock no puede quedar tomado.</summary>
+        private void OnDestroy()
+        {
+            if (_castPlaying) FinishCast();
         }
 
         private static SpriteRenderer Block(Transform parent, string name, Sprite sprite, Color color,

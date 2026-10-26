@@ -64,6 +64,7 @@ namespace V2.Waifu
         private SkillExecutor _executor;
         private BoardSession _session;
         private BoardLayoutMock _layout;
+        private WaifuCutsceneDirector _cutscene;
         private Font _font;
         private Transform _root;
         private int _sign = -1;
@@ -75,6 +76,7 @@ namespace V2.Waifu
         {
             _layout = FindFirstObjectByType<BoardLayoutMock>();
             _session = FindFirstObjectByType<BoardSession>();
+            _cutscene = FindFirstObjectByType<WaifuCutsceneDirector>();
             if (_layout != null)
             {
                 _sign = _layout.IsRight ? -1 : 1;
@@ -121,6 +123,8 @@ namespace V2.Waifu
             if (_executor != null && _executor.TryFire(slot))
             {
                 PlayFire(CardOf(slot));
+                // El cast sale recien cuando la skill se ejecuto con exito (no en el rechazo).
+                if (_cutscene != null) _cutscene.PlayCast(slot);
                 Refresh(false);
                 return true;
             }
