@@ -18,7 +18,7 @@ MonoBehaviour:
   element: 1
   role: 1
   chargeCost: 10
-  cooldownMatches: 0
+  cooldownMatches: 2
   skillArchetype: 2
   potency: 4
   passiveId: 0

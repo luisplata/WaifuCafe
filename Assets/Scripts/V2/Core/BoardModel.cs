@@ -20,6 +20,9 @@ namespace WaifuCafe.Core
         /// <summary>Tope de pasadas encadenadas: evita un loop con un IRandom degenerado.</summary>
         private const int MaxCascades = 64;
 
+        /// <summary>Intentos de barajado antes de devolver la grilla original.</summary>
+        private const int ShuffleAttempts = 100;
+
         private readonly Dish[,] _cells;
         private readonly bool[,] _filled;
         private readonly IRandom _rng;
@@ -148,8 +151,95 @@ namespace WaifuCafe.Core
                 return false;
             }
 
-            result = Resolve(groups);
+            result = Resolve(null, groups);
             return true;
+        }
+
+        /// <summary>
+        /// Limpia las celdas pedidas (skills), sin swap ni validacion de linea. Cada celda
+        /// aporta 1 unidad del plato que tenia y la ola 1 son esas celdas. Despues aplica
+        /// gravedad + refill y encadena los matches que aparezcan.
+        /// </summary>
+        public ResolveResult ClearCells(IReadOnlyList<BoardPos> cells)
+        {
+            var wave = new List<BoardPos>();
+            var seen = new bool[Width, Height];
+
+            if (cells != null)
+            {
+                foreach (BoardPos p in cells)
+                {
+                    if (!InBounds(p.X, p.Y) || seen[p.X, p.Y] || !_filled[p.X, p.Y]) continue;
+                    seen[p.X, p.Y] = true;
+                    wave.Add(p);
+                }
+            }
+
+            return wave.Count == 0 ? ResolveResult.Empty : Resolve(wave, null);
+        }
+
+        /// <summary>
+        /// Convierte las celdas pedidas al plato dado (skills) y resuelve los matches que
+        /// resulten. Las celdas que no forman linea quedan convertidas. Si no cambia nada,
+        /// devuelve <see cref="ResolveResult.Empty"/>.
+        /// </summary>
+        public ResolveResult ConvertCells(IReadOnlyList<BoardPos> cells, Dish dish)
+        {
+            if (cells == null) return ResolveResult.Empty;
+
+            bool changed = false;
+            foreach (BoardPos p in cells)
+            {
+                if (!InBounds(p.X, p.Y) || !_filled[p.X, p.Y] || _cells[p.X, p.Y] == dish) continue;
+                _cells[p.X, p.Y] = dish;
+                changed = true;
+            }
+
+            if (!changed) return ResolveResult.Empty;
+
+            var groups = CollectGroups();
+            return groups.Count == 0 ? ResolveResult.Empty : Resolve(null, groups);
+        }
+
+        /// <summary>
+        /// RF-4: baraja hasta dejar la grilla sin matches inmediatos y con al menos una
+        /// jugada. Devuelve false y restaura la grilla original si no lo logra.
+        /// </summary>
+        public bool ReshuffleWithMove()
+        {
+            var original = new Dish[Width, Height];
+            var pool = new List<Dish>(Width * Height);
+
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    original[x, y] = _cells[x, y];
+                    pool.Add(_cells[x, y]);
+                }
+            }
+
+            for (int attempt = 0; attempt < ShuffleAttempts; attempt++)
+            {
+                for (int i = pool.Count - 1; i > 0; i--)
+                {
+                    int j = _rng.Next(i + 1);
+                    (pool[i], pool[j]) = (pool[j], pool[i]);
+                }
+
+                int k = 0;
+                for (int y = 0; y < Height; y++)
+                    for (int x = 0; x < Width; x++)
+                        _cells[x, y] = pool[k++];
+
+                if (!HasAnyMatch() && HasMove()) return true;
+            }
+
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
+                    _cells[x, y] = original[x, y];
+
+            return false;
         }
 
         private void FillWithoutRuns()
@@ -246,21 +336,50 @@ namespace WaifuCafe.Core
         }
 
         /// <summary>
-        /// Limpia el primer grupo y encadena mientras el refill genere lineas nuevas.
-        /// Las unidades se acumulan por grupo conectado y NO llevan multiplicador.
-        /// Cada eslabon deja su ola con las celdas exactas que limpio y la foto del tablero
-        /// ya caido: la ultima foto coincide con el estado final.
+        /// Resuelve una primera ola (grupos de un swap o celdas de una skill) y encadena
+        /// mientras el refill genere lineas nuevas. Cada eslabon deja su ola exacta y la
+        /// foto del tablero ya caido: la ultima foto coincide con el estado final.
         /// </summary>
-        private ResolveResult Resolve(List<MatchGroup> firstGroups)
+        private ResolveResult Resolve(List<BoardPos> wave, List<MatchGroup> groups)
         {
-            int cascades = 0;
-            int cleared = 0;
+            int cleared = wave != null ? wave.Count : 0;
             var units = new Dictionary<Dish, int>();
             var waves = new List<IReadOnlyList<BoardPos>>();
             var waveUnits = new List<int>();
             var snapshots = new List<BoardSnapshot>();
-            var groups = firstGroups;
 
+            if (groups != null)
+            {
+                waves.Add(CellsOf(groups));
+                waveUnits.Add(Accumulate(groups, units, ref cleared));
+                ClearCells(groups);
+            }
+            else
+            {
+                waves.Add(wave);
+                waveUnits.Add(wave.Count);
+                foreach (BoardPos p in wave)
+                {
+                    Dish dish = _cells[p.X, p.Y];
+                    units.TryGetValue(dish, out int current);
+                    units[dish] = current + 1;
+                    _filled[p.X, p.Y] = false;
+                }
+            }
+
+            ApplyGravityAndRefill();
+            snapshots.Add(BoardSnapshot.Capture(_cells));
+
+            int cascades = 1;
+            DrainCascades(ref cascades, ref cleared, units, waves, waveUnits, snapshots);
+            return new ResolveResult(cascades, cleared, units, waves, waveUnits, snapshots);
+        }
+
+        /// <summary>Encadena los matches que dejo la gravedad; cada eslabon deja ola y foto.</summary>
+        private void DrainCascades(ref int cascades, ref int cleared, Dictionary<Dish, int> units,
+            List<IReadOnlyList<BoardPos>> waves, List<int> waveUnits, List<BoardSnapshot> snapshots)
+        {
+            var groups = CollectGroups();
             while (groups.Count > 0 && cascades < MaxCascades)
             {
                 cascades++;
@@ -271,8 +390,6 @@ namespace WaifuCafe.Core
                 snapshots.Add(BoardSnapshot.Capture(_cells));
                 groups = CollectGroups();
             }
-
-            return new ResolveResult(cascades, cleared, units, waves, waveUnits, snapshots);
         }
 
         /// <summary>Celdas de todos los grupos como coordenadas de tablero (para la vista).</summary>

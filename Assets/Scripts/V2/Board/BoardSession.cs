@@ -4,10 +4,13 @@ using WaifuCafe.Core;
 
 namespace V2.Board
 {
+    /// <summary>De donde salio la resolucion que se esta entregando.</summary>
+    public enum ResolutionSource { Swap, Skill }
+
     /// <summary>
     /// Unica orquestadora de una jugada: modelo puro -> vista -> entrega de unidades.
-    /// Un solo camino para todo lo que produce unidades (hoy el swap; las skills lo
-    /// reusaran via <see cref="Deliver"/>). Sin economia ni pedidos: eso llega despues.
+    /// Un solo camino para todo lo que produce unidades: swaps y skills de tablero.
+    /// Sin economia ni pedidos: eso vive fuera.
     /// </summary>
     public sealed class BoardSession : MonoBehaviour
     {
@@ -31,6 +34,9 @@ namespace V2.Board
 
         /// <summary>Unidades por plato de la ultima jugada entregada.</summary>
         public event Action<ResolveResult> Delivered;
+
+        /// <summary>Origen de la resolucion que se esta entregando (cooldowns, feedback).</summary>
+        public ResolutionSource LastSource { get; private set; }
 
         /// <summary>El tablero cambio: la vista ya se re-sincronizo.</summary>
         public event Action BoardChanged;
@@ -68,9 +74,48 @@ namespace V2.Board
             Delivered?.Invoke(result);
         }
 
+        /// <summary>
+        /// Resolucion de una skill que YA muto el modelo: entra por las mismas olas,
+        /// telegraph, cascadas y entrega que un swap. Sin olas (conversion sin match),
+        /// solo re-sincroniza la vista.
+        /// </summary>
+        public bool ResolveSkill(ResolveResult result)
+        {
+            if (Locked || IsResolving || Board == null || view == null) return false;
+
+            if (result.Cascades <= 0)
+            {
+                view.SyncAll();
+                BoardChanged?.Invoke();
+                return true;
+            }
+
+            IsResolving = true;
+            view.PlaySkillResolve(result, () => CompleteSkill(result));
+            return true;
+        }
+
+        /// <summary>Re-sincroniza la vista tras un cambio sin resolucion (reshuffle).</summary>
+        public void SyncBoard()
+        {
+            if (view == null) return;
+            view.SyncAll();
+            BoardChanged?.Invoke();
+        }
+
         private void CompleteMove(ResolveResult result)
         {
             EnsurePlayable();
+            LastSource = ResolutionSource.Swap;
+            IsResolving = false;
+            Deliver(result);
+            BoardChanged?.Invoke();
+        }
+
+        private void CompleteSkill(ResolveResult result)
+        {
+            EnsurePlayable();
+            LastSource = ResolutionSource.Skill;
             IsResolving = false;
             Deliver(result);
             BoardChanged?.Invoke();

@@ -29,6 +29,19 @@ namespace WaifuCafe.Core
 
         public bool IsReady(Dish element, int cost) => cost > 0 && this[element] >= cost;
 
+        /// <summary>
+        /// Gasta carga del medidor compartido. Disparar una waifu baja el valor de TODAS
+        /// las de su elemento: ese es el costo real de la carga compartida.
+        /// </summary>
+        public int Spend(Dish element, int units)
+        {
+            if (units <= 0) return 0;
+            int current = this[element];
+            int spent = current < units ? current : units;
+            if (spent > 0) _charge[element] = current - spent;
+            return spent;
+        }
+
         public void Reset() => _charge.Clear();
     }
 }

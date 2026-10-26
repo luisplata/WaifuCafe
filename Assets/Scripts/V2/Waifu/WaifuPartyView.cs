@@ -1,5 +1,6 @@
 using PrimeTween;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using V2.Board;
 using WaifuCafe.Core;
 
@@ -38,6 +39,7 @@ namespace V2.Waifu
         private static readonly Color TextColor = new Color(1f, 1f, 1f, 0.86f);
         private static readonly Color MutedColor = new Color(1f, 1f, 1f, 0.62f);
         private static readonly Color ReadyColor = new Color(1f, 0.86f, 0.42f, 1f);
+        private static readonly Color CooldownColor = new Color(0.94f, 0.55f, 0.58f, 1f);
 
         private sealed class Card
         {
@@ -58,6 +60,7 @@ namespace V2.Waifu
             new System.Collections.Generic.List<Card>();
 
         private WaifuPartyRuntime _runtime;
+        private SkillExecutor _executor;
         private BoardSession _session;
         private BoardLayoutMock _layout;
         private Font _font;
@@ -80,6 +83,7 @@ namespace V2.Waifu
             if (_session != null) _session.Delivered += OnDelivered;
 
             _runtime = new WaifuPartyRuntime(party);
+            _executor = new SkillExecutor(_runtime, _session);
             Rebuild();
         }
 
@@ -93,8 +97,32 @@ namespace V2.Waifu
         private void OnDelivered(ResolveResult result)
         {
             if (_runtime == null) return;
-            _runtime.Charge(result);
+
+            // Solo los matches del jugador cobran carga y descuentan cooldown. Si la
+            // resolucion de una skill rechargea la party, el costo compartido se
+            // devolveria solo y no seria un costo.
+            bool swap = _session != null && _session.LastSource == ResolutionSource.Swap;
+            if (swap)
+            {
+                _runtime.Charge(result);
+                if (_executor != null) _executor.TickCooldowns();
+            }
+
             Refresh(true);
+        }
+
+        /// <summary>Click en la carta: dispara la skill si esta READY (sino, shake corto).</summary>
+        public bool Fire(int slot)
+        {
+            if (_executor != null && _executor.TryFire(slot))
+            {
+                PlayFire(CardOf(slot));
+                Refresh(false);
+                return true;
+            }
+
+            PlayDenied(CardOf(slot));
+            return false;
         }
 
         private void Rebuild()
@@ -126,6 +154,13 @@ namespace V2.Waifu
             root.SetParent(_root, false);
             root.localPosition = new Vector3(x, cardY, 0f);
             card.Root = root;
+
+            // Zona de click de la carta (EventSystem + Physics2DRaycaster, sin Input legado).
+            var collider = root.gameObject.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(cardWidth, cardHeight);
+            var click = root.gameObject.AddComponent<CardClick>();
+            click.Owner = this;
+            click.Slot = slot;
 
             Block(root, "Card", Vector3.zero, new Vector2(cardWidth, cardHeight), CardColor, 0);
 
@@ -163,17 +198,27 @@ namespace V2.Waifu
 
                 int amount = _runtime.AmountFor(card.Slot);
                 bool ready = _runtime.IsReady(card.Slot);
+                int cooldown = _executor != null ? _executor.CooldownLeft(card.Slot) : 0;
+                bool available = ready && cooldown <= 0;
                 bool gained = card.LastAmount >= 0 && amount > card.LastAmount;
                 card.LastAmount = amount;
 
                 if (card.Charge != null)
                 {
-                    card.Charge.text = ready ? "READY" : amount + "/" + def.ChargeCost;
-                    card.Charge.color = ready ? ReadyColor : TextColor;
+                    if (cooldown > 0)
+                    {
+                        card.Charge.text = "CD " + cooldown;
+                        card.Charge.color = CooldownColor;
+                    }
+                    else
+                    {
+                        card.Charge.text = ready ? "READY" : amount + "/" + def.ChargeCost;
+                        card.Charge.color = ready ? ReadyColor : TextColor;
+                    }
                 }
 
                 ApplyFill(card, def.ChargeCost <= 0 ? 0f : Mathf.Clamp01(amount / (float)def.ChargeCost));
-                card.ReadyGlow.SetActive(ready);
+                card.ReadyGlow.SetActive(available);
 
                 if (animate && gained)
                 {
@@ -183,7 +228,7 @@ namespace V2.Waifu
                         .Chain(Tween.Scale(card.Root, Vector3.one, chargeTime * 0.6f, Ease.OutBack));
                 }
 
-                if (ready && !card.WasReady)
+                if (available && !card.WasReady)
                 {
                     card.Pulse.Stop();
                     card.Pulse = Sequence.Create()
@@ -191,8 +236,39 @@ namespace V2.Waifu
                         .Chain(Tween.Scale(card.Portrait, Vector3.one, readyTime * 0.65f, Ease.OutBack));
                 }
 
-                card.WasReady = ready;
+                card.WasReady = available;
             }
+        }
+
+        private Card CardOf(int slot)
+        {
+            for (int i = 0; i < _cards.Count; i++)
+                if (_cards[i].Slot == slot) return _cards[i];
+            return null;
+        }
+
+        /// <summary>Skill disparada: la carta escala como feedback.</summary>
+        private void PlayFire(Card card)
+        {
+            if (card == null) return;
+
+            card.Pulse.Stop();
+            card.Pulse = Sequence.Create()
+                .Chain(Tween.Scale(card.Root, Vector3.one * 1.10f, 0.07f, Ease.OutQuad))
+                .Chain(Tween.Scale(card.Root, Vector3.one, 0.2f, Ease.OutBack));
+        }
+
+        /// <summary>Skill no disponible: shake corto, sin errores.</summary>
+        private void PlayDenied(Card card)
+        {
+            if (card == null) return;
+
+            Vector3 origin = card.Root.localPosition;
+            card.Pulse.Stop();
+            card.Pulse = Sequence.Create()
+                .Chain(Tween.LocalPosition(card.Root, origin + new Vector3(0.12f * _sign, 0f, 0f),
+                    0.05f, Ease.OutQuad))
+                .Chain(Tween.LocalPosition(card.Root, origin, 0.12f, Ease.OutBack));
         }
 
         private void ApplyFill(Card card, float t)
@@ -260,6 +336,15 @@ namespace V2.Waifu
             }
 
             return mesh;
+        }
+
+        /// <summary>Zona clickeable de una carta: no conoce reglas, solo pide disparar.</summary>
+        private sealed class CardClick : MonoBehaviour, IPointerClickHandler
+        {
+            public WaifuPartyView Owner;
+            public int Slot;
+
+            public void OnPointerClick(PointerEventData eventData) => Owner.Fire(Slot);
         }
     }
 }

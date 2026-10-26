@@ -45,6 +45,16 @@ namespace V2.Waifu
 
         public void Charge(ResolveResult result) => Charges.Add(result);
 
+        /// <summary>
+        /// Gasta la carga compartida del elemento del slot: disparar una waifu baja el
+        /// medidor de TODAS las de su elemento (ese es el costo real).
+        /// </summary>
+        public int Spend(int slot)
+        {
+            WaifuDefinitionSO def = this[slot];
+            return def == null ? 0 : Charges.Spend(def.Element, def.ChargeCost);
+        }
+
         public void Reset() => Charges.Reset();
     }
 }

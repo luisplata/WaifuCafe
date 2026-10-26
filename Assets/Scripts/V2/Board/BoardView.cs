@@ -106,6 +106,9 @@ namespace V2.Board
 
         public bool IsInteractive => _session != null && !_animating && !_session.IsResolving;
 
+        /// <summary>Celda elegida por tap: destino de las skills de tablero (Rika).</summary>
+        public BoardPos? SelectedPos => _selected == null ? (BoardPos?)null : _selected.Pos;
+
         private void Awake()
         {
             PrimeTweenConfig.SetTweensCapacity(tweenCapacity);
@@ -288,6 +291,22 @@ namespace V2.Board
             StartCoroutine(ResolveRoutine(a, b, result, onDone));
         }
 
+        /// <summary>
+        /// Skill de tablero: sin swap, pero con las mismas olas, telegraph y caida que un
+        /// match. La ola 1 son las celdas que toco la skill.
+        /// </summary>
+        public void PlaySkillResolve(ResolveResult result, Action onDone)
+        {
+            if (_animating)
+            {
+                SyncAll();
+                onDone?.Invoke();
+                return;
+            }
+
+            StartCoroutine(ResolveRoutine(null, null, result, onDone));
+        }
+
         /// <summary>Swap rechazado (RF-1): rebote con overshoot + shake + flash rojo tenue.</summary>
         public void PlayReject(BoardPos a, BoardPos b)
         {
@@ -295,42 +314,46 @@ namespace V2.Board
             StartCoroutine(RejectRoutine(a, b));
         }
 
-        private IEnumerator ResolveRoutine(BoardPos a, BoardPos b, ResolveResult result, Action onDone)
+        private IEnumerator ResolveRoutine(BoardPos? a, BoardPos? b, ResolveResult result, Action onDone)
         {
             _animating = true;
             CancelHint();
             Select(null);
-            _juice.PlaySwap();
+            bool swap = a.HasValue && b.HasValue;
+            if (swap) _juice.PlaySwap();
             float startMs = Time.realtimeSinceStartup * 1000f;
 
-            Vector3 wa = CellToWorld(a);
-            Vector3 wb = CellToWorld(b);
-            TileView ta = Get(a);
-            TileView tb = Get(b);
-
             int pending = 0;
-            if (ta != null)
+            if (swap)
             {
-                pending++;
-                ta.PlaySwap(wb, swapTime, () => pending--);
-            }
+                Vector3 wa = CellToWorld(a.Value);
+                Vector3 wb = CellToWorld(b.Value);
+                TileView ta = Get(a.Value);
+                TileView tb = Get(b.Value);
 
-            if (tb != null)
-            {
-                pending++;
-                tb.PlaySwap(wa, swapTime, () => pending--);
-            }
+                if (ta != null)
+                {
+                    pending++;
+                    ta.PlaySwap(wb, swapTime, () => pending--);
+                }
 
-            // 1) ATERRIZAJE de la ola 0: el swap. Nada arranca hasta que las dos fichas llegan.
-            while (pending > 0) yield return null;
+                if (tb != null)
+                {
+                    pending++;
+                    tb.PlaySwap(wa, swapTime, () => pending--);
+                }
 
-            // Las fichas viajaron con su sprite: se reasigna la celda fisica, no el dibujo.
-            if (ta != null && tb != null)
-            {
-                ta.Rebind(b, wb);
-                tb.Rebind(a, wa);
-                _tiles[a.X, a.Y] = tb;
-                _tiles[b.X, b.Y] = ta;
+                // 1) ATERRIZAJE de la ola 0: el swap. Nada arranca hasta que las dos fichas llegan.
+                while (pending > 0) yield return null;
+
+                // Las fichas viajaron con su sprite: se reasigna la celda fisica, no el dibujo.
+                if (ta != null && tb != null)
+                {
+                    ta.Rebind(b.Value, wb);
+                    tb.Rebind(a.Value, wa);
+                    _tiles[a.Value.X, a.Value.Y] = tb;
+                    _tiles[b.Value.X, b.Value.Y] = ta;
+                }
             }
 
             IReadOnlyList<IReadOnlyList<BoardPos>> waves = result.Waves;
@@ -402,8 +425,8 @@ namespace V2.Board
                     TileView tile = Get(p);
                     if (tile == null) continue;
 
-                    float delay = wave == 1
-                        ? (Mathf.Abs(p.X - a.X) + Mathf.Abs(p.Y - a.Y)) * popStagger
+                    float delay = wave == 1 && swap
+                        ? (Mathf.Abs(p.X - a.Value.X) + Mathf.Abs(p.Y - a.Value.Y)) * popStagger
                         : i * popStagger;
                     maxDelay = Mathf.Max(maxDelay, delay);
 

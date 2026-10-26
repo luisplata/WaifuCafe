@@ -144,6 +144,59 @@ namespace WaifuCafe.Tests
                 "la foto de la ola 1 ya es el estado final: no es una foto por ola");
         }
 
+        [Test]
+        public void T12_ClearCells_SeedWaveOneWithTheRequestedCells_ThenResolveCascades()
+        {
+            // Tres Snack aislados: la skill los limpia aunque no formen linea.
+            var board = Board(Grid(5, 5, (0, 1), (2, 3), (4, 0)));
+            var cells = new[] { new BoardPos(0, 1), new BoardPos(2, 3), new BoardPos(4, 0) };
+
+            ResolveResult result = board.ClearCells(cells);
+
+            CollectionAssert.AreEqual(cells, new List<BoardPos>(result.Waves[0]),
+                "la ola 1 debe ser exactamente las celdas que limpio la skill");
+            Assert.AreEqual(3, result.WaveUnits[0], "cada celda limpiada aporta 1 unidad");
+            Assert.AreEqual(3, UnitsOf(result, Dish.Snack), "las unidades son del plato que habia");
+            Assert.AreEqual(result.Waves.Count, result.Snapshots.Count, "una foto por ola");
+
+            AssertNoHoles(board, 0);
+            Assert.IsFalse(board.HasAnyMatch(), "quedaron lineas pendientes tras la skill");
+        }
+
+        [Test]
+        public void T13_ConvertCells_ChangesTheGrid_AndResolvesTheResultingMatch()
+        {
+            // Dos Snack en fila + una celda convertible: la conversion arma la linea de 3.
+            var board = Board(Grid(5, 5, (0, 2), (1, 2)));
+            Assert.IsFalse(board.HasAnyMatch(), "el fixture no debe tener lineas antes de convertir");
+
+            var converted = new BoardPos(2, 2);
+            ResolveResult result = board.ConvertCells(new[] { converted }, Dish.Snack);
+
+            Assert.GreaterOrEqual(result.Cascades, 1, "la conversion debe resolver el match que forma");
+            CollectionAssert.AreEquivalent(
+                new[] { new BoardPos(0, 2), new BoardPos(1, 2), converted },
+                new List<BoardPos>(result.Waves[0]), "la ola 1 es la linea que armo la conversion");
+            Assert.AreEqual(3, UnitsOf(result, Dish.Snack), "el match convertido emite 3 unidades");
+
+            AssertNoHoles(board, 0);
+            Assert.IsFalse(board.HasAnyMatch(), "la conversion dejo lineas sin resolver");
+        }
+
+        [Test]
+        public void T14_ReshuffleWithMove_LeavesNoMatchesAndAGuaranteedMove()
+        {
+            for (int seed = 1; seed <= 10; seed++)
+            {
+                // El fixture arranca con una linea de Snack: barajar tiene que sacarla.
+                var board = Board(Grid(5, 5, (0, 0), (1, 0), (2, 0)), new SystemRandom(seed), 5);
+
+                Assert.IsTrue(board.ReshuffleWithMove(), $"seed {seed}: no logro dejar el tablero jugable");
+                Assert.IsFalse(board.HasAnyMatch(), $"seed {seed}: el barajado dejo matches inmediatos");
+                Assert.IsTrue(board.HasMove(), $"seed {seed}: el barajado no dejo ninguna jugada");
+            }
+        }
+
         private static List<Dish> Flatten(BoardSnapshot snapshot)
         {
             var cells = new List<Dish>(snapshot.Width * snapshot.Height);

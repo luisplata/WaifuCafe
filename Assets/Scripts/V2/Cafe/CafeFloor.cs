@@ -157,8 +157,21 @@ namespace V2.Cafe
 
         private void OnDelivered(ResolveResult result)
         {
-            Delivery delivery = _book.Deliver(result);
+            Present(_book.Deliver(result));
+        }
 
+        /// <summary>
+        /// Entrega directa de una skill (Luna): mismo libro, mismas burbujas, mismo pago.
+        /// No pasa por el tablero, asi que no carga a la party ni dispara olas.
+        /// </summary>
+        public Delivery DeliverDirect(Dish dish, int units)
+        {
+            if (_book == null) return Delivery.Empty;
+            return Present(_book.Deliver(dish, units));
+        }
+
+        private Delivery Present(Delivery delivery)
+        {
             foreach (OrderFill fill in delivery.Used)
             {
                 Seat seat = Find(fill.Order);
@@ -175,6 +188,7 @@ namespace V2.Cafe
 
             _bank.Refresh(_book);
             if (delivery.DiscardedTotal > 0) _bank.PlayDiscarded(delivery.Discarded);
+            return delivery;
         }
 
         private IEnumerator Retire(Seat seat)

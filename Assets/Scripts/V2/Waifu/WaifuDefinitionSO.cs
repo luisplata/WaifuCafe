@@ -5,8 +5,18 @@ namespace V2.Waifu
 {
     public enum WaifuRole { Cocina, Servicio, Apoyo, Control }
 
-    /// <summary>Arquetipos del slice. Aca son solo datos: el ejecutor llega en PR7.</summary>
-    public enum SkillArchetype { ClearCross, ConvertToElement, InstantServeUnits, DelayEviction }
+    /// <summary>
+    /// Arquetipos del slice. <see cref="DelayEviction"/> queda RESERVADO: la expulsion no
+    /// existe hasta PR9, asi que ningun SO debe usarlo todavia.
+    /// </summary>
+    public enum SkillArchetype
+    {
+        ClearCross,
+        ConvertToElement,
+        InstantServeUnits,
+        DelayEviction,
+        ReshuffleBoard,
+    }
 
     public enum PassiveId { None, ExtraCharge, CoinBonus, FasterService }
 
