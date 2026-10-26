@@ -1,12 +1,22 @@
 # Imágenes del landing (index.html)
 
+## Presets disponibles
+
+Todos usan el checkpoint **Pixel Art Diffusion XL (spriteShaper)** y comparten los mismos 13 nombres de archivo.
+
+| Carpeta | LoRA | LoRA aplica | Look |
+|---|---|---|---|
+| `..._WaifuLover-illustrious_v2` | WaifuLover-illustrious v2 (SDXL) | sí | pixel art, cálido |
+| `..._ht_series_style_v2_illustrious` | ht_series_style_v2 (SDXL) | sí | ilustración limpia |
+| `..._pixel_f2` | pixel_f2 (SD1.5) | **no** | idéntico al checkpoint solo |
+
+`pixel_f2` es un LoRA SD1.5 aplicado sobre un checkpoint SDXL: ComfyUI no encuentra ninguna capa que parchear y genera sin el LoRA, en silencio. Ese set funciona como baseline del checkpoint.
+
 ## Preset activo
 
 ```
-pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2
+pixelArtDiffusionXL_spriteShaper__pixel_f2
 ```
-
-Generado con **Pixel Art Diffusion XL (spriteShaper)** + LoRA **WaifuLover-illustrious v2** (ambos SDXL), en ComfyUI.
 
 Todas las imágenes del sitio viven en `site-assets/landing/<preset>/` con **nombres canónicos fijos**. La página apunta a esa carpeta en cada `src`.
 
@@ -16,7 +26,7 @@ Todas las imágenes del sitio viven en `site-assets/landing/<preset>/` con **nom
 2. Reemplazá el nombre de carpeta en `index.html` (buscar y reemplazar):
 
 ```
-site-assets/landing/pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2/
+site-assets/landing/pixelArtDiffusionXL_spriteShaper__pixel_f2/
 ```
 
 por el nuevo. También está en el `<link rel="icon">` y en `og:image` (este último con URL absoluta).
