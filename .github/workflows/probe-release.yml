@@ -1,0 +1,25 @@
+name: probe-release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release API con GITHUB_TOKEN
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "== crear release draft =="
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/releases" \
+            -f tag_name="probe-${{ github.run_id }}" \
+            -f name="probe" \
+            -F draft=true 2>&1 || true
+          echo "== crear tag ref =="
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+            -f ref="refs/tags/probe-tag-${{ github.run_id }}" \
+            -f sha="${GITHUB_SHA}" 2>&1 || true
