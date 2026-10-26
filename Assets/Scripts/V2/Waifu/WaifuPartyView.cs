@@ -8,7 +8,7 @@ namespace V2.Waifu
 {
     /// <summary>
     /// Cartas reales de la party en la columna del cafe: retrato procedural, nombre, rol,
-    /// barra de carga compartida por elemento y estado READY. Solo lee el runtime y la
+    /// barra de carga propia de cada waifu y estado READY. Solo lee el runtime y la
     /// resolucion del tablero; no ejecuta skills ni decide reglas. El A/B de lado se
     /// resuelve reconstruyendo las cartas espejadas.
     /// </summary>
@@ -99,8 +99,8 @@ namespace V2.Waifu
             if (_runtime == null) return;
 
             // Solo los matches del jugador cobran carga y descuentan cooldown. Si la
-            // resolucion de una skill rechargea la party, el costo compartido se
-            // devolveria solo y no seria un costo.
+            // resolucion de una skill rechargea la party, la carga gastada se devolveria
+            // sola y no seria un costo.
             bool swap = _session != null && _session.LastSource == ResolutionSource.Swap;
             if (swap)
             {

@@ -7,8 +7,8 @@ using WaifuCafe.Core;
 namespace V2.Waifu
 {
     /// <summary>
-    /// Ejecuta las skills de la party. Vive fuera de la vista: valida carga compartida,
-    /// cooldown medido en matches y que el tablero no este resolviendo; aplica el efecto
+    /// Ejecuta las skills de la party. Vive fuera de la vista: valida la carga propia de la
+    /// waifu, cooldown medido en matches y que el tablero no este resolviendo; aplica el efecto
     /// y lo devuelve por el mismo camino que un swap (olas, snapshots, cascadas, telegraph).
     /// </summary>
     public sealed class SkillExecutor
@@ -39,8 +39,8 @@ namespace V2.Waifu
         }
 
         /// <summary>
-        /// Valida READY + cooldown + tablero libre, aplica el efecto, consume la carga
-        /// compartida y arranca el cooldown. Devuelve false sin efectos si no puede.
+        /// Valida READY + cooldown + tablero libre, aplica el efecto, consume SOLO la carga
+        /// de ese slot y arranca el cooldown. Devuelve false sin efectos si no puede.
         /// </summary>
         public bool TryFire(int slot)
         {

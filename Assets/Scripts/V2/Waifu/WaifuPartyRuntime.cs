@@ -4,9 +4,9 @@ using WaifuCafe.Core;
 namespace V2.Waifu
 {
     /// <summary>
-    /// Estado de la party del dia: las definiciones elegidas y UN medidor por elemento.
-    /// Cargar un plato suma al medidor compartido; cada slot se marca listo con su propio
-    /// <c>chargeCost</c>. No ejecuta skills: eso es PR7.
+    /// Estado de la party del dia: las definiciones elegidas y la carga de CADA waifu.
+    /// Un plato acreditado reparte unidades a todos los slots de ese elemento, pero cada
+    /// uno tiene su propio tanque: disparar una waifu no toca a sus companeras.
     /// </summary>
     public sealed class WaifuPartyRuntime
     {
@@ -14,13 +14,20 @@ namespace V2.Waifu
 
         private readonly WaifuDefinitionSO[] _slots;
 
-        public ElementChargeMeter Charges { get; } = new ElementChargeMeter();
+        public WaifuCharge Charges { get; } = new WaifuCharge();
 
         public WaifuPartyRuntime(WaifuDefinitionSO[] party)
         {
             int count = party == null ? 0 : Math.Min(MaxSlots, party.Length);
             _slots = new WaifuDefinitionSO[count];
-            for (int i = 0; i < count; i++) _slots[i] = party[i];
+            var elements = new Dish[count];
+            for (int i = 0; i < count; i++)
+            {
+                _slots[i] = party[i];
+                elements[i] = party[i] != null ? party[i].Element : Dish.Desayuno;
+            }
+
+            Charges.Configure(elements);
         }
 
         public int SlotCount => _slots.Length;
@@ -28,31 +35,24 @@ namespace V2.Waifu
         public WaifuDefinitionSO this[int slot] =>
             slot >= 0 && slot < _slots.Length ? _slots[slot] : null;
 
-        /// <summary>Unidades acumuladas en el elemento de ese slot.</summary>
-        public int AmountFor(int slot)
-        {
-            WaifuDefinitionSO def = this[slot];
-            return def == null ? 0 : Charges[def.Element];
-        }
+        /// <summary>Unidades acumuladas en el tanque propio de ese slot.</summary>
+        public int AmountFor(int slot) => Charges[slot];
 
         public bool IsReady(int slot)
         {
             WaifuDefinitionSO def = this[slot];
-            return def != null && Charges.IsReady(def.Element, def.ChargeCost);
+            return def != null && Charges.IsReady(slot, def.ChargeCost);
         }
 
         public void Charge(Dish dish, int units) => Charges.Add(dish, units);
 
         public void Charge(ResolveResult result) => Charges.Add(result);
 
-        /// <summary>
-        /// Gasta la carga compartida del elemento del slot: disparar una waifu baja el
-        /// medidor de TODAS las de su elemento (ese es el costo real).
-        /// </summary>
+        /// <summary>Gasta solo el tanque de la waifu que dispara.</summary>
         public int Spend(int slot)
         {
             WaifuDefinitionSO def = this[slot];
-            return def == null ? 0 : Charges.Spend(def.Element, def.ChargeCost);
+            return def == null ? 0 : Charges.Spend(slot, def.ChargeCost);
         }
 
         public void Reset() => Charges.Reset();
