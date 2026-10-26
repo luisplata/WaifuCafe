@@ -175,7 +175,10 @@ namespace V2.Board
 
         public void PlaySwap(Vector3 to, float duration, Action done)
         {
+            // El viaje arranca donde esta la ficha (offset del drag incluido), no en el home.
+            Vector3 from = transform.position;
             PrepareTravel();
+            transform.position = from;
             _move = Tween.Position(transform, to, duration, Ease.OutBack).OnComplete(done);
         }
 

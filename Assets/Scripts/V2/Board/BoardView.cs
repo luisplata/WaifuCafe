@@ -242,14 +242,17 @@ namespace V2.Board
             _dragConsumed = true;
             BoardPos from = _dragOrigin.Pos;
             BoardPos to = cell.Value;
-            _dragOrigin.ReleaseGrab(swapTime);
+            // El viaje lo maneja la resolucion (swap o rebote): no devolver a home aca.
             Select(null);
             _session.TryMove(from, to);
         }
 
         public void HandleEndDrag()
         {
-            if (_dragOrigin != null) _dragOrigin.ReleaseGrab(swapTime);
+            // Release valido: la ficha viaja con el swap (o rebota) y la animacion manda.
+            // Solo vuelve a home si el drag no disparo nada, o si la resolucion ya termino.
+            bool animated = _dragConsumed && (_animating || (_session != null && _session.IsResolving));
+            if (_dragOrigin != null && !animated) _dragOrigin.ReleaseGrab(swapTime);
             _dragOrigin = null;
             _dragConsumed = false;
         }
