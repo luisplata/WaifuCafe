@@ -2,21 +2,44 @@
 
 ## Presets disponibles
 
-Todos usan el checkpoint **Pixel Art Diffusion XL (spriteShaper)** y comparten los mismos 13 nombres de archivo.
+Todos comparten los mismos 13 nombres de archivo.
 
-| Carpeta | LoRA | LoRA aplica | Look |
+| Carpeta | Checkpoint | LoRA | Resultado |
 |---|---|---|---|
-| `..._WaifuLover-illustrious_v2` | WaifuLover-illustrious v2 (SDXL) | sí | pixel art, cálido |
-| `..._ht_series_style_v2_illustrious` | ht_series_style_v2 (SDXL) | sí | ilustración limpia |
-| `..._pixel_f2` | pixel_f2 (SD1.5) | **no** | idéntico al checkpoint solo |
-
-`pixel_f2` es un LoRA SD1.5 aplicado sobre un checkpoint SDXL: ComfyUI no encuentra ninguna capa que parchear y genera sin el LoRA, en silencio. Ese set funciona como baseline del checkpoint.
+| `pixelIllustrious_v30__WaifuLover-illustrious_v2` | pixelIllustrious_v30 (SDXL Illustrious) | WaifuLover @ 0.6 | **pixel art real** (receta buena) |
+| `pixelArtDiffusionXL_spriteShaper__ht_series_style_v2_illustrious` | spriteShaper (SDXL genérico) | ht_series @ 1.0 | ilustración limpia |
+| `pixelArtDiffusionXL_spriteShaper__WaifuLover-illustrious_v2` | spriteShaper (SDXL genérico) | WaifuLover @ 1.0 | pixel art suave |
+| `pixelArtDiffusionXL_spriteShaper__pixel_f2` | spriteShaper (SDXL genérico) | pixel_f2 (SD1.5) | **descartar**: 96 capas con forma incompatible ensucian la imagen |
 
 ## Preset activo
 
 ```
-pixelArtDiffusionXL_spriteShaper__pixel_f2
+pixelIllustrious_v30__WaifuLover-illustrious_v2
 ```
+
+## Receta de replicación (la que sí funciona)
+
+Replicada a partir de dos muestras de Civitai. Lo que hace la diferencia **no es solo el checkpoint**:
+
+| Parámetro | Valor | Por qué |
+|---|---|---|
+| Checkpoint | `pixelIllustrious_v30` | Es Illustrious: los LoRAs Illustrious matchean su arquitectura |
+| LoRA | `WaifuLover-illustrious_v2` @ **0.6** | A 1.0 satura; las muestras de Civitai usan 0.5–0.6 |
+| Clip skip | **2** (nodo `CLIPSetLastLayer`, `stop_at_clip_layer = -2`) | Es el default de anime; con 1 cambian caras y estilo |
+| Sampler / scheduler | `euler_ancestral` + `normal` | Igual que la receta embebida en el checkpoint |
+| Steps / CFG | 35 / 7.0 | Idem |
+| Tamaños | 1152×648 (16:9), 864×1152 (3:4), 1024×1024 (icono) | SDXL rinde cerca de 1 MP |
+| Prompt | tags booru, empezando por `masterpiece, best quality, very awa, absurdres, good quality, very aesthetic, newest, pixel art,` | **El tag `pixel art` es obligatorio**: el checkpoint solo no alcanza |
+| Negative | incluye bloque NSFW (`nsfw, nude, naked, explicit, buttocks, cleavage, ...`) | El LoRA WaifuLover sesga hacia cuerpos; sin esto el icono salió explícito |
+| app-icon | **sin LoRA** + autocrop al contenido con 18% de margen | El LoRA arruina objetos; el recorte lo hace legible a 48 px |
+| og-image | derivada del hero (crop centrado 1200×630) | No se genera aparte |
+
+### Errores que NO hay que repetir
+
+1. **No mezclar familias.** Un LoRA SD1.5 sobre checkpoint SDXL no falla: aplica las pocas capas cuyo nombre coincide y ensucia la imagen. Verificar con los logs: `N patches attached` debe ser el total del LoRA (~722 para un LoRA de 2958 claves), no un número suelto.
+2. **No usar prosa.** `wide cinematic shot of a cozy anime cafe interior, ...` rinde peor que `pixel art, cafe interior, wooden counter, warm lighting`. Los modelos anime están entrenados con tags.
+3. **No confiar en el nombre del checkpoint.** `pixelArtDiffusionXL_spriteShaper` suena a pixel art, pero sin el tag `pixel art` produce ilustración suave.
+4. **Reiniciar ComfyUI antes de cada imagen** en 8 GB de VRAM: si no, el contenedor muere con exit 137 (OOM) y la API deja de responder.
 
 Todas las imágenes del sitio viven en `site-assets/landing/<preset>/` con **nombres canónicos fijos**. La página apunta a esa carpeta en cada `src`.
 
@@ -26,7 +49,7 @@ Todas las imágenes del sitio viven en `site-assets/landing/<preset>/` con **nom
 2. Reemplazá el nombre de carpeta en `index.html` (buscar y reemplazar):
 
 ```
-site-assets/landing/pixelArtDiffusionXL_spriteShaper__pixel_f2/
+site-assets/landing/pixelIllustrious_v30__WaifuLover-illustrious_v2/
 ```
 
 por el nuevo. También está en el `<link rel="icon">` y en `og:image` (este último con URL absoluta).
