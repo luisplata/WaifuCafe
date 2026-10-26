@@ -167,10 +167,18 @@ jobs:
         run: ls -lh artifacts/android-aab/
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.validate.outputs.tag }}
-          target_commitish: ${{ github.sha }}
-          name: WaifuCafe ${{ needs.validate.outputs.tag }}
-          generate_release_notes: true
-          files: artifacts/android-aab/WaifuCafe-${{ needs.validate.outputs.version }}.aab
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.validate.outputs.tag }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::El release $TAG ya existe"; exit 1
+          fi
+          # Sin --target: el tag se crea sobre el HEAD de main, que es el commit
+          # del run. GITHUB_TOKEN no puede crear un ref hacia otro commit (403).
+          gh release create "$TAG" "artifacts/android-aab/WaifuCafe-$VERSION.aab" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "WaifuCafe $TAG" \
+            --generate-notes
