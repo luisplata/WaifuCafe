@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using V2.Helpers;
 using WaifuCafe.Core;
 
 namespace V2.Board
@@ -104,7 +105,10 @@ namespace V2.Board
         private int Width => _tiles?.GetLength(0) ?? 0;
         private int Height => _tiles?.GetLength(1) ?? 0;
 
-        public bool IsInteractive => _session != null && !_animating && !_session.IsResolving;
+        public bool IsInteractive => _session != null && !_animating && !_session.IsResolving && !InputLock.IsLocked;
+
+        /// <summary>Tablero ocupado: resolviendo o animando. La cinematica espera a que baje.</summary>
+        public bool IsBusy => _animating || (_session != null && _session.IsResolving);
 
         /// <summary>Celda elegida por tap: destino de las skills de tablero (Rika).</summary>
         public BoardPos? SelectedPos => _selected == null ? (BoardPos?)null : _selected.Pos;

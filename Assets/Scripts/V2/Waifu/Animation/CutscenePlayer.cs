@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.Playables;
+using V2.Helpers;
 
 namespace V2.Waifu.Animation
 {
@@ -70,21 +71,41 @@ namespace V2.Waifu.Animation
             Skip();
         }
 
+        /// <summary>Cablea referencias cuando el overlay se arma por codigo (sin PlayableDirector).</summary>
+        public void Bind(WaifuView view, GameObject help, float duration, float grace)
+        {
+            waifu = view;
+            helpRoot = help;
+            fallbackDuration = Mathf.Max(0.1f, duration);
+            skipGrace = Mathf.Max(0f, grace);
+            playOnStart = false;
+        }
+
         /// <summary>Arranca la cinematica y bloquea el input de gameplay.</summary>
         public void Play()
         {
-            if (IsPlayingNow) return;
+            if (_active != null) return;
             _active = this;
-            _elapsed = 0f;
-            if (helpRoot != null) helpRoot.SetActive(true);
-            if (waifu != null)
+            InputLock.Acquire();
+            try
             {
-                waifu.SetCooldown(false);
-                waifu.Activate();
-            }
+                _elapsed = 0f;
+                if (helpRoot != null) helpRoot.SetActive(true);
+                if (waifu != null)
+                {
+                    waifu.SetCooldown(false);
+                    waifu.Activate();
+                }
 
-            if (director != null && director.playableAsset != null) director.Play();
-            else StartCoroutine(Fallback());
+                if (director != null && director.playableAsset != null) director.Play();
+                else StartCoroutine(Fallback());
+            }
+            catch
+            {
+                // Nunca dejar el lock tomado si el arranque explota.
+                FinishCore();
+                throw;
+            }
         }
 
         /// <summary>Corta la cinematica sin esperar al final y la deja en Idle.</summary>
@@ -108,24 +129,35 @@ namespace V2.Waifu.Animation
         private void Finish()
         {
             if (!IsPlayingNow) return;
+            FinishCore();
+            onFinished?.Invoke();
+            Finished?.Invoke();
+        }
+
+        /// <summary>Cierra la cinematica en cualquier salida (fin natural, skip, error, destroy).</summary>
+        private void FinishCore()
+        {
             _active = null;
             StopAllCoroutines();
             if (helpRoot != null) helpRoot.SetActive(false);
             if (director != null && director.state == PlayState.Playing) director.Stop();
             if (waifu != null) waifu.Idle();
-            onFinished?.Invoke();
-            Finished?.Invoke();
+            InputLock.Release();
         }
 
         private void OnDestroy()
         {
-            if (IsPlayingNow) _active = null;
+            if (IsPlayingNow) FinishCore();
         }
 
         private bool SkipPressed()
         {
+            // Pointer.current puede quedar en un touch virtual del editor; el mouse
+            // tambien cuenta como click para saltar la cinematica.
             Pointer pointer = Pointer.current;
             if (pointer != null && pointer.press.wasPressedThisFrame) return true;
+            Mouse mouse = Mouse.current;
+            if (mouse != null && mouse.leftButton.wasPressedThisFrame) return true;
             Keyboard keyboard = Keyboard.current;
             return keyboard != null && keyboard[skipKey].wasPressedThisFrame;
         }

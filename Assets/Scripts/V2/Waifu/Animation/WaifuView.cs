@@ -49,6 +49,15 @@ namespace V2.Waifu.Animation
         public void Cast() { if (bridge != null) bridge.Cast(); }
         public void Activate() { if (bridge != null) bridge.Activate(); }
 
+        /// <summary>Ajusta identidad y color de elemento (la cinematica la llama antes de Activate).</summary>
+        public void ApplyIdentity(string name, Dish dishElement, Color color)
+        {
+            displayName = name;
+            element = dishElement;
+            elementColor = color;
+            ApplyPlaceholder();
+        }
+
         public void SetCooldown(bool on)
         {
             IsCooldown = on;

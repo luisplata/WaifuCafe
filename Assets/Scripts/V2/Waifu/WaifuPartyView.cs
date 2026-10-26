@@ -2,6 +2,7 @@ using PrimeTween;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using V2.Board;
+using V2.Helpers;
 using WaifuCafe.Core;
 
 namespace V2.Waifu
@@ -114,6 +115,9 @@ namespace V2.Waifu
         /// <summary>Click en la carta: dispara la skill si esta READY (sino, shake corto).</summary>
         public bool Fire(int slot)
         {
+            // Cinematica (o cualquier otro bloqueo global): la carta no dispara.
+            if (InputLock.IsLocked) return false;
+
             if (_executor != null && _executor.TryFire(slot))
             {
                 PlayFire(CardOf(slot));
