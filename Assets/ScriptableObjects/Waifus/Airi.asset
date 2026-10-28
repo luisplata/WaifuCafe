@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Airi
   m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuDefinitionSO
   displayName: Airi
+  id: airi
+  faction: 0
+  baseStars: 1
+  maxStars: 3
   rarity: 0
   portraitColor: {r: 0.35, g: 0.78, b: 0.45, a: 1}
   element: 1

@@ -3,6 +3,7 @@ using UnityEngine;
 using V2.Board;
 using V2.Cafe;
 using WaifuCafe.Core;
+using WaifuCafe.Core.Meta;
 
 namespace V2.Waifu
 {

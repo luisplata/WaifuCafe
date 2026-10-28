@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Neko
   m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuDefinitionSO
   displayName: Neko
+  id: neko
+  faction: 0
+  baseStars: 1
+  maxStars: 3
   rarity: 0
   portraitColor: {r: 0.93, g: 0.58, b: 0.3, a: 1}
   element: 4

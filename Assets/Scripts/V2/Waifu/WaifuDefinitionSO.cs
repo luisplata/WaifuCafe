@@ -1,37 +1,28 @@
 using UnityEngine;
 using WaifuCafe.Core;
+using WaifuCafe.Core.Meta;
 
 namespace V2.Waifu
 {
-    public enum WaifuRole { Cocina, Servicio, Apoyo, Control }
-
-    /// <summary>
-    /// Arquetipos del slice. <see cref="DelayEviction"/> queda RESERVADO: la expulsion no
-    /// existe hasta PR9, asi que ningun SO debe usarlo todavia.
-    /// </summary>
-    public enum SkillArchetype
-    {
-        ClearCross,
-        ConvertToElement,
-        InstantServeUnits,
-        DelayEviction,
-        ReshuffleBoard,
-    }
-
-    public enum PassiveId { None, ExtraCharge, CoinBonus, FasterService }
-
-    public enum WaifuRarity { Comun, Rara, Epica }
-
     /// <summary>
     /// Una waifu como dato puro: identidad, elemento, rol, carga y skill declarada.
-    /// Agregar una waifu = agregar un asset, sin tocar codigo (RF-13).
+    /// Agregar una waifu = agregar un asset, sin tocar codigo (RF-13). Las estrellas
+    /// actuales NO viven aca: el perfil guarda <c>owned[].stars</c>.
     /// </summary>
     [CreateAssetMenu(menuName = "WaifuCafe/Waifu", fileName = "Waifu")]
     public sealed class WaifuDefinitionSO : ScriptableObject
     {
         [Header("Identidad")]
+        [Tooltip("Id estable para el perfil y el catalogo (minusculas, sin espacios).")]
+        [SerializeField] private string id = string.Empty;
         [SerializeField] private string displayName = "Waifu";
+        [SerializeField] private WaifuFaction faction = WaifuFaction.Cafe;
         [SerializeField] private WaifuRarity rarity = WaifuRarity.Comun;
+
+        [Header("Estrellas (escala del asset; las actuales viven en el perfil)")]
+        [SerializeField, Min(1)] private int baseStars = 1;
+        [SerializeField, Min(1)] private int maxStars = 3;
+
         [Tooltip("Color del retrato procedural (sin arte final).")]
         [SerializeField] private Color portraitColor = Color.white;
 
@@ -55,10 +46,14 @@ namespace V2.Waifu
         [Tooltip("Chibi transparente: retrato de carta, flash READY y cinematica.")]
         [SerializeField] private Sprite chibiArt;
 
+        public string Id => id;
         public string DisplayName => displayName;
         public Sprite CardArt => cardArt;
         public Sprite ChibiArt => chibiArt;
+        public WaifuFaction Faction => faction;
         public WaifuRarity Rarity => rarity;
+        public int BaseStars => baseStars;
+        public int MaxStars => maxStars;
         public Color PortraitColor => portraitColor;
         public Dish Element => element;
         public WaifuRole Role => role;
@@ -67,5 +62,12 @@ namespace V2.Waifu
         public SkillArchetype SkillArchetype => skillArchetype;
         public int Potency => potency;
         public PassiveId PassiveId => passiveId;
+
+        private void OnValidate()
+        {
+            if (string.IsNullOrWhiteSpace(id)) id = name.ToLowerInvariant();
+            baseStars = Mathf.Clamp(baseStars, WaifuStars.Min, WaifuStars.Max);
+            maxStars = Mathf.Clamp(maxStars, baseStars, WaifuStars.Max);
+        }
     }
 }

@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Sora
   m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuDefinitionSO
   displayName: Sora
+  id: sora
+  faction: 2
+  baseStars: 1
+  maxStars: 3
   rarity: 1
   portraitColor: {r: 0.35, g: 0.75, b: 0.9, a: 1}
   element: 4

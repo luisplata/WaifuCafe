@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Alice
   m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuDefinitionSO
   displayName: Alice
+  id: alice
+  faction: 2
+  baseStars: 1
+  maxStars: 3
   rarity: 2
   portraitColor: {r: 0.72, g: 0.8, b: 0.95, a: 1}
   element: 3

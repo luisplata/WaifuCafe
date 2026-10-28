@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Miko
   m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuDefinitionSO
   displayName: Miko
+  id: miko
+  faction: 1
+  baseStars: 1
+  maxStars: 3
   rarity: 1
   portraitColor: {r: 0.95, g: 0.75, b: 0.3, a: 1}
   element: 0

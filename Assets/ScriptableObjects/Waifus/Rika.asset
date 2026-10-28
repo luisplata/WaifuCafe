@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Rika
   m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuDefinitionSO
   displayName: Rika
+  id: rika
+  faction: 1
+  baseStars: 1
+  maxStars: 3
   rarity: 2
   portraitColor: {r: 0.32, g: 0.62, b: 0.92, a: 1}
   element: 2

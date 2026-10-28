@@ -18,5 +18,8 @@ namespace V2.Helpers
         public static void Hold() => _count++;
 
         public static void Release() => _count = _count > 0 ? _count - 1 : 0;
+
+        /// <summary>Descarta bloqueos colgados al recomponer la escena (bootstrap/run).</summary>
+        public static void Reset() => _count = 0;
     }
 }

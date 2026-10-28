@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: Hana
   m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuDefinitionSO
   displayName: Hana
+  id: hana
+  faction: 1
+  baseStars: 1
+  maxStars: 3
   rarity: 0
   portraitColor: {r: 0.4, g: 0.8, b: 0.86, a: 1}
   element: 2

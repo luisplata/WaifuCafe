@@ -13,10 +13,14 @@ MonoBehaviour:
   m_Name: Yuki
   m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuDefinitionSO
   displayName: Yuki
+  id: yuki
+  faction: 0
+  baseStars: 1
+  maxStars: 3
   rarity: 2
   portraitColor: {r: 0.91, g: 0.45, b: 0.68, a: 1}
   element: 3
-  role: 2
+  role: 3
   chargeCost: 12
   cooldownMatches: 2
   skillArchetype: 4
