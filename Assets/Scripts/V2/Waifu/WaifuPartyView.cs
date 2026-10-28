@@ -46,12 +46,12 @@ namespace V2.Waifu
         {
             public int Slot;
             public Transform Root;
-            public Transform Portrait;
             public SpriteRenderer Fill;
             public TextMesh Name;
             public TextMesh Role;
             public TextMesh Charge;
             public GameObject ReadyGlow;
+            public float BarY = -1.18f;
             public Sequence Pulse;
             public int LastAmount = -1;
             public bool WasReady;
@@ -63,6 +63,7 @@ namespace V2.Waifu
         private WaifuPartyRuntime _runtime;
         private SkillExecutor _executor;
         private BoardSession _session;
+        private BoardView _board;
         private BoardLayoutMock _layout;
         private WaifuCutsceneDirector _cutscene;
         private Font _font;
@@ -76,6 +77,7 @@ namespace V2.Waifu
         {
             _layout = FindFirstObjectByType<BoardLayoutMock>();
             _session = FindFirstObjectByType<BoardSession>();
+            _board = FindFirstObjectByType<BoardView>();
             _cutscene = FindFirstObjectByType<WaifuCutsceneDirector>();
             if (_layout != null)
             {
@@ -184,28 +186,71 @@ namespace V2.Waifu
 
             Block(root, "Card", Vector3.zero, new Vector2(cardWidth, cardHeight), CardColor, 0);
 
+            // Carta ilustrada: el arte legacy ocupa la carta completa y el pie oscuro
+            // mantiene legibles nombre, rol y barra. Sin arte, se usa el retrato procedural.
+            if (def.CardArt != null) BuildArtCard(root, card, def);
+            else BuildFallbackCard(root, card, def);
+
+            return card;
+        }
+
+        /// <summary>Carta con ilustracion legacy a sangre completa y pie de datos.</summary>
+        private void BuildArtCard(Transform root, Card card, WaifuDefinitionSO def)
+        {
+            Block(root, "CardArt", Vector3.zero, new Vector2(cardWidth, cardHeight),
+                Color.white, 1, def.CardArt);
+            Block(root, "CardFrame", Vector3.zero, new Vector2(cardWidth, cardHeight),
+                FrameColor, 9, DishSprites.RoundFrame());
+            Block(root, "CardFooter", new Vector3(0f, -1.28f, 0f),
+                new Vector2(cardWidth, 1.44f), new Color(0.10f, 0.08f, 0.13f, 1f), 4);
+
+            card.ReadyGlow = Block(root, "ReadyGlow", Vector3.zero,
+                new Vector2(cardWidth + 0.10f, cardHeight + 0.10f),
+                GlowColor(Accent(def)), 15, DishSprites.RoundFrame()).gameObject;
+            card.ReadyGlow.SetActive(false);
+
+            card.Name = Label(root, def.DisplayName, -0.74f, 0.34f, Color.white);
+            card.Role = Label(root, def.Role.ToString(), -1.06f, 0.22f, MutedColor);
+            // Icono del elemento a la derecha del rol: misma forma y color que la ficha
+            // del tablero, para que se lea de un vistazo.
+            Color elementColor = _board != null ? _board.DishColor(def.Element) : Color.white;
+            Block(root, "ElementIcon", new Vector3(1.08f, -1.06f, 0f),
+                new Vector2(0.42f, 0.42f), elementColor, 11, DishSprites.For(def.Element));
+            BuildCharge(root, card, def, -1.44f, -1.80f);
+        }
+
+        /// <summary>Fallback sin arte: panel plano, retrato chibi o forma del elemento.</summary>
+        private void BuildFallbackCard(Transform root, Card card, WaifuDefinitionSO def)
+        {
             card.ReadyGlow = Block(root, "ReadyGlow", new Vector3(0f, 0.2f, 0f),
                 new Vector2(2.5f, 2.5f), GlowColor(Accent(def)), 2, DishSprites.Glow()).gameObject;
             card.ReadyGlow.SetActive(false);
 
+            Sprite portraitSprite = def.ChibiArt != null ? def.ChibiArt : DishSprites.For(def.Element);
             SpriteRenderer portrait = Block(root, "Portrait", new Vector3(0f, 0.2f, 0f),
-                new Vector2(1.8f, 1.8f), Accent(def), 3, DishSprites.For(def.Element));
-            card.Portrait = portrait.transform;
+                new Vector2(1.8f, 1.8f), def.ChibiArt != null ? Color.white : Accent(def),
+                3, portraitSprite);
+            if (def.ChibiArt != null) FitInside(portrait.transform, def.ChibiArt, 1.8f);
             Block(root, "PortraitFrame", new Vector3(0f, 0.2f, 0f),
                 new Vector2(1.94f, 1.94f), FrameColor, 4, DishSprites.RoundFrame());
 
             card.Name = Label(root, def.DisplayName, 1.70f, 0.34f, Color.white);
             card.Role = Label(root, def.Role + " · " + def.Element, 1.34f, 0.22f, MutedColor);
+            BuildCharge(root, card, def, -1.18f, -1.58f);
+        }
 
-            Block(root, "BarBg", new Vector3(0f, -1.18f, 0f),
+        private void BuildCharge(Transform root, Card card, WaifuDefinitionSO def,
+            float barY, float textY)
+        {
+            card.BarY = barY;
+            Block(root, "BarBg", new Vector3(0f, barY, 0f),
                 new Vector2(BarWidth + 0.2f, 0.30f), BarColor, 5);
-            card.Fill = Block(root, "BarFill", new Vector3(0f, -1.18f, 0f),
+            card.Fill = Block(root, "BarFill", new Vector3(0f, barY, 0f),
                 new Vector2(0.001f, 0.20f), Accent(def), 6);
-            Block(root, "BarFrame", new Vector3(0f, -1.18f, 0f),
+            Block(root, "BarFrame", new Vector3(0f, barY, 0f),
                 new Vector2(BarWidth + 0.24f, 0.34f), FrameColor, 7, DishSprites.RoundFrame());
 
-            card.Charge = Label(root, "0/" + def.ChargeCost, -1.58f, 0.30f, TextColor);
-            return card;
+            card.Charge = Label(root, "0/" + def.ChargeCost, textY, 0.30f, TextColor);
         }
 
         private void Refresh(bool animate)
@@ -254,8 +299,10 @@ namespace V2.Waifu
                 {
                     card.Pulse.Stop();
                     card.Pulse = Sequence.Create()
-                        .Chain(Tween.Scale(card.Portrait, Vector3.one * readyScale, readyTime * 0.35f, Ease.OutQuad))
-                        .Chain(Tween.Scale(card.Portrait, Vector3.one, readyTime * 0.65f, Ease.OutBack));
+                        .Chain(Tween.Scale(card.Root, Vector3.one * readyScale,
+                            readyTime * 0.35f, Ease.OutQuad))
+                        .Chain(Tween.Scale(card.Root, Vector3.one,
+                            readyTime * 0.65f, Ease.OutBack));
                 }
 
                 card.WasReady = available;
@@ -297,7 +344,7 @@ namespace V2.Waifu
         {
             float width = Mathf.Max(0.001f, BarWidth * t);
             float origin = -_sign * BarWidth * 0.5f;
-            card.Fill.transform.localPosition = new Vector3(origin + _sign * width * 0.5f, -1.18f, 0f);
+            card.Fill.transform.localPosition = new Vector3(origin + _sign * width * 0.5f, card.BarY, 0f);
             card.Fill.transform.localScale = new Vector3(width, 0.20f, 1f);
             card.Fill.enabled = t > 0.001f;
         }
@@ -314,6 +361,15 @@ namespace V2.Waifu
         {
             color.a = 0.85f;
             return color;
+        }
+
+        /// <summary>Escala uniforme para que el sprite entre completo en una caja cuadrada.</summary>
+        private static void FitInside(Transform target, Sprite sprite, float maxSize)
+        {
+            Vector2 size = sprite.bounds.size;
+            float scale = Mathf.Min(maxSize / Mathf.Max(0.001f, size.x),
+                                    maxSize / Mathf.Max(0.001f, size.y));
+            target.localScale = Vector3.one * scale;
         }
 
         private static SpriteRenderer Block(Transform parent, string name, Vector3 localPos,

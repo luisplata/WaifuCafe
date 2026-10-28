@@ -117,12 +117,13 @@ namespace V2.Waifu
             _castPlaying = true;
             try
             {
-                _castWaifu.ApplyIdentity(def.DisplayName, def.Element, element);
+                _castWaifu.ApplyIdentity(def.DisplayName, def.Element, element, def.ChibiArt);
                 _castWaifu.transform.localPosition = new Vector3(readyEnterFromX, ReadyHome.y, 0f);
                 _castWaifu.transform.localScale = Vector3.one * readyScaleFrom;
                 _castBody = _castBody != null ? _castBody : _castWaifu.transform.Find("Body")
                     .GetComponent<SpriteRenderer>();
-                _castBody.color = element;
+                // Con arte, el chibi conserva sus colores; el flash ya lleva el color del elemento.
+                _castBody.color = def.ChibiArt != null ? Color.white : element;
 
                 if (_castTitle != null)
                 {
@@ -203,7 +204,7 @@ namespace V2.Waifu
             _playing = true;
 
             Color element = boardView != null ? boardView.DishColor(def.Element) : def.PortraitColor;
-            _waifu.ApplyIdentity(def.DisplayName, def.Element, element);
+            _waifu.ApplyIdentity(def.DisplayName, def.Element, element, def.ChibiArt);
             if (_title != null)
             {
                 _title.text = "Activación de " + def.DisplayName;

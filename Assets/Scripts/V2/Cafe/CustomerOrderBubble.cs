@@ -17,7 +17,7 @@ namespace V2.Cafe
         public const float RowHeight = 1.7f;
 
         private const int MaxLines = 2;
-        private const float IconScale = 0.9f;
+        private const float IconScale = 0.8f;
 
         private static readonly Color RowColor = new Color(0.21f, 0.17f, 0.27f, 0.95f);
         private static readonly Color EmptyColor = new Color(0.21f, 0.17f, 0.27f, 0.22f);
@@ -37,6 +37,7 @@ namespace V2.Cafe
         private readonly TextMeshPro[] _texts = new TextMeshPro[MaxLines];
 
         private SpriteRenderer _bg;
+        private SpriteRenderer _customer;
         private Tween _enter;
         private Sequence _receive;
         private Sequence _leave;
@@ -50,6 +51,9 @@ namespace V2.Cafe
             _bg = AddSprite("Row", DishSprites.RoundRect(), 1);
             _bg.transform.localScale = new Vector3(RowWidth, RowHeight, 1f);
 
+            _customer = AddSprite("Customer", null, 2);
+            _customer.enabled = false;
+
             for (int i = 0; i < MaxLines; i++)
             {
                 _icons[i] = AddSprite("Icon" + i, DishSprites.For(Dish.Almuerzo), 3);
@@ -59,6 +63,22 @@ namespace V2.Cafe
 
             Layout();
             Clear();
+        }
+
+        /// <summary>Cliente chibi del asiento. Null oculta la figura (fallback sin arte).</summary>
+        public void SetCustomer(Sprite sprite)
+        {
+            if (_customer == null) return;
+
+            _customer.sprite = sprite;
+            _customer.enabled = sprite != null;
+            _customer.color = Color.white;
+            if (sprite != null)
+            {
+                float scale = RowHeight * 1.15f / Mathf.Max(0.001f, sprite.bounds.size.y);
+                _customer.transform.localScale = Vector3.one * scale;
+            }
+            Layout();
         }
 
         public void SetSide(int sign)
@@ -123,10 +143,14 @@ namespace V2.Cafe
         {
             _leave.Stop();
             _bg.color = DoneColor;
+            Sequence leave = Tween.Scale(transform, Vector3.one * 0.85f, 0.30f, Ease.InQuad)
+                .Group(Tween.Alpha(_bg, 0f, 0.30f));
+            if (_customer != null && _customer.enabled)
+                leave = leave.Group(Tween.Alpha(_customer, 0f, 0.30f));
+
             _leave = Sequence.Create()
                 .Chain(Tween.Scale(transform, Vector3.one * 1.04f, 0.10f, Ease.OutQuad))
-                .Chain(Tween.Scale(transform, Vector3.one * 0.85f, 0.30f, Ease.InQuad)
-                    .Group(Tween.Alpha(_bg, 0f, 0.30f)));
+                .Chain(leave);
         }
 
         /// <summary>Asiento libre: slot apagado, sin iconos ni texto.</summary>
@@ -138,6 +162,12 @@ namespace V2.Cafe
             _leave.Stop();
             transform.localScale = Vector3.one;
             _bg.color = EmptyColor;
+
+            if (_customer != null)
+            {
+                _customer.enabled = false;
+                _customer.color = Color.white;
+            }
 
             for (int i = 0; i < MaxLines; i++)
             {
@@ -153,10 +183,13 @@ namespace V2.Cafe
         {
             int count = _order == null ? 0 : Mathf.Min(MaxLines, _order.Dishes.Count);
 
+            if (_customer != null)
+                _customer.transform.localPosition = new Vector3(5.35f * _sign, 0f, 0f);
+
             for (int i = 0; i < MaxLines; i++)
             {
                 float y = count > 1 ? (i == 0 ? 0.38f : -0.38f) : 0f;
-                _icons[i].transform.localPosition = new Vector3(-3.05f * _sign, y, 0f);
+                _icons[i].transform.localPosition = new Vector3(-5.35f * _sign, y, 0f);
                 if (_texts[i] == null) continue;
                 _texts[i].transform.localPosition = new Vector3(-2.42f * _sign, y, 0f);
                 _texts[i].alignment = _sign > 0 ? TextAlignmentOptions.Left : TextAlignmentOptions.Right;

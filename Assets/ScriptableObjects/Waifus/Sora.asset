@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a574ec314c4efe24fb49071a95f7212d, type: 3}
+  m_Name: Sora
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuDefinitionSO
+  displayName: Sora
+  rarity: 1
+  portraitColor: {r: 0.35, g: 0.75, b: 0.9, a: 1}
+  element: 4
+  role: 2
+  chargeCost: 12
+  cooldownMatches: 2
+  skillArchetype: 4
+  potency: 4
+  passiveId: 1
+  cardArt: {fileID: 21300000, guid: f4c25eadaa211bd44a6d16ed82f435a6, type: 3}
+  chibiArt: {fileID: 21300000, guid: 7e3021aa154437347b5191b4c946103d, type: 3}

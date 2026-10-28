@@ -62,6 +62,8 @@ namespace V2.Cafe
         private int _flightCursor;
 
         private System.Random _rng;
+        private Sprite[] _customerPool;
+        private int _customerCursor;
         private float _interval;
         private float _arrivalClock;
         private float _rampClock;
@@ -91,6 +93,8 @@ namespace V2.Cafe
             if (_layout != null) _layout.SideChanged += OnSideChanged;
 
             _rng = new System.Random(seed != 0 ? seed : System.Environment.TickCount);
+            _customerPool = Resources.LoadAll<Sprite>("ArtV3/Customers");
+            System.Array.Sort(_customerPool, (a, b) => string.CompareOrdinal(a.name, b.name));
             _book = new OrderBook();
             _interval = IntervalAt(0f);
 
@@ -154,12 +158,19 @@ namespace V2.Cafe
             Order order = CreateOrder();
             Delivery auto = _book.Add(order);
             seat.Order = order;
+            seat.Bubble.SetCustomer(NextCustomer());
             seat.Bubble.Show(order);
 
             foreach (OrderFill fill in auto.Used) seat.Bubble.Receive(fill.Dish, fill.Units);
             _bank.Refresh(_book);
 
             if (order.IsComplete) StartCoroutine(Retire(seat));
+        }
+
+        private Sprite NextCustomer()
+        {
+            if (_customerPool == null || _customerPool.Length == 0) return null;
+            return _customerPool[_customerCursor++ % _customerPool.Length];
         }
 
         private Order CreateOrder()

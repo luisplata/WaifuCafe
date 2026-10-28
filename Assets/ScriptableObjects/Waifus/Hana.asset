@@ -22,3 +22,5 @@ MonoBehaviour:
   skillArchetype: 1
   potency: 3
   passiveId: 0
+  cardArt: {fileID: 21300000, guid: 468d32b81904f6e49821c4217071c9e6, type: 3}
+  chibiArt: {fileID: 21300000, guid: ee4e3795117e5644298ec796647a2053, type: 3}

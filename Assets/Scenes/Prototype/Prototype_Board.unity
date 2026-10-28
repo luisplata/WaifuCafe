@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 88505031}
   - component: {fileID: 88505030}
+  - component: {fileID: 88505032}
   m_Layer: 0
   m_Name: LayoutMock
   m_TagString: Untagged
@@ -166,6 +167,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &88505032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 88505029}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b2abfb0fefa630479635c8e7c575f6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Cafe.CafeBackdrop
+  resourcePath: ArtV3/Backgrounds/Cafe
+  dim: 0.42
+  sortingOrder: -100
 --- !u!1 &112716485
 GameObject:
   m_ObjectHideFlags: 0
@@ -196,9 +212,40 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::V2.Cafe.CafeFloor
   seatCount: 5
-  arrivalInterval: 5.5
-  minArrivalInterval: 3.5
-  arrivalRampPerMinute: 0.25
+  rampDuration: 180
+  arrivalCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 9
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5
+      value: 6
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 4
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   orderPlatesMin: 1
   orderPlatesMax: 2
   orderUnitsMin: 3
@@ -512,6 +559,67 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &777000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 777000002}
+  - component: {fileID: 777000003}
+  m_Layer: 0
+  m_Name: WaifuCutscene
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &777000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 777000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &777000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 777000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 579a2ddea7451f44d9a58fb7386175cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuCutsceneDirector
+  party: {fileID: 2017145721}
+  boardView: {fileID: 144921609}
+  animatorController: {fileID: 9100000, guid: 299f8c3dd8c16b54abfdcd7ae21a5e70, type: 2}
+  duration: 2
+  skipGrace: 0.2
+  bigTrigger: Activate
+  designOrtho: 5.2
+  readyDuration: 0.7
+  readyAlpha: 0.34
+  quickTrigger: Cast
+  readyEnterFromX: 2.6
+  readyScaleFrom: 0.8
+  readyActorScale: 0.72
+  readyTextColorFactor: 0.85
+  debugKey: 17
+  readyDebugKey: 36
+  debugSlot: 0
 --- !u!1 &2017145720
 GameObject:
   m_ObjectHideFlags: 0
@@ -570,59 +678,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &777000001
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 777000002}
-  - component: {fileID: 777000003}
-  m_Layer: 0
-  m_Name: WaifuCutscene
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &777000002
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 777000001}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &777000003
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 777000001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 579a2ddea7451f44d9a58fb7386175cc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::V2.Waifu.WaifuCutsceneDirector
-  party: {fileID: 2017145721}
-  session: {fileID: 144921608}
-  boardView: {fileID: 144921609}
-  animatorController: {fileID: 9100000, guid: 299f8c3dd8c16b54abfdcd7ae21a5e70, type: 2}
-  duration: 2
-  skipGrace: 0.2
-  designOrtho: 5.2
-  debugKey: 17
-  debugSlot: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

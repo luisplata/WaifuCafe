@@ -49,7 +49,15 @@ namespace V2.Waifu
         [SerializeField] private int potency = 4;
         [SerializeField] private PassiveId passiveId = PassiveId.None;
 
+        [Header("Arte (opcional; si falta se usa el placeholder procedural)")]
+        [Tooltip("Ilustracion de la carta: fondo completo del arte legacy.")]
+        [SerializeField] private Sprite cardArt;
+        [Tooltip("Chibi transparente: retrato de carta, flash READY y cinematica.")]
+        [SerializeField] private Sprite chibiArt;
+
         public string DisplayName => displayName;
+        public Sprite CardArt => cardArt;
+        public Sprite ChibiArt => chibiArt;
         public WaifuRarity Rarity => rarity;
         public Color PortraitColor => portraitColor;
         public Dish Element => element;
