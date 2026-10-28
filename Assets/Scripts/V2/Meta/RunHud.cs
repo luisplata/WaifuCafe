@@ -25,8 +25,11 @@ namespace V2.Meta
         private TextMeshProUGUI _objective;
         private TextMeshProUGUI _progress;
         private TextMeshProUGUI _lost;
+        private TextMeshProUGUI _ultimate;
         private TextMeshProUGUI _timer;
         private TextMeshProUGUI _coins;
+        private string _ultimateText = string.Empty;
+        private bool _ultimateReady;
 
         public RunHud(Transform parent)
         {
@@ -57,25 +60,29 @@ namespace V2.Meta
             rect.anchorMax = new Vector2(1f, 1f);
             rect.pivot = new Vector2(0.5f, 1f);
             rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(0f, 104f);
+            rect.sizeDelta = new Vector2(0f, 132f);
             _panel.GetComponent<Image>().color = PanelColor;
 
             _title = Label(_panel.transform, "Title", 32f, TextAlignmentOptions.Left,
-                new Vector2(0f, 0.52f), new Vector2(0.42f, 1f),
+                new Vector2(0f, 0.62f), new Vector2(0.42f, 1f),
                 new Vector2(28f, 0f), new Vector2(0f, -10f), AccentColor);
             _title.text = config.Contract.Title;
 
             _objective = Label(_panel.transform, "Objective", 24f, TextAlignmentOptions.Left,
-                new Vector2(0f, 0f), new Vector2(0.42f, 0.52f),
+                new Vector2(0f, 0.18f), new Vector2(0.42f, 0.62f),
                 new Vector2(28f, 8f), new Vector2(0f, 0f), TextColor);
             _objective.text = config.Contract.GoalText;
 
             _progress = Label(_panel.transform, "Progress", 30f, TextAlignmentOptions.Center,
-                new Vector2(0.40f, 0.38f), new Vector2(0.76f, 1f),
+                new Vector2(0.40f, 0.56f), new Vector2(0.76f, 1f),
                 Vector2.zero, Vector2.zero, TextColor);
 
             _lost = Label(_panel.transform, "Lost", 22f, TextAlignmentOptions.Center,
-                new Vector2(0.40f, 0f), new Vector2(0.76f, 0.38f),
+                new Vector2(0.40f, 0.28f), new Vector2(0.76f, 0.56f),
+                Vector2.zero, Vector2.zero, MutedColor);
+
+            _ultimate = Label(_panel.transform, "Ultimate", 20f, TextAlignmentOptions.Center,
+                new Vector2(0.34f, 0f), new Vector2(0.78f, 0.28f),
                 Vector2.zero, Vector2.zero, MutedColor);
 
             _coins = Label(_panel.transform, "Coins", 30f, TextAlignmentOptions.Right,
@@ -86,7 +93,26 @@ namespace V2.Meta
                 new Vector2(0.76f, 0f), new Vector2(1f, 0.5f),
                 Vector2.zero, new Vector2(-28f, 8f), TextColor);
 
+            ApplyUltimateText();
             Refresh(ContractProgress.Empty, config);
+        }
+
+        /// <summary>
+        /// Estado de la ultimate en el HUD (badge del gate y, al castearla, "usada"). Se
+        /// llama después del <see cref="Build"/>; el HUD no decide reglas.
+        /// </summary>
+        public void SetUltimate(string text, bool ready)
+        {
+            _ultimateText = text ?? string.Empty;
+            _ultimateReady = ready;
+            ApplyUltimateText();
+        }
+
+        private void ApplyUltimateText()
+        {
+            if (_ultimate == null) return;
+            _ultimate.text = _ultimateText;
+            _ultimate.color = _ultimateReady ? AccentColor : MutedColor;
         }
 
         public void Refresh(ContractProgress progress, RunConfig config)

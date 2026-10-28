@@ -66,6 +66,9 @@ namespace V2.Waifu
         private Transform _backdrop;
         private Transform _stage;
         private bool _playing;
+        private string _ultimateTitle = string.Empty;
+        private int _ultimateLeaderSlot = -1;
+        private bool _ultimateReady;
 
         private Transform _castRoot;
         private Transform _castStage;
@@ -102,6 +105,18 @@ namespace V2.Waifu
         {
             if (_playing) FitToView();
             if (_castPlaying) FitCast();
+        }
+
+        /// <summary>
+        /// Título de la ultimate de facción que castea el líder. Lo inyecta la vista de
+        /// party después de construir el runtime (sin Find); si no está lista, la cinemática
+        /// sigue mostrando la activa normal.
+        /// </summary>
+        public void SetUltimate(string title, int leaderSlot, bool ready)
+        {
+            _ultimateTitle = title ?? string.Empty;
+            _ultimateLeaderSlot = leaderSlot;
+            _ultimateReady = ready;
         }
 
         /// <summary>Flash de "quedo lista": 0.7 s, sin skip ni GameplayLock; no bloquea el disparo.</summary>
@@ -207,8 +222,10 @@ namespace V2.Waifu
             _waifu.ApplyIdentity(def.DisplayName, def.Element, element, def.ChibiArt);
             if (_title != null)
             {
-                _title.text = "Activación de " + def.DisplayName;
-                _title.color = Color.Lerp(Color.white, element, 0.35f);
+                bool ultimate = _ultimateReady && slot == _ultimateLeaderSlot &&
+                                !string.IsNullOrWhiteSpace(_ultimateTitle);
+                _title.text = ultimate ? _ultimateTitle : "Activación de " + def.DisplayName;
+                _title.color = Color.Lerp(Color.white, element, ultimate ? 0.65f : 0.35f);
             }
 
             _visual.gameObject.SetActive(true);

@@ -19,7 +19,7 @@ MonoBehaviour:
   maxStars: 3
   rarity: 0
   portraitColor: {r: 0.95, g: 0.55, b: 0.72, a: 1}
-  element: 2
+  element: 4
   role: 1
   chargeCost: 10
   cooldownMatches: 0

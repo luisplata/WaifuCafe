@@ -37,6 +37,16 @@ namespace WaifuCafe.Core
                 if (_elements[i] == element) _charge[i] += units;
         }
 
+        /// <summary>
+        /// Suma unidades SOLO al tanque de ese slot (carga inicial, pasivas por waifu). No
+        /// reparte por elemento como <see cref="Add(Dish,int)"/>.
+        /// </summary>
+        public void AddToSlot(int slot, int units)
+        {
+            if (!Valid(slot) || units <= 0) return;
+            _charge[slot] += units;
+        }
+
         /// <summary>Suma las unidades de cada plato de una resolucion con el reparto por elemento.</summary>
         public void Add(ResolveResult result)
         {

@@ -86,6 +86,7 @@ namespace V2.Cafe
         private float _coinMultiplier = 1f;
         private float _arrivalMultiplier = 1f;
         private float _postreWeight = 1f;
+        private int _orderCoinBonus;
 
         /// <summary>Monedas pagadas en el dia (HUD completo llega en otro corte).</summary>
         public int Coins { get; private set; }
@@ -161,6 +162,51 @@ namespace V2.Cafe
         /// curso terminan (ya no pagan: el pago ocurre al completar el pedido).
         /// </summary>
         public void StopRun() => _stopped = true;
+
+        /// <summary>
+        /// Sinergia Café 2/3: monedas extra por cada pedido servido. 0 en free-play.
+        /// Llamar después de <see cref="Configure"/>.
+        /// </summary>
+        public void SetOrderCoinBonus(int coins) => _orderCoinBonus = Mathf.Max(0, coins);
+
+        /// <summary>
+        /// Sinergia Espectáculo 2/3: multiplica la paciencia de los clientes que lleguen
+        /// desde ahora. Llamar UNA vez por <see cref="Configure"/> (después de configurar).
+        /// </summary>
+        public void SetPatienceMultiplier(float multiplier)
+        {
+            if (multiplier <= 0f || Mathf.Approximately(multiplier, 1f)) return;
+            _patienceSeconds = Mathf.Max(1f, _patienceSeconds * multiplier);
+        }
+
+        /// <summary>
+        /// Ultimate Encore: +15% de paciencia a los clientes sentados y a los que lleguen.
+        /// </summary>
+        public void BoostPatience(float multiplier)
+        {
+            if (multiplier <= 0f || Mathf.Approximately(multiplier, 1f)) return;
+
+            _patienceSeconds = Mathf.Max(1f, _patienceSeconds * multiplier);
+            if (_seats == null) return;
+
+            foreach (Seat seat in _seats)
+            {
+                if (seat.Order == null || seat.Retiring || seat.Served) continue;
+                seat.PatienceLeft = Mathf.Max(0f, seat.PatienceLeft * multiplier);
+            }
+        }
+
+        /// <summary>
+        /// Monedas extra fuera del pago de un pedido (Espectáculo 3: +1 por cascada de 3+).
+        /// Mantiene el aviso de monedas para el HUD y el contrato.
+        /// </summary>
+        public void AddBonusCoins(int coins)
+        {
+            if (coins <= 0 || _stopped) return;
+
+            Coins += coins;
+            CoinsChanged?.Invoke(coins);
+        }
 
         private void Start()
         {
@@ -412,6 +458,7 @@ namespace V2.Cafe
             seat.Served = true;
 
             int coins = Mathf.RoundToInt(Mathf.Max(1, TotalUnits(order)) * coinsPerUnit * _coinMultiplier);
+            coins += _orderCoinBonus;
             if (coins < 1) coins = 1;
             Coins += coins;
 

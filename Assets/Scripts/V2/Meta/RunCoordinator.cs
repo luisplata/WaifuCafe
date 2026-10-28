@@ -41,6 +41,8 @@ namespace V2.Meta
         private bool _ended;
         private RunHud _hud;
         private ResultScreen _result;
+        private List<WaifuKit> _partyKits = new List<WaifuKit>();
+        private PartyModifiers _partyModifiers = PartyModifiers.Neutral();
 
         public bool IsRunning => _running;
         public bool HasEnded => _ended;
@@ -122,17 +124,27 @@ namespace V2.Meta
                 Debug.LogError("[RunCoordinator] Falta asignar BoardSession.");
             }
 
-            if (cafeFloor != null)
-                cafeFloor.Configure(config);
-            else
-                Debug.LogError("[RunCoordinator] Falta asignar CafeFloor.");
+            _partyKits = BuildPartyKits(config.PartyIds);
+            _partyModifiers = SynergyModel.Build(_partyKits, config.Modifiers);
 
-            ConfigureParty(config);
+            if (cafeFloor != null)
+            {
+                cafeFloor.Configure(config);
+                cafeFloor.SetOrderCoinBonus(_partyModifiers.OrderCoinBonus);
+                cafeFloor.SetPatienceMultiplier(_partyModifiers.PatienceMultiplier);
+            }
+            else
+            {
+                Debug.LogError("[RunCoordinator] Falta asignar CafeFloor.");
+            }
+
+            ConfigureParty(config, _partyModifiers);
             Subscribe();
 
             EnsureUi();
             _result.Hide();
             _hud.Build(config);
+            _hud.SetUltimate(UltimateBadge(), IsUltimateLive());
             _hud.Refresh(_state.Progress, config);
         }
 
@@ -146,7 +158,7 @@ namespace V2.Meta
             Evaluate();
         }
 
-        private void ConfigureParty(RunConfig config)
+        private void ConfigureParty(RunConfig config, PartyModifiers modifiers)
         {
             if (partyView == null) return;
 
@@ -177,8 +189,63 @@ namespace V2.Meta
                 definitions.Add(definition);
             }
 
-            partyView.Configure(definitions.ToArray());
+            partyView.Configure(definitions.ToArray(), modifiers, cafeFloor);
         }
+
+        /// <summary>
+        /// Kits puros de la party de la run (estrellas del perfil). Sin GameRoot no hay
+        /// sinergia: free-play conserva las reglas base.
+        /// </summary>
+        private List<WaifuKit> BuildPartyKits(IReadOnlyList<string> ids)
+        {
+            var kits = new List<WaifuKit>();
+            GameRoot root = GameRoot.Instance;
+            IWaifuCatalog catalog = root != null ? root.Catalog : null;
+            if (catalog == null || ids == null) return kits;
+
+            PlayerProfile profile = root.Profile != null ? root.Profile.Current : null;
+            foreach (string id in ids)
+            {
+                WaifuDefinitionSO def = catalog.Find(id);
+                if (def == null) continue;
+
+                kits.Add(new WaifuKit
+                {
+                    Id = def.Id,
+                    Faction = def.Faction,
+                    Role = def.Role,
+                    Element = def.Element,
+                    Active = def.SkillArchetype,
+                    Passive = def.PassiveId,
+                    Stars = StarsOf(profile, def.Id, def.BaseStars),
+                    ChargeCost = def.ChargeCost,
+                    CooldownMatches = def.CooldownMatches,
+                    BasePotency = def.Potency,
+                });
+            }
+
+            return kits;
+        }
+
+        private static int StarsOf(PlayerProfile profile, string id, int fallback)
+        {
+            if (profile == null || profile.owned == null || string.IsNullOrWhiteSpace(id))
+                return WaifuStars.Clamp(fallback);
+
+            foreach (StarterEntry entry in profile.owned)
+            {
+                if (entry != null && string.Equals(entry.waifuId, id, StringComparison.OrdinalIgnoreCase))
+                    return WaifuStars.Clamp(entry.stars);
+            }
+
+            return WaifuStars.Clamp(fallback);
+        }
+
+        private string UltimateBadge() =>
+            SynergyModel.BadgeText(_partyModifiers.Ultimate, _partyKits);
+
+        private bool IsUltimateLive() =>
+            _partyModifiers.Ultimate.IsReady && _partyModifiers.Ultimate.Live;
 
         private void Subscribe()
         {
@@ -190,7 +257,11 @@ namespace V2.Meta
             }
 
             if (boardSession != null) boardSession.Delivered += OnBoardDelivered;
-            if (partyView != null) partyView.SkillCast += OnSkillCast;
+            if (partyView != null)
+            {
+                partyView.SkillCast += OnSkillCast;
+                partyView.UltimateCast += OnUltimateCast;
+            }
         }
 
         private void Unsubscribe()
@@ -203,7 +274,11 @@ namespace V2.Meta
             }
 
             if (boardSession != null) boardSession.Delivered -= OnBoardDelivered;
-            if (partyView != null) partyView.SkillCast -= OnSkillCast;
+            if (partyView != null)
+            {
+                partyView.SkillCast -= OnSkillCast;
+                partyView.UltimateCast -= OnUltimateCast;
+            }
         }
 
         private void OnOrderServed(Order order)
@@ -231,6 +306,14 @@ namespace V2.Meta
         {
             if (!_running || _ended) return;
             _state.AddCleared(result);
+
+            // Espectáculo 3 + contrato: monedas por resolución de 3 o más cascadas.
+            if (result.Cascades >= 3 && cafeFloor != null && _partyModifiers.CascadeCoinBonus > 0)
+            {
+                cafeFloor.AddBonusCoins(_partyModifiers.CascadeCoinBonus);
+                _state.Coins = cafeFloor.Coins;
+            }
+
             Evaluate();
         }
 
@@ -239,6 +322,13 @@ namespace V2.Meta
             if (!_running || _ended) return;
             _state.SkillsCast++;
             Evaluate();
+        }
+
+        private void OnUltimateCast(string title)
+        {
+            if (!_running || _ended || string.IsNullOrWhiteSpace(title)) return;
+            _state.UltimateUsed = title;
+            _hud?.SetUltimate("ULTIMATE: " + title + " — USADA", false);
         }
 
         private void Evaluate()

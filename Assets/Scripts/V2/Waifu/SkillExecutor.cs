@@ -11,6 +11,9 @@ namespace V2.Waifu
     /// Ejecuta las skills de la party. Vive fuera de la vista: valida la carga propia de la
     /// waifu, cooldown medido en matches y que el tablero no este resolviendo; aplica el efecto
     /// y lo devuelve por el mismo camino que un swap (olas, snapshots, cascadas, telegraph).
+    /// La potencia sale de <see cref="WaifuPartyRuntime.PotencyFor"/> (estrellas + nivel +
+    /// sinergia) y el lider con ultimate viva castea la ultimate de facción en lugar de su
+    /// activa normal.
     /// </summary>
     public sealed class SkillExecutor
     {
@@ -18,15 +21,28 @@ namespace V2.Waifu
         private readonly BoardSession _session;
         private readonly BoardView _view;
         private readonly CafeFloor _floor;
+        private readonly PartyModifiers _mods;
         private readonly int[] _cooldown = new int[WaifuPartyRuntime.MaxSlots];
 
-        public SkillExecutor(WaifuPartyRuntime party, BoardSession session)
+        public SkillExecutor(WaifuPartyRuntime party, BoardSession session, CafeFloor floor = null,
+            PartyModifiers modifiers = null)
         {
             _party = party;
             _session = session;
             _view = session != null ? session.GetComponentInChildren<BoardView>() : null;
-            _floor = UnityEngine.Object.FindFirstObjectByType<CafeFloor>();
+            _floor = floor;
+            _mods = modifiers ?? (party != null ? party.Modifiers : null) ?? PartyModifiers.Neutral();
         }
+
+        /// <summary>Ultimate de la party (puede estar bloqueada o ser chase/debug).</summary>
+        public UltimateInfo Ultimate => _mods.Ultimate;
+
+        /// <summary>Última ultimate efectivamente ejecutada (None = ninguna).</summary>
+        public UltimateId LastUltimate { get; private set; }
+
+        public string LastUltimateTitle => LastUltimate == UltimateId.None
+            ? string.Empty
+            : UltimateTable.Title(LastUltimate);
 
         /// <summary>Intentos restantes de cooldown (en matches) para ese slot.</summary>
         public int CooldownLeft(int slot) =>
@@ -50,13 +66,25 @@ namespace V2.Waifu
 
         /// <summary>
         /// Compromete el costo antes de la cinematica: gasta SOLO la carga de ese slot y
-        /// arranca su cooldown. Si no valida, no toca nada.
+        /// arranca su cooldown (Control 2 lo reduce; FasterService descuenta a las companeras).
+        /// Si no valida, no toca nada.
         /// </summary>
         public bool CommitFire(int slot)
         {
             if (!CanFire(slot)) return false;
+
+            WaifuDefinitionSO def = _party[slot];
             _party.Spend(slot);
-            _cooldown[slot] = Mathf.Max(0, _party[slot].CooldownMatches);
+
+            int reduction = def.Role == WaifuRole.Control ? _mods.ControlCooldownReduction : 0;
+            _cooldown[slot] = Mathf.Max(0, def.CooldownMatches - reduction);
+
+            if (def.PassiveId == PassiveId.FasterService)
+            {
+                for (int i = 0; i < _cooldown.Length; i++)
+                    if (i != slot && _cooldown[i] > 0) _cooldown[i]--;
+            }
+
             return true;
         }
 
@@ -69,28 +97,49 @@ namespace V2.Waifu
             WaifuDefinitionSO def = _party != null ? _party[slot] : null;
             if (def == null || _session == null || _session.Board == null) return false;
             if (_session.IsResolving || _session.Locked) return false;
-            return Apply(def);
+            return Apply(slot, def);
         }
 
         /// <summary>Sin cinemática: validar, comprometer y ejecutar. El costo no se devuelve.</summary>
         public bool TryFire(int slot) => CanFire(slot) && CommitFire(slot) && ExecuteFire(slot);
 
-        private bool Apply(WaifuDefinitionSO def)
+        /// <summary>
+        /// Dev/tuning: ejecuta una ultimate sin gate, sin costo y sin cinemática. Sólo para
+        /// probar Libro Mayor / Encore / Zorro de Fuego (FU2: chase/debug en V1).
+        /// </summary>
+        public bool DebugUltimate(UltimateId id)
         {
+            if (id == UltimateId.None || _session == null || _session.Board == null) return false;
+            if (_session.IsResolving || _session.Locked) return false;
+
+            var info = new UltimateInfo(id, 0, WaifuFaction.Cafe, -1, 0);
+            return ApplyUltimate(info);
+        }
+
+        private bool Apply(int slot, WaifuDefinitionSO def)
+        {
+            LastUltimate = UltimateId.None;
+
+            if (ShouldCastUltimate(slot)) return ApplyUltimate(_mods.Ultimate);
+
             switch (def.SkillArchetype)
             {
                 case SkillArchetype.ClearCross:
-                    return _session.ResolveSkill(_session.Board.ClearCells(Cross(TargetCell())));
+                {
+                    int level = _party.LevelFor(slot);
+                    return _session.ResolveSkill(_session.Board.ClearCells(Area(TargetCell(), level)));
+                }
 
                 case SkillArchetype.ConvertToElement:
                 {
-                    List<BoardPos> cells = PickConversionCells(_session.Board, def.Element, def.Potency);
+                    int count = _party.PotencyFor(slot);
+                    List<BoardPos> cells = PickConversionCells(_session.Board, def.Element, count);
                     if (cells.Count == 0) return false;
                     return _session.ResolveSkill(_session.Board.ConvertCells(cells, def.Element));
                 }
 
                 case SkillArchetype.InstantServeUnits:
-                    return ServeDirect(def);
+                    return ServeDirect(slot, def);
 
                 case SkillArchetype.ReshuffleBoard:
                     if (!_session.Board.ReshuffleWithMove()) return false;
@@ -98,7 +147,62 @@ namespace V2.Waifu
                     return true;
 
                 default:
-                    // DelayEviction esta reservado: la expulsion no existe hasta PR9.
+                    // DelayEviction esta reservado: la expulsion no existe todavia.
+                    return false;
+            }
+        }
+
+        /// <summary>La ultimate sólo la castea el líder y sólo si está viva en V1 (FU2).</summary>
+        private bool ShouldCastUltimate(int slot) =>
+            _mods.Ultimate.IsReady && _mods.Ultimate.Live && slot == _mods.Ultimate.LeaderSlot;
+
+        private bool ApplyUltimate(UltimateInfo ultimate)
+        {
+            LastUltimate = UltimateId.None;
+
+            switch (ultimate.Id)
+            {
+                // Café 3: entrega 1 unidad de cada plato pendiente a cada pedido.
+                case UltimateId.LibroMayor:
+                {
+                    bool delivered = _floor != null && _floor.DeliverToAllOrders(
+                        UltimateTable.DeliverUnits(UltimateId.LibroMayor)) > 0;
+                    if (!delivered) return false;
+                    LastUltimate = UltimateId.LibroMayor;
+                    return true;
+                }
+
+                // Espectáculo 3: 2 unidades por pedido y +15% de paciencia.
+                case UltimateId.Encore:
+                {
+                    bool delivered = _floor != null && _floor.DeliverToAllOrders(
+                        UltimateTable.DeliverUnits(UltimateId.Encore)) > 0;
+                    if (!delivered) return false;
+                    _floor.BoostPatience(1.15f);
+                    LastUltimate = UltimateId.Encore;
+                    return true;
+                }
+
+                // Míticos 3 (LIVE): 3×3 alrededor del objetivo a Postre y +1 potencia de party.
+                case UltimateId.LunaDeSangre:
+                {
+                    ResolveResult result = _session.Board.ConvertCells(Area(TargetCell(), 2), Dish.Postre);
+                    if (!_session.ResolveSkill(result)) return false;
+                    _mods.AddPotency(1);
+                    LastUltimate = UltimateId.LunaDeSangre;
+                    return true;
+                }
+
+                // Míticos T2 (debug): fila + columna del objetivo a Bebida.
+                case UltimateId.ZorroDeFuego:
+                {
+                    ResolveResult result = _session.Board.ConvertCells(RowAndColumn(TargetCell()), Dish.Bebida);
+                    if (!_session.ResolveSkill(result)) return false;
+                    LastUltimate = UltimateId.ZorroDeFuego;
+                    return true;
+                }
+
+                default:
                     return false;
             }
         }
@@ -108,6 +212,33 @@ namespace V2.Waifu
         {
             if (_view != null && _view.SelectedPos.HasValue) return _view.SelectedPos.Value;
             return new BoardPos(_session.Board.Width / 2, _session.Board.Height / 2);
+        }
+
+        /// <summary>
+        /// Área de ClearCross por nivel (D13): 1 = cruz de 5 celdas, 2 = 3×3, 3 = 5×5.
+        /// Las celdas fuera del tablero se descartan en el modelo.
+        /// </summary>
+        private List<BoardPos> Area(BoardPos center, int level)
+        {
+            if (level <= 1) return Cross(center);
+
+            int radius = level >= 3 ? 2 : 1;
+            var cells = new List<BoardPos>((radius * 2 + 1) * (radius * 2 + 1));
+            for (int dy = -radius; dy <= radius; dy++)
+                for (int dx = -radius; dx <= radius; dx++)
+                    cells.Add(new BoardPos(center.X + dx, center.Y + dy));
+            return cells;
+        }
+
+        private List<BoardPos> RowAndColumn(BoardPos center)
+        {
+            int width = _session.Board.Width;
+            int height = _session.Board.Height;
+            var cells = new List<BoardPos>(width + height);
+
+            for (int x = 0; x < width; x++) cells.Add(new BoardPos(x, center.Y));
+            for (int y = 0; y < height; y++) cells.Add(new BoardPos(center.X, y));
+            return cells;
         }
 
         private static List<BoardPos> Cross(BoardPos center) => new List<BoardPos>(5)
@@ -120,10 +251,11 @@ namespace V2.Waifu
         };
 
         /// <summary>Entrega directa al libro de pedidos con el mismo feedback que un match.</summary>
-        private bool ServeDirect(WaifuDefinitionSO def)
+        private bool ServeDirect(int slot, WaifuDefinitionSO def)
         {
-            if (_floor == null || _floor.Book == null || def.Potency <= 0) return false;
-            return !_floor.DeliverDirect(def.Element, def.Potency).IsEmpty;
+            int units = _party.PotencyFor(slot);
+            if (_floor == null || _floor.Book == null || units <= 0) return false;
+            return !_floor.DeliverDirect(def.Element, units).IsEmpty;
         }
 
         /// <summary>

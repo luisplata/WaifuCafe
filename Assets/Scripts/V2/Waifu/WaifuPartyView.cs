@@ -3,8 +3,10 @@ using PrimeTween;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using V2.Board;
+using V2.Cafe;
 using V2.Helpers;
 using WaifuCafe.Core;
+using WaifuCafe.Core.Meta;
 
 namespace V2.Waifu
 {
@@ -51,6 +53,7 @@ namespace V2.Waifu
             public TextMesh Name;
             public TextMesh Role;
             public TextMesh Charge;
+            public TextMesh Ultimate;
             public GameObject ReadyGlow;
             public float BarY = -1.18f;
             public Sequence Pulse;
@@ -67,23 +70,36 @@ namespace V2.Waifu
         private BoardView _board;
         private BoardLayoutMock _layout;
         private WaifuCutsceneDirector _cutscene;
+        private CafeFloor _floor;
         private Font _font;
         private Transform _root;
         private int _sign = -1;
         private WaifuDefinitionSO[] _overrideParty;
+        private PartyModifiers _overrideModifiers;
+        private CafeFloor _overrideFloor;
 
         /// <summary>Estado de carga de la party (lo consume PR7 para disparar skills).</summary>
         public WaifuPartyRuntime Runtime => _runtime;
 
+        /// <summary>Sinergia efectiva de la party (null hasta el <c>Start</c>).</summary>
+        public PartyModifiers Modifiers => _runtime != null ? _runtime.Modifiers : _overrideModifiers;
+
         /// <summary>Skill ejecutada (slot). El contrato la cuenta para su objetivo.</summary>
         public event Action<int> SkillCast;
 
+        /// <summary>Ultimate ejecutada (título). El contrato la muestra en el resultado.</summary>
+        public event Action<string> UltimateCast;
+
         /// <summary>
-        /// Party de la run (viene del perfil). Llamar antes de <c>Start</c>; el
-        /// RunCoordinator usa orden -150. Null/empty conserva la party del inspector.
+        /// Party de la run (viene del perfil) y su sinergia. Llamar antes de <c>Start</c>; el
+        /// RunCoordinator usa orden -150. Null/empty conserva la party del inspector y la
+        /// sinergia neutral (free-play).
         /// </summary>
-        public void Configure(WaifuDefinitionSO[] definitions)
+        public void Configure(WaifuDefinitionSO[] definitions, PartyModifiers modifiers = null,
+            CafeFloor floor = null)
         {
+            _overrideModifiers = modifiers;
+            _overrideFloor = floor;
             _overrideParty = definitions != null && definitions.Length > 0 ? definitions : null;
             if (_overrideParty == null || _runtime != null) return;
 
@@ -98,6 +114,8 @@ namespace V2.Waifu
             _session = FindFirstObjectByType<BoardSession>();
             _board = FindFirstObjectByType<BoardView>();
             _cutscene = FindFirstObjectByType<WaifuCutsceneDirector>();
+            // Free-play: nadie inyecta el piso, se resuelve como siempre en la escena.
+            _floor = _overrideFloor != null ? _overrideFloor : FindFirstObjectByType<CafeFloor>();
             if (_layout != null)
             {
                 _sign = _layout.IsRight ? -1 : 1;
@@ -106,8 +124,11 @@ namespace V2.Waifu
 
             if (_session != null) _session.Delivered += OnDelivered;
 
-            _runtime = new WaifuPartyRuntime(party);
-            _executor = new SkillExecutor(_runtime, _session);
+            _runtime = new WaifuPartyRuntime(party, _overrideModifiers);
+            _executor = new SkillExecutor(_runtime, _session, _floor, _runtime.Modifiers);
+            _cutscene?.SetUltimate(_runtime.Modifiers.Ultimate.Title,
+                _runtime.Modifiers.Ultimate.LeaderSlot,
+                _runtime.Modifiers.Ultimate.IsReady && _runtime.Modifiers.Ultimate.Live);
             Rebuild();
         }
 
@@ -163,8 +184,24 @@ namespace V2.Waifu
         /// <summary>Cierra el disparo: aplica el efecto ya cobrado y refresca las cartas.</summary>
         private void ExecuteFire(int slot)
         {
-            if (_executor != null) _executor.ExecuteFire(slot);
+            bool applied = _executor != null && _executor.ExecuteFire(slot);
+            if (applied && _executor.LastUltimate != UltimateId.None)
+                UltimateCast?.Invoke(_executor.LastUltimateTitle);
             Refresh(false);
+        }
+
+        /// <summary>
+        /// Dev/tuning: ejecuta una ultimate sin gate ni costo (Libro Mayor / Encore / Zorro).
+        /// No dispara cinemática ni cobra carga; avisa por el mismo evento que una real.
+        /// </summary>
+        public bool DebugUltimate(UltimateId ultimate)
+        {
+            if (_executor == null) return false;
+
+            bool applied = _executor.DebugUltimate(ultimate);
+            if (applied) UltimateCast?.Invoke(_executor.LastUltimateTitle);
+            Refresh(false);
+            return applied;
         }
 
         private void Rebuild()
@@ -210,6 +247,11 @@ namespace V2.Waifu
             // mantiene legibles nombre, rol y barra. Sin arte, se usa el retrato procedural.
             if (def.CardArt != null) BuildArtCard(root, card, def);
             else BuildFallbackCard(root, card, def);
+
+            // Badge de ultimate: sólo la carta del líder que puede castearla.
+            UltimateInfo ultimate = _runtime.Modifiers.Ultimate;
+            if (ultimate.IsReady && ultimate.Live && ultimate.LeaderSlot == slot)
+                card.Ultimate = Label(root, "ULT", 1.70f, 0.26f, ReadyColor);
 
             return card;
         }
@@ -270,7 +312,7 @@ namespace V2.Waifu
             Block(root, "BarFrame", new Vector3(0f, barY, 0f),
                 new Vector2(BarWidth + 0.24f, 0.34f), FrameColor, 7, DishSprites.RoundFrame());
 
-            card.Charge = Label(root, "0/" + def.ChargeCost, textY, 0.30f, TextColor);
+            card.Charge = Label(root, "0/" + _runtime.ChargeCost(card.Slot), textY, 0.30f, TextColor);
         }
 
         private void Refresh(bool animate)
@@ -282,6 +324,7 @@ namespace V2.Waifu
                 if (def == null) continue;
 
                 int amount = _runtime.AmountFor(card.Slot);
+                int cost = _runtime.ChargeCost(card.Slot);
                 bool ready = _runtime.IsReady(card.Slot);
                 int cooldown = _executor != null ? _executor.CooldownLeft(card.Slot) : 0;
                 bool available = ready && cooldown <= 0;
@@ -297,12 +340,12 @@ namespace V2.Waifu
                     }
                     else
                     {
-                        card.Charge.text = ready ? "READY" : amount + "/" + def.ChargeCost;
+                        card.Charge.text = ready ? "READY" : amount + "/" + cost;
                         card.Charge.color = ready ? ReadyColor : TextColor;
                     }
                 }
 
-                ApplyFill(card, def.ChargeCost <= 0 ? 0f : Mathf.Clamp01(amount / (float)def.ChargeCost));
+                ApplyFill(card, cost <= 0 ? 0f : Mathf.Clamp01(amount / (float)cost));
                 card.ReadyGlow.SetActive(available);
                 // Flash ambiental solo cuando la carta queda realmente disponible (READY + CD).
                 if (available && !card.WasReady && _cutscene != null) _cutscene.PlayReady(card.Slot);

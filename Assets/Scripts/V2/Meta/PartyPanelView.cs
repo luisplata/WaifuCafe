@@ -42,11 +42,11 @@ namespace V2.Meta
                 _slots.Add(new SlotWidget(slotRoot, i + 1, onRemove));
             }
 
-            _synergy = MetaUi.Label(panel, "SynergySummary", "Sinergia: — (E4)", 15f, MetaUi.Muted,
+            _synergy = MetaUi.Label(panel, "SynergySummary", "Sinergia: —", 15f, MetaUi.Muted,
                 TextAlignmentOptions.TopLeft, new Vector2(16f, 386f),
                 new Vector2(PanelWidth - 32f, 22f));
 
-            _ultimate = MetaUi.Label(panel, "UltimateBadge", "ULTIMATE: — (E4)", 15f, MetaUi.Muted,
+            _ultimate = MetaUi.Label(panel, "UltimateBadge", "ULTIMATE: —", 15f, MetaUi.Muted,
                 TextAlignmentOptions.TopLeft, new Vector2(16f, 410f),
                 new Vector2(PanelWidth - 32f, 22f), FontStyles.Bold);
             _ultimate.raycastTarget = true;
@@ -56,10 +56,10 @@ namespace V2.Meta
                 out _startLabel);
             _startButton.onClick.AddListener(() => StartRequested?.Invoke());
 
-            _tooltip = new SynergyTooltip(panel, new Vector2(16f, 432f),
-                new Vector2(PanelWidth - 32f, 68f));
+            _tooltip = new SynergyTooltip(panel, new Vector2(16f, 424f),
+                new Vector2(PanelWidth - 32f, 104f));
             _tooltip.Bind(_ultimate.gameObject,
-                "Sinergias y ultimates: el gate de facción y estrellas se conecta en E4.");
+                "Sinergia: sumá facciones o roles repetidos.");
         }
 
         public event Action StartRequested;
@@ -98,6 +98,12 @@ namespace V2.Meta
         {
             _ultimate.text = string.IsNullOrWhiteSpace(text) ? "ULTIMATE: —" : text;
             _ultimate.color = ready ? MetaUi.Accent : MetaUi.Muted;
+        }
+
+        /// <summary>Tooltip real de sinergia/ultimate (<see cref="SynergyModel.Tooltip"/>).</summary>
+        public void SetUltimateTooltip(string text)
+        {
+            _tooltip.SetText(text);
         }
 
         private static int StarsOf(PlayerProfile profile, string id)

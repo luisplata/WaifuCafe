@@ -196,9 +196,59 @@ namespace V2.Meta
 
             RebuildRoster(profile);
             _partyPanelView?.Refresh(profile.party, _catalog, profile);
+            RefreshSynergy(profile);
             EnsureContractSelection(profile);
             UpdateCardSelection();
             UpdateStartState(profile);
+        }
+
+        /// <summary>
+        /// Sinergia real de la party: breakpoints, badge de ultimate y tooltip. Todo sale de
+        /// <see cref="SynergyModel"/>; la vista sólo pinta el texto.
+        /// </summary>
+        private void RefreshSynergy(PlayerProfile profile)
+        {
+            if (_partyPanelView == null) return;
+
+            List<WaifuKit> kits = BuildPartyKits(profile);
+            PartyModifiers modifiers = SynergyModel.Build(kits);
+            UltimateInfo ultimate = modifiers.Ultimate;
+
+            _partyPanelView.SetSynergySummary("Sinergia: " + SynergyModel.Summary(kits));
+            _partyPanelView.SetUltimateBadge(SynergyModel.BadgeText(ultimate, kits),
+                ultimate.IsReady && ultimate.Live);
+            _partyPanelView.SetUltimateTooltip(SynergyModel.Tooltip(kits));
+        }
+
+        private List<WaifuKit> BuildPartyKits(PlayerProfile profile)
+        {
+            var kits = new List<WaifuKit>(MaxParty);
+            if (profile == null || profile.party == null || _catalog == null) return kits;
+
+            foreach (string id in profile.party)
+            {
+                WaifuDefinitionSO definition = _catalog.Find(id);
+                if (definition == null) continue;
+
+                int stars = StarsOf(profile, definition.Id);
+                if (stars <= 0) stars = definition.BaseStars;
+
+                kits.Add(new WaifuKit
+                {
+                    Id = definition.Id,
+                    Faction = definition.Faction,
+                    Role = definition.Role,
+                    Element = definition.Element,
+                    Active = definition.SkillArchetype,
+                    Passive = definition.PassiveId,
+                    Stars = WaifuStars.Clamp(stars),
+                    ChargeCost = definition.ChargeCost,
+                    CooldownMatches = definition.CooldownMatches,
+                    BasePotency = definition.Potency,
+                });
+            }
+
+            return kits;
         }
 
         private void RebuildRoster(PlayerProfile profile)

@@ -25,6 +25,6 @@ MonoBehaviour:
   cooldownMatches: 2
   skillArchetype: 0
   potency: 10
-  passiveId: 0
+  passiveId: 2
   cardArt: {fileID: 21300000, guid: 34ed616a4cdce0446a33785adb80dcef, type: 3}
   chibiArt: {fileID: 21300000, guid: a22bf7aff19b99d47b31f3945f0fc35b, type: 3}
