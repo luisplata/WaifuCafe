@@ -344,6 +344,7 @@ namespace WaifuCafe.Core
         {
             int cleared = wave != null ? wave.Count : 0;
             var units = new Dictionary<Dish, int>();
+            var clearedByDish = new Dictionary<Dish, int>();
             var waves = new List<IReadOnlyList<BoardPos>>();
             var waveUnits = new List<int>();
             var snapshots = new List<BoardSnapshot>();
@@ -351,7 +352,7 @@ namespace WaifuCafe.Core
             if (groups != null)
             {
                 waves.Add(CellsOf(groups));
-                waveUnits.Add(Accumulate(groups, units, ref cleared));
+                waveUnits.Add(Accumulate(groups, units, clearedByDish, ref cleared));
                 ClearCells(groups);
             }
             else
@@ -363,6 +364,7 @@ namespace WaifuCafe.Core
                     Dish dish = _cells[p.X, p.Y];
                     units.TryGetValue(dish, out int current);
                     units[dish] = current + 1;
+                    Bump(clearedByDish, dish, 1);
                     _filled[p.X, p.Y] = false;
                 }
             }
@@ -371,20 +373,21 @@ namespace WaifuCafe.Core
             snapshots.Add(BoardSnapshot.Capture(_cells));
 
             int cascades = 1;
-            DrainCascades(ref cascades, ref cleared, units, waves, waveUnits, snapshots);
-            return new ResolveResult(cascades, cleared, units, waves, waveUnits, snapshots);
+            DrainCascades(ref cascades, ref cleared, units, clearedByDish, waves, waveUnits, snapshots);
+            return new ResolveResult(cascades, cleared, units, waves, waveUnits, snapshots, clearedByDish);
         }
 
         /// <summary>Encadena los matches que dejo la gravedad; cada eslabon deja ola y foto.</summary>
         private void DrainCascades(ref int cascades, ref int cleared, Dictionary<Dish, int> units,
-            List<IReadOnlyList<BoardPos>> waves, List<int> waveUnits, List<BoardSnapshot> snapshots)
+            Dictionary<Dish, int> clearedByDish, List<IReadOnlyList<BoardPos>> waves, List<int> waveUnits,
+            List<BoardSnapshot> snapshots)
         {
             var groups = CollectGroups();
             while (groups.Count > 0 && cascades < MaxCascades)
             {
                 cascades++;
                 waves.Add(CellsOf(groups));
-                waveUnits.Add(Accumulate(groups, units, ref cleared));
+                waveUnits.Add(Accumulate(groups, units, clearedByDish, ref cleared));
                 ClearCells(groups);
                 ApplyGravityAndRefill();
                 snapshots.Add(BoardSnapshot.Capture(_cells));
@@ -406,13 +409,15 @@ namespace WaifuCafe.Core
         }
 
         /// <summary>Acumula la ola y devuelve cuantas unidades emitio.</summary>
-        private static int Accumulate(List<MatchGroup> groups, Dictionary<Dish, int> units, ref int cleared)
+        private static int Accumulate(List<MatchGroup> groups, Dictionary<Dish, int> units,
+            Dictionary<Dish, int> clearedByDish, ref int cleared)
         {
             int waveUnits = 0;
 
             foreach (var group in groups)
             {
                 cleared += group.Cells.Count;
+                Bump(clearedByDish, group.Dish, group.Cells.Count);
                 int unitsInGroup = Math.Min(group.Cells.Count, MaxUnitsPerMatch);
                 units.TryGetValue(group.Dish, out int current);
                 units[group.Dish] = current + unitsInGroup;
@@ -420,6 +425,12 @@ namespace WaifuCafe.Core
             }
 
             return waveUnits;
+        }
+
+        private static void Bump(Dictionary<Dish, int> counts, Dish dish, int units)
+        {
+            counts.TryGetValue(dish, out int current);
+            counts[dish] = current + units;
         }
 
         /// <summary>

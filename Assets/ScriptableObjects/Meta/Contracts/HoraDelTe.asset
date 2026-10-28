@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adc9cf69af1ad4741894f59213940d31, type: 3}
+  m_Name: HoraDelTe
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Meta.ContractSO
+  id: hora-te
+  title: "Hora del T\xE9"
+  faction: 2
+  locked: 1
+  goalText: "Serv\xED 6 VIP sin perder ninguno"
+  modifierText: "Paciencia VIP -25% \xB7 +1 moneda por cascada \u22653"
+  defeatText: 1 VIP perdido o tiempo sin llegar a 6
+  goalServedOrders: 0
+  goalSkillsCast: 0
+  goalClearedDish: 3
+  goalClearedDishUnits: 0
+  goalClearedDish2: 0
+  goalClearedDish2Units: 0
+  goalVipOrders: 6
+  arrivalIntervalMultiplier: 1
+  coinMultiplier: 1
+  chargeCostMultiplier: 1
+  postreWeightMultiplier: 1
+  patienceMultiplier: 0.75
+  coinsPerCascade: 1
+  ultimateEnabled: 1
+  timeLimitSeconds: 180
+  maxLostOrders: 1
+  failEnabled: 1
+  basePatienceSeconds: 30

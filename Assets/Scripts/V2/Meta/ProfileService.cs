@@ -16,13 +16,16 @@ namespace V2.Meta
         public const string DefaultPrefsKey = "waifu_profile_v1";
 
         private readonly IWaifuCatalog _catalog;
+        private readonly IContractCatalog _contracts;
         private readonly string _key;
 
         private PlayerProfile _current;
 
-        public ProfileService(IWaifuCatalog catalog, string prefsKey = DefaultPrefsKey)
+        public ProfileService(IWaifuCatalog catalog, IContractCatalog contracts = null,
+            string prefsKey = DefaultPrefsKey)
         {
             _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+            _contracts = contracts;
             if (string.IsNullOrWhiteSpace(prefsKey)) throw new ArgumentException("prefsKey vacio", nameof(prefsKey));
             _key = prefsKey;
         }
@@ -97,8 +100,20 @@ namespace V2.Meta
                 }
             }
 
-            // Los contratos llegan en E3; por ahora cualquier lastContractId es desconocido.
-            return ProfileSanitizer.Sanitize(_current, knownIds, Array.Empty<string>());
+            // Los contratos conocidos llegan del catálogo (E3); sin catálogo cualquier
+            // lastContractId se considera desconocido y se limpia.
+            var knownContracts = new List<string>();
+            IReadOnlyList<ContractSO> contractList = _contracts != null ? _contracts.All : null;
+            if (contractList != null)
+            {
+                foreach (ContractSO contract in contractList)
+                {
+                    if (contract != null && !string.IsNullOrWhiteSpace(contract.Id))
+                        knownContracts.Add(contract.Id);
+                }
+            }
+
+            return ProfileSanitizer.Sanitize(_current, knownIds, knownContracts);
         }
 
         private void Persist(PlayerProfile profile)

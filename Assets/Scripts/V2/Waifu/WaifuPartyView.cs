@@ -1,3 +1,4 @@
+using System;
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -69,9 +70,27 @@ namespace V2.Waifu
         private Font _font;
         private Transform _root;
         private int _sign = -1;
+        private WaifuDefinitionSO[] _overrideParty;
 
         /// <summary>Estado de carga de la party (lo consume PR7 para disparar skills).</summary>
         public WaifuPartyRuntime Runtime => _runtime;
+
+        /// <summary>Skill ejecutada (slot). El contrato la cuenta para su objetivo.</summary>
+        public event Action<int> SkillCast;
+
+        /// <summary>
+        /// Party de la run (viene del perfil). Llamar antes de <c>Start</c>; el
+        /// RunCoordinator usa orden -150. Null/empty conserva la party del inspector.
+        /// </summary>
+        public void Configure(WaifuDefinitionSO[] definitions)
+        {
+            _overrideParty = definitions != null && definitions.Length > 0 ? definitions : null;
+            if (_overrideParty == null || _runtime != null) return;
+
+            var slots = new WaifuDefinitionSO[WaifuPartyRuntime.MaxSlots];
+            for (int i = 0; i < slots.Length && i < _overrideParty.Length; i++) slots[i] = _overrideParty[i];
+            party = slots;
+        }
 
         private void Start()
         {
@@ -135,6 +154,7 @@ namespace V2.Waifu
 
             Refresh(false);
             PlayFire(card);
+            SkillCast?.Invoke(slot);
             if (_cutscene != null) _cutscene.PlayFire(slot, () => ExecuteFire(slot));
             else ExecuteFire(slot);
             return true;

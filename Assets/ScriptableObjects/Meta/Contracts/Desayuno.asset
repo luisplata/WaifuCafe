@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adc9cf69af1ad4741894f59213940d31, type: 3}
+  m_Name: Desayuno
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Meta.ContractSO
+  id: desayuno-real
+  title: Desayuno Real
+  faction: 0
+  locked: 1
+  goalText: "Serv\xED 10 Desayunos y 10 Postres"
+  modifierText: "Sin ultimate \xB7 breakpoints 2/2"
+  defeatText: 3 pedidos perdidos o tiempo sin cumplir
+  goalServedOrders: 0
+  goalSkillsCast: 0
+  goalClearedDish: 0
+  goalClearedDishUnits: 10
+  goalClearedDish2: 3
+  goalClearedDish2Units: 10
+  goalVipOrders: 0
+  arrivalIntervalMultiplier: 1
+  coinMultiplier: 1
+  chargeCostMultiplier: 1
+  postreWeightMultiplier: 1
+  patienceMultiplier: 1
+  coinsPerCascade: 0
+  ultimateEnabled: 0
+  timeLimitSeconds: 180
+  maxLostOrders: 3
+  failEnabled: 1
+  basePatienceSeconds: 30

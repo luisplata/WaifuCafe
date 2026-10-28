@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using PrimeTween;
@@ -5,13 +6,15 @@ using UnityEngine;
 using V2.Board;
 using V2.Helpers;
 using WaifuCafe.Core;
+using WaifuCafe.Core.Meta;
 
 namespace V2.Cafe
 {
     /// <summary>
     /// Suelo del cafe del prototipo: 5 asientos visibles, spawner de pedidos y cableado
     /// de la entrega del tablero. Un pedido completo paga, libera el asiento y sale del
-    /// libro. Sin expulsión todavia: con los 5 ocupados no entra nadie.
+    /// libro. Con un <see cref="RunConfig"/> activo cada cliente tiene paciencia y puede
+    /// perderse; en free-play (sin configurar) el comportamiento es el de siempre.
     /// </summary>
     public sealed class CafeFloor : MonoBehaviour
     {
@@ -36,6 +39,10 @@ namespace V2.Cafe
         [SerializeField] private float retireDelay = 0.35f;
         [SerializeField] private float flyTime = 0.32f;
 
+        [Header("Paciencia (solo contratos)")]
+        [Tooltip("Paciencia base por cliente sentado. En free-play no se usa.")]
+        [SerializeField] private float basePatienceSeconds = 30f;
+
         private const float ColumnCenterX = 6.7f;
         private const float RowTopY = 5.55f;
         private const float RowStep = 1.85f;
@@ -47,6 +54,8 @@ namespace V2.Cafe
             public CustomerOrderBubble Bubble;
             public Order Order;
             public bool Retiring;
+            public bool Served;
+            public float PatienceLeft;
         }
 
         private Seat[] _seats;
@@ -70,8 +79,25 @@ namespace V2.Cafe
         private int _seq;
         private int _right = -1;
 
+        private RunConfig _config;
+        private bool _configured;
+        private bool _stopped;
+        private float _patienceSeconds;
+        private float _coinMultiplier = 1f;
+        private float _arrivalMultiplier = 1f;
+        private float _postreWeight = 1f;
+
         /// <summary>Monedas pagadas en el dia (HUD completo llega en otro corte).</summary>
         public int Coins { get; private set; }
+
+        /// <summary>Pedidos perdidos por paciencia en la run.</summary>
+        public int Lost { get; private set; }
+
+        /// <summary>True cuando una run configuró el piso (contratos).</summary>
+        public bool IsConfigured => _configured;
+
+        /// <summary>Config de la run (null en free-play).</summary>
+        public RunConfig Config => _config;
 
         public OrderBook Book => _book;
 
@@ -83,7 +109,59 @@ namespace V2.Cafe
 
         public float ArrivalInterval => _interval;
 
+        /// <summary>Pedido completado: se pagó y se cuenta para el contrato.</summary>
+        public event Action<Order> OrderServed;
+
+        /// <summary>Pedido perdido por paciencia.</summary>
+        public event Action<Order> OrderLost;
+
+        /// <summary>Monedas ganadas en este evento (delta, no total).</summary>
+        public event Action<int> CoinsChanged;
+
         private int Side => _right;
+
+        /// <summary>
+        /// Ajusta el piso para una run de contrato. Llamar antes de <c>Start</c> (el
+        /// RunCoordinator usa orden -150); si ya arrancó, aplica en caliente lo posible.
+        /// </summary>
+        public void Configure(RunConfig config)
+        {
+            if (config == null) return;
+
+            _config = config;
+            _configured = true;
+            _stopped = false;
+            seed = config.Seed;
+            _patienceSeconds = config.PatienceSeconds;
+
+            // Una run nueva arranca con su propia economía y su propio conteo.
+            Coins = 0;
+            Lost = 0;
+            _arrivalClock = 0f;
+            _rampClock = 0f;
+
+            ContractModifiers modifiers = config.Modifiers;
+            _coinMultiplier = Mathf.Max(0f, modifiers.coinMultiplier);
+            _arrivalMultiplier = modifiers.arrivalIntervalMultiplier > 0f
+                ? modifiers.arrivalIntervalMultiplier
+                : 1f;
+            _postreWeight = modifiers.postreWeightMultiplier > 0f
+                ? modifiers.postreWeightMultiplier
+                : 1f;
+
+            if (_rng != null)
+            {
+                _rng = new System.Random(seed != 0 ? seed : System.Environment.TickCount);
+                _interval = IntervalAt(_rampClock);
+            }
+        }
+
+        /// <summary>
+        /// Cierra la run: no entran más clientes ni corre la paciencia. Las animaciones en
+        /// curso terminan (ya no pagan: el pago ocurre al completar el pedido).
+        /// </summary>
+        public void StopRun() => _stopped = true;
+
         private void Start()
         {
             _session = FindFirstObjectByType<BoardSession>();
@@ -91,6 +169,8 @@ namespace V2.Cafe
             _layout = FindFirstObjectByType<BoardLayoutMock>();
             _right = _layout != null && !_layout.IsRight ? 1 : -1;
             if (_layout != null) _layout.SideChanged += OnSideChanged;
+
+            if (!_configured) _patienceSeconds = basePatienceSeconds;
 
             _rng = new System.Random(seed != 0 ? seed : System.Environment.TickCount);
             _customerPool = Resources.LoadAll<Sprite>("ArtV3/Customers");
@@ -125,11 +205,13 @@ namespace V2.Cafe
                 // Un solo concepto: si el gameplay esta bloqueado (resolucion o cinematica)
                 // el reloj de llegadas Y el de dificultad quedan congelados.
                 if (GameplayLock.IsLocked) continue;
+                if (_stopped) continue;
 
                 float dt = Time.deltaTime;
                 _arrivalClock += dt;
                 _rampClock += dt;
                 _interval = IntervalAt(_rampClock);
+                TickPatience(dt);
                 if (_arrivalClock < _interval) continue;
 
                 _arrivalClock -= _interval;
@@ -140,31 +222,51 @@ namespace V2.Cafe
         /// <summary>X = dificultad (Clamp01: X = 1 queda fija); Y = segundos entre llegadas.</summary>
         private float IntervalAt(float seconds)
         {
-            if (arrivalCurve == null || arrivalCurve.length == 0) return 4f;
+            if (arrivalCurve == null || arrivalCurve.length == 0) return 4f * _arrivalMultiplier;
             float t = rampDuration > 0f ? Mathf.Clamp01(seconds / rampDuration) : 1f;
-            return Mathf.Max(0.5f, arrivalCurve.Evaluate(t));
+            return Mathf.Max(0.5f, arrivalCurve.Evaluate(t) * _arrivalMultiplier);
         }
 
         /// <summary>Curva por defecto: arranca tranquilo (9 s) y acelera hasta 4 s.</summary>
         private static AnimationCurve DefaultArrivalCurve() =>
             new AnimationCurve(new Keyframe(0f, 9f), new Keyframe(0.5f, 6f), new Keyframe(1f, 4f));
 
+        /// <summary>
+        /// Solo con contrato: cada cliente sentado consume paciencia. Al llegar a 0 el
+        /// pedido se pierde y cuenta para la derrota. En free-play no existe la paciencia.
+        /// </summary>
+        private void TickPatience(float dt)
+        {
+            if (!_configured || _seats == null || _patienceSeconds <= 0f) return;
+
+            foreach (Seat seat in _seats)
+            {
+                if (seat.Order == null || seat.Retiring || seat.Served) continue;
+
+                seat.PatienceLeft -= dt;
+                if (seat.PatienceLeft <= 0f) Lose(seat);
+            }
+        }
+
         private void TrySpawn()
         {
-            if (GameplayLock.IsLocked) return;
+            if (_stopped || GameplayLock.IsLocked) return;
             Seat seat = FreeSeat();
             if (seat == null) return;
 
             Order order = CreateOrder();
             Delivery auto = _book.Add(order);
             seat.Order = order;
+            seat.Served = false;
+            seat.Retiring = false;
+            seat.PatienceLeft = _patienceSeconds;
             seat.Bubble.SetCustomer(NextCustomer());
             seat.Bubble.Show(order);
 
             foreach (OrderFill fill in auto.Used) seat.Bubble.Receive(fill.Dish, fill.Units);
             _bank.Refresh(_book);
 
-            if (order.IsComplete) StartCoroutine(Retire(seat));
+            if (order.IsComplete) Serve(seat);
         }
 
         private Sprite NextCustomer()
@@ -184,7 +286,7 @@ namespace V2.Cafe
 
             for (int i = 0; i < plates; i++)
             {
-                int index = _rng.Next(pool.Count);
+                int index = PickDishIndex(pool);
                 Dish dish = pool[index];
                 pool.RemoveAt(index);
 
@@ -197,6 +299,31 @@ namespace V2.Cafe
             int seq = ++_seq;
             return new Order(seq, seq, needs);
         }
+
+        /// <summary>
+        /// Elige un plato del pool. Con contrato, Postre pesa lo que diga el modificador
+        /// (Noche de Brujas lo sube ×1.5); sin contrato todos pesan igual.
+        /// </summary>
+        private int PickDishIndex(List<Dish> pool)
+        {
+            if (!_configured || Mathf.Approximately(_postreWeight, 1f)) return _rng.Next(pool.Count);
+
+            double totalWeight = 0d;
+            for (int i = 0; i < pool.Count; i++) totalWeight += Weight(pool[i]);
+
+            if (totalWeight <= 0d) return _rng.Next(pool.Count);
+
+            double roll = _rng.NextDouble() * totalWeight;
+            for (int i = 0; i < pool.Count; i++)
+            {
+                roll -= Weight(pool[i]);
+                if (roll <= 0d) return i;
+            }
+
+            return pool.Count - 1;
+        }
+
+        private double Weight(Dish dish) => dish == Dish.Postre ? _postreWeight : 1d;
 
         // ---- Entrega ----------------------------------------------------------------
 
@@ -215,6 +342,43 @@ namespace V2.Cafe
             return Present(_book.Deliver(dish, units));
         }
 
+        /// <summary>
+        /// Ultimate de facción: entrega <paramref name="units"/> unidades de cada plato
+        /// pendiente a cada pedido activo. Devuelve cuántas unidades aplicó.
+        /// </summary>
+        public int DeliverToAllOrders(int units)
+        {
+            if (_book == null || units <= 0 || _stopped) return 0;
+
+            var snapshot = new List<Order>(_book.Orders);
+            int applied = 0;
+
+            foreach (Order order in snapshot)
+            {
+                if (order == null || order.IsComplete) continue;
+
+                var dishes = new List<Dish>(order.Dishes);
+                foreach (Dish dish in dishes)
+                {
+                    int pending = order.Remaining(dish);
+                    if (pending <= 0) continue;
+
+                    Delivery delivery = _book.Deliver(dish, Mathf.Min(units, pending));
+                    applied += CountUnits(delivery);
+                    Present(delivery);
+                }
+            }
+
+            return applied;
+        }
+
+        private static int CountUnits(Delivery delivery)
+        {
+            int total = 0;
+            foreach (OrderFill fill in delivery.Used) total += fill.Units;
+            return total;
+        }
+
         private Delivery Present(Delivery delivery)
         {
             foreach (OrderFill fill in delivery.Used)
@@ -228,12 +392,36 @@ namespace V2.Cafe
             foreach (Order order in delivery.Completed)
             {
                 Seat seat = Find(order);
-                if (seat != null) StartCoroutine(Retire(seat));
+                if (seat != null) Serve(seat);
             }
 
             _bank.Refresh(_book);
             if (delivery.DiscardedTotal > 0) _bank.PlayDiscarded(delivery.Discarded);
             return delivery;
+        }
+
+        /// <summary>
+        /// Pedido completo: paga una sola vez, avisa al contrato y arranca la salida visual.
+        /// Es el único punto de pago (también para el auto-llenado del banco).
+        /// </summary>
+        private void Serve(Seat seat)
+        {
+            if (seat == null || seat.Order == null || seat.Served || seat.Retiring) return;
+
+            Order order = seat.Order;
+            seat.Served = true;
+
+            int coins = Mathf.RoundToInt(Mathf.Max(1, TotalUnits(order)) * coinsPerUnit * _coinMultiplier);
+            if (coins < 1) coins = 1;
+            Coins += coins;
+
+            if (_view != null)
+                _view.ShowFloatText(seat.Root.position + Vector3.up * 0.85f, "+" + coins,
+                    new Color(0.96f, 0.86f, 0.42f), 1f);
+
+            CoinsChanged?.Invoke(coins);
+            OrderServed?.Invoke(order);
+            StartCoroutine(Retire(seat));
         }
 
         private IEnumerator Retire(Seat seat)
@@ -245,16 +433,42 @@ namespace V2.Cafe
             yield return new WaitForSeconds(retireDelay);
             seat.Bubble.Complete();
 
-            int coins = Mathf.Max(1, TotalUnits(order)) * coinsPerUnit;
-            Coins += coins;
-            if (_view != null)
-                _view.ShowFloatText(seat.Root.position + Vector3.up * 0.85f, "+" + coins,
-                    new Color(0.96f, 0.86f, 0.42f), 1f);
-
             yield return new WaitForSeconds(0.32f);
             _book.Remove(order);
             seat.Order = null;
             seat.Retiring = false;
+            seat.Served = false;
+            seat.PatienceLeft = 0f;
+            seat.Bubble.Clear();
+            _bank.Refresh(_book);
+
+            yield return new WaitForSeconds(0.1f);
+            TrySpawn();
+        }
+
+        /// <summary>Paciencia agotada: se pierde el pedido, se avisa y se libera el asiento.</summary>
+        private void Lose(Seat seat)
+        {
+            if (seat == null || seat.Order == null || seat.Served || seat.Retiring) return;
+            seat.Retiring = true;
+            StartCoroutine(LoseRoutine(seat));
+        }
+
+        private IEnumerator LoseRoutine(Seat seat)
+        {
+            Order order = seat.Order;
+            if (order == null) yield break;
+
+            Lost++;
+            seat.Bubble.Leave();
+            OrderLost?.Invoke(order);
+
+            yield return new WaitForSeconds(retireDelay);
+            _book.Remove(order);
+            seat.Order = null;
+            seat.Retiring = false;
+            seat.Served = false;
+            seat.PatienceLeft = 0f;
             seat.Bubble.Clear();
             _bank.Refresh(_book);
 

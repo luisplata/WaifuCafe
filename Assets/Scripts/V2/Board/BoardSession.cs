@@ -49,6 +49,26 @@ namespace V2.Board
             view.Attach(this);
         }
 
+        /// <summary>
+        /// Configura una run antes de <c>Start</c> (RunCoordinator usa orden -150): semilla
+        /// y dimensiones del tablero. Si ya hay tablero, lo regenera en caliente. Sin
+        /// llamada, el comportamiento es el free-play de siempre.
+        /// </summary>
+        public void Configure(int boardSeed, int boardWidth, int boardHeight, int boardTileTypes)
+        {
+            seed = boardSeed;
+            width = Mathf.Max(3, boardWidth);
+            height = Mathf.Max(3, boardHeight);
+            tileTypes = Mathf.Clamp(boardTileTypes, 3, 5);
+
+            if (Board == null) return;
+
+            if (view == null) view = GetComponentInChildren<BoardView>();
+            Board = NewBoard();
+            if (view != null) view.SyncAll();
+            BoardChanged?.Invoke();
+        }
+
         /// <summary>Intento de swap adyacente. Devuelve false si se rechazo (rebote).</summary>
         public bool TryMove(BoardPos a, BoardPos b)
         {

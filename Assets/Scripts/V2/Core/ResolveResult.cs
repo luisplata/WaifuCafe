@@ -17,8 +17,11 @@ namespace WaifuCafe.Core
 
         private static readonly IReadOnlyList<BoardSnapshot> NoSnapshots = Array.Empty<BoardSnapshot>();
 
+        private static readonly IReadOnlyDictionary<Dish, int> NoClearedByDish =
+            new Dictionary<Dish, int>();
+
         public static ResolveResult Empty => new ResolveResult(0, 0, new Dictionary<Dish, int>(), NoWaves,
-            NoWaveUnits, NoSnapshots);
+            NoWaveUnits, NoSnapshots, NoClearedByDish);
 
         /// <summary>Niveles de resolucion encadenada. Una sola pasada = 1. Igual a <c>Waves.Count</c>.</summary>
         public readonly int Cascades;
@@ -47,6 +50,13 @@ namespace WaifuCafe.Core
         public readonly IReadOnlyList<BoardSnapshot> Snapshots;
 
         /// <summary>
+        /// Fichas limpiadas por plato, sin el tope de 5 por grupo. Sirve para objetivos que
+        /// cuentan celdas (por ejemplo "25 Postre"); <see cref="Units"/> sigue siendo lo
+        /// que se entrega a los pedidos.
+        /// </summary>
+        public readonly IReadOnlyDictionary<Dish, int> ClearedByDish;
+
+        /// <summary>
         /// Multiplicador que corresponde a las monedas (1 = sin cascada). Es SOLO un dato:
         /// la economia vive fuera del core y no entra en este PR; las unidades no lo usan.
         /// </summary>
@@ -54,7 +64,7 @@ namespace WaifuCafe.Core
 
         public ResolveResult(int cascades, int cleared, Dictionary<Dish, int> units,
             IReadOnlyList<IReadOnlyList<BoardPos>> waves, IReadOnlyList<int> waveUnits,
-            IReadOnlyList<BoardSnapshot> snapshots)
+            IReadOnlyList<BoardSnapshot> snapshots, IReadOnlyDictionary<Dish, int> clearedByDish = null)
         {
             Cascades = cascades;
             Cleared = cleared;
@@ -62,6 +72,7 @@ namespace WaifuCafe.Core
             Waves = waves ?? NoWaves;
             WaveUnits = waveUnits ?? NoWaveUnits;
             Snapshots = snapshots ?? NoSnapshots;
+            ClearedByDish = clearedByDish ?? NoClearedByDish;
         }
     }
 }

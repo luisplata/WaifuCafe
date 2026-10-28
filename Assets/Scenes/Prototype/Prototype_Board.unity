@@ -182,6 +182,55 @@ MonoBehaviour:
   resourcePath: ArtV3/Backgrounds/Cafe
   dim: 0.42
   sortingOrder: -100
+--- !u!1 &94082133
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 94082135}
+  - component: {fileID: 94082134}
+  m_Layer: 0
+  m_Name: RunCoordinator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &94082134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 94082133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 732c0d4f6040e6f4eaac508ad18fae84, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Meta.RunCoordinator
+  boardSession: {fileID: 144921608}
+  cafeFloor: {fileID: 112716486}
+  partyView: {fileID: 2017145721}
+  devContract: {fileID: 11400000, guid: 40b1becea6be2224cbb1a3a84d4af784, type: 2}
+  menuScene: MetaMenu
+--- !u!4 &94082135
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 94082133}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &112716485
 GameObject:
   m_ObjectHideFlags: 0
@@ -254,6 +303,7 @@ MonoBehaviour:
   coinsPerUnit: 1
   retireDelay: 0.35
   flyTime: 0.32
+  basePatienceSeconds: 30
 --- !u!4 &112716487
 Transform:
   m_ObjectHideFlags: 0
@@ -689,3 +739,4 @@ SceneRoots:
   - {fileID: 112716487}
   - {fileID: 2017145722}
   - {fileID: 777000002}
+  - {fileID: 94082135}

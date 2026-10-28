@@ -22,6 +22,7 @@ namespace V2.Cafe
         private static readonly Color RowColor = new Color(0.21f, 0.17f, 0.27f, 0.95f);
         private static readonly Color EmptyColor = new Color(0.21f, 0.17f, 0.27f, 0.22f);
         private static readonly Color DoneColor = new Color(0.30f, 0.55f, 0.38f, 1f);
+        private static readonly Color LostColor = new Color(0.62f, 0.24f, 0.28f, 1f);
         private static readonly Color TextColor = new Color(1f, 1f, 1f, 0.86f);
 
         private static readonly Color[] DishColors =
@@ -150,6 +151,24 @@ namespace V2.Cafe
 
             _leave = Sequence.Create()
                 .Chain(Tween.Scale(transform, Vector3.one * 1.04f, 0.10f, Ease.OutQuad))
+                .Chain(leave);
+        }
+
+        /// <summary>
+        /// Cliente perdido (se le acabó la paciencia): tinte rojizo y fade, sin pop verde.
+        /// <see cref="Clear"/> resetea el asiento después.
+        /// </summary>
+        public void Leave()
+        {
+            _leave.Stop();
+            _bg.color = LostColor;
+            Sequence leave = Tween.Scale(transform, Vector3.one * 0.88f, 0.28f, Ease.InQuad)
+                .Group(Tween.Alpha(_bg, 0f, 0.28f));
+            if (_customer != null && _customer.enabled)
+                leave = leave.Group(Tween.Alpha(_customer, 0f, 0.28f));
+
+            _leave = Sequence.Create()
+                .Chain(Tween.Scale(transform, Vector3.one * 1.03f, 0.08f, Ease.OutQuad))
                 .Chain(leave);
         }
 
