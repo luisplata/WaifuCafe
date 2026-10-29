@@ -96,6 +96,13 @@ de monedas/pedidos.
 
 - V1: **Rush** y **Noche** jugables (`locked: 0`); **Hora del Té** y **Desayuno
   Real** existen como preview bloqueada (`locked: 1`) y no son accionables.
+- **Rotación (E6)**: el contrato **destacado** se deriva de `lastContractId` (último
+  jugado) y queda preseleccionado, con badge; el jugador puede elegir el otro. El
+  cursor avanza al **lanzar** la run, no al elegir ni al terminarla. Sin campos
+  nuevos en el perfil.
+- Las previews locked muestran su razón (`lockReason`) y **no** ofrecen acción: no
+  hay botones muertos. La razón de Hora del Té nombra la causa técnica: todavía no
+  existen pedidos VIP en el café V2 (`RunState.VipOrders` nunca se incrementa).
 - La rotación es la razón para cambiar de facción/party. Sin contratos, la build
   óptima se congela.
 - La derrota y la victoria son **por contrato**, no por un marcador único.
@@ -214,7 +221,11 @@ de monedas/pedidos.
 **Estado al cerrar el Core Loop Meta V1:** E0–E5 cerrados y commiteados
 (`01d504e` roadmap, `8ccd51c` E1, `84bf724` E3, `ec423e5` E2, `9bc831e` E4,
 `ac9f6f9` E5, `3775d7f` HUD compacto + pausa, `67d2e58` botón de pausa). E8 cierra
-este documento y el Project #10. **E6, E7 y E9 siguen abiertos.**
+este documento y el Project #10.
+
+**E6 cerrado** (`8f109de` modelo puro + tests, `71f60a0` previews sin botones
+muertos, `2429b6f` destacado + override, `cd770c6` fix de rotación). Suite 71/71.
+**E7 y E9 siguen abiertos.**
 
 ```mermaid
 graph TD
