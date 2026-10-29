@@ -117,14 +117,18 @@ Reparto: **5 Café / 5 Míticos** jugables. Los locked existen como assets
   nuevo, reset, cursor locked/desconocido) arranca en el primero; con cursor
   avanza al siguiente con wrap; si `size` cubre el catálogo devuelve el ciclo
   completo una vez, sin duplicados. Comparación OrdinalIgnoreCase.
-- El **recomendado** es `pool[0]` y se pinta como pill `RECOMENDADO`: es una
-  sugerencia de rotación, no una obligación. El CTA `ELEGIR`/`ELEGIDO` sigue
-  siendo la señal de selección.
+- **Nada viene preseleccionado**: el jugador elige siempre y `JUGAR` queda
+  bloqueado con `ELEGÍ UN CONTRATO` hasta que elija. El CTA `ELEGIR`/`ELEGIDO`
+  es la única señal de selección.
+- El pill `RECOMENDADO` **no es posicional ni obligatorio**: sale de
+  `ContractRecommendation` y aparece sólo cuando la party tiene **mayoría
+  estricta** de una facción y el pool tiene un contrato de esa facción. En
+  empate (2/2) o sin match, no hay listón. Se recalcula con cada cambio de party.
 - El cursor `lastContractId` avanza al **lanzar** la run, no al elegir ni al
   terminarla; abandonar una run también lo mueve (el write ocurre al lanzar).
   Sin campos nuevos en el perfil (`waifu_profile_v1` no cambia).
-- Jugar siempre el recomendado recorre los 10 contratos en 10 runs sin repetir
-  destacado; cada contrato aparece en 3 pools consecutivos (1 nuevo por run).
+- Lanzar los contratos en orden de pool recorre los 10 en 10 runs sin repetir;
+  cada contrato aparece en 3 pools consecutivos (1 nuevo por run).
 - La rotación es la razón para cambiar de facción/party. Sin contratos, la build
   óptima se congela.
 - La derrota y la victoria son **por contrato**, no por un marcador único.
