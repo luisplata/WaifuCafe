@@ -10,9 +10,10 @@ namespace V2.Meta
 {
     /// <summary>
     /// Composition root del menú meta. Usa los servicios de <see cref="GameRoot"/>
-    /// (catálogo, contratos y perfil), pinta roster/party/contratos y lanza la run con
-    /// <see cref="IRunLauncher"/>. No busca objetos por tipo: las referencias de escena
-    /// llegan serializadas y los servicios por <c>GameRoot.Instance</c>.
+    /// (catálogo, contratos y perfil) y organiza el menú en tres pantallas de un solo
+    /// nivel: <c>Summary</c> (home con resumen y JUGAR), <c>Contract</c> y <c>Party</c>.
+    /// Lanza la run con <see cref="IRunLauncher"/>. No busca objetos por tipo: las
+    /// referencias de escena llegan serializadas y los servicios por <c>GameRoot.Instance</c>.
     /// </summary>
     public sealed class MetaCoordinator : MonoBehaviour
     {
@@ -20,6 +21,14 @@ namespace V2.Meta
 
         /// <summary>Contratos jugables visibles por sesión (el resto rota al lanzar).</summary>
         private const int ContractPoolSize = 3;
+
+        /// <summary>Pantallas del menú. Un solo nivel: Summary ↔ Contract/Party.</summary>
+        private enum MenuScreen
+        {
+            Summary,
+            Contract,
+            Party,
+        }
 
         [Header("Header")]
         [SerializeField] private TextMeshProUGUI coinsLabel;
@@ -30,11 +39,22 @@ namespace V2.Meta
         [SerializeField] private RectTransform contractPanel;
         [SerializeField] private RectTransform rosterPanel;
         [SerializeField] private RectTransform partyPanel;
+        [Tooltip("Panel de gacha/restaurante. Queda apagado: esas zonas llegan más adelante.")]
+        [SerializeField] private RectTransform managerPanel;
 
         [Header("Reset")]
         [SerializeField] private GameObject resetConfirmPanel;
         [SerializeField] private Button resetConfirmYesButton;
         [SerializeField] private Button resetConfirmNoButton;
+
+        // Layout de la pantalla Summary (coordenadas de pantalla 1920×1080, origen arriba-izquierda).
+        private const float SummaryLeft = 40f;
+        private const float SummaryWidth = 1840f;
+        private const float SummaryRowButtonWidth = 180f;
+        private const float SummaryRowButtonHeight = 48f;
+        private static readonly Color SummaryRowColor = new Color(0.10f, 0.09f, 0.16f, 0.96f);
+        private static readonly Color BackdropColor = new Color(0.04f, 0.03f, 0.07f, 1f);
+        private static readonly Color SecondaryButtonColor = new Color(0.55f, 0.52f, 0.66f, 1f);
 
         private GameRoot _root;
         private IWaifuCatalog _catalog;
@@ -43,6 +63,18 @@ namespace V2.Meta
         private IRunLauncher _launcher;
         private PartyPanelView _partyPanelView;
         private RectTransform _rosterContent;
+        private TextMeshProUGUI _rosterFooter;
+
+        private GameObject _summaryScreen;
+        private GameObject _contractScreen;
+        private GameObject _partyScreen;
+        private TextMeshProUGUI _summaryContractTitle;
+        private TextMeshProUGUI _summaryContractGoal;
+        private TextMeshProUGUI _summaryPartyLine;
+        private TextMeshProUGUI _summarySynergyLine;
+        private TextMeshProUGUI _summaryStartLabel;
+        private Button _summaryStartButton;
+        private MenuScreen _screen = MenuScreen.Summary;
 
         private readonly List<ContractCardView> _cards = new List<ContractCardView>();
         private readonly List<RosterChipView> _chips = new List<RosterChipView>();
@@ -67,6 +99,10 @@ namespace V2.Meta
 
         private void Build()
         {
+            // Gacha y restaurante no existen todavía como zona: el panel queda apagado
+            // sin borrarlo de la escena (se recablea cuando lleguen).
+            if (managerPanel != null) managerPanel.gameObject.SetActive(false);
+
             _root = GameRoot.Instance;
             if (_root == null || !_root.IsInitialized)
             {
@@ -101,13 +137,216 @@ namespace V2.Meta
             ResolvePool();
             ResolveRecommendation();
 
+            // La pantalla Contract muestra el panel a ancho completo: se reancla antes de
+            // armar las tarjetas porque BuildContractCards reparte el ancho del panel.
+            if (contractPanel != null)
+                MetaUi.SetTopLeft(contractPanel, new Vector2(SummaryLeft, 152f),
+                    new Vector2(SummaryWidth, 560f));
+
+            // Fondo único detrás del header y de las 3 pantallas: la ilustración del café es
+            // demasiado brillante y tapa la lectura. Queda entre Background (#0) y Header.
+            GameObject menuBackdrop = MetaUi.Panel(transform, "MenuBackdrop", BackdropColor,
+                new Vector2(0f, 96f), new Vector2(1920f, 984f));
+            menuBackdrop.transform.SetSiblingIndex(1);
+
             BuildContractCards();
             BuildRosterScroll();
             _partyPanelView = new PartyPanelView(partyPanel, RemoveFromParty);
             _partyPanelView.StartRequested += StartRun;
 
+            BuildScreens();
+
             _profile.Changed += RefreshAll;
             RefreshAll();
+        }
+
+        /// <summary>
+        /// Roots de las tres pantallas. Contract y Party sólo aportan el botón VOLVER; sus
+        /// paneles siguen siendo hijos del canvas y se prenden/apagan acá. No hay búsquedas:
+        /// el canvas es el padre de los paneles serializados.
+        /// </summary>
+        private void BuildScreens()
+        {
+            Transform parent = contractPanel != null && contractPanel.parent != null
+                ? contractPanel.parent
+                : transform;
+
+            _summaryScreen = CreateScreenRoot(parent, "Screen_Summary");
+            BuildSummaryScreen(_summaryScreen.transform);
+
+            _contractScreen = CreateScreenRoot(parent, "Screen_Contract");
+            BuildBackButton(_contractScreen.transform);
+
+            _partyScreen = CreateScreenRoot(parent, "Screen_Party");
+            BuildBackButton(_partyScreen.transform);
+
+            // El confirm de reset es modal: tiene que quedar por encima de las pantallas.
+            if (resetConfirmPanel != null) resetConfirmPanel.transform.SetAsLastSibling();
+
+            ShowScreen(MenuScreen.Summary, true);
+        }
+
+        private static GameObject CreateScreenRoot(Transform parent, string name)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            var rect = go.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            MetaUi.Stretch(rect);
+            return go;
+        }
+
+        private Button BuildBackButton(Transform parent)
+        {
+            Button button = MetaUi.Button(parent, "Back", "← VOLVER", SecondaryButtonColor,
+                new Vector2(SummaryLeft, 104f), new Vector2(160f, 44f), 16f, out _);
+            button.onClick.AddListener(() => ShowScreen(MenuScreen.Summary));
+            return button;
+        }
+
+        private void ShowScreen(MenuScreen screen, bool force = false)
+        {
+            // Idempotente: la primera navegación entra con force para fijar la visibilidad
+            // inicial; el resto sólo hace trabajo cuando la pantalla cambia de verdad.
+            if (!force && screen == _screen) return;
+            _screen = screen;
+
+            if (_summaryScreen != null) _summaryScreen.SetActive(screen == MenuScreen.Summary);
+
+            if (contractPanel != null) contractPanel.gameObject.SetActive(screen == MenuScreen.Contract);
+            if (_contractScreen != null) _contractScreen.SetActive(screen == MenuScreen.Contract);
+
+            if (partyPanel != null) partyPanel.gameObject.SetActive(screen == MenuScreen.Party);
+            if (rosterPanel != null) rosterPanel.gameObject.SetActive(screen == MenuScreen.Party);
+            if (_partyScreen != null) _partyScreen.SetActive(screen == MenuScreen.Party);
+
+            // Siempre apagado, se navegue a donde se navegue.
+            if (managerPanel != null) managerPanel.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// Home del menú: resumen de lo elegido + JUGAR. No guarda estado; sólo lee
+        /// <see cref="_selectedContract"/> y el perfil.
+        /// </summary>
+        private void BuildSummaryScreen(Transform parent)
+        {
+            MetaUi.Label(parent, "Title", "PRÓXIMO TURNO", 34f, MetaUi.Accent,
+                TextAlignmentOptions.TopLeft, new Vector2(SummaryLeft, 112f),
+                new Vector2(900f, 44f), FontStyles.Bold);
+
+            GameObject contractRow = BuildSummaryRow(parent, "ContractRow", 168f,
+                "CONTRATO", 28f, FontStyles.Bold, out _summaryContractTitle, out _summaryContractGoal);
+            Button changeContract = MetaUi.Button(contractRow.transform, "Change",
+                "CAMBIAR ›", SecondaryButtonColor, SummaryRowButtonTopLeft,
+                SummaryRowButtonSize, 18f, out _);
+            changeContract.onClick.AddListener(() => ShowScreen(MenuScreen.Contract));
+
+            GameObject partyRow = BuildSummaryRow(parent, "PartyRow", 368f,
+                "PARTY", 26f, FontStyles.Normal, out _summaryPartyLine, out _);
+            Button changeParty = MetaUi.Button(partyRow.transform, "Change",
+                "CAMBIAR ›", SecondaryButtonColor, SummaryRowButtonTopLeft,
+                SummaryRowButtonSize, 18f, out _);
+            changeParty.onClick.AddListener(() => ShowScreen(MenuScreen.Party));
+
+            GameObject synergyRow = MetaUi.Panel(parent, "SynergyRow", SummaryRowColor,
+                new Vector2(SummaryLeft, 568f), new Vector2(SummaryWidth, 120f));
+            MetaUi.AccentBar(synergyRow.transform, Vector2.zero, new Vector2(6f, 120f),
+                MetaUi.Muted);
+            MetaUi.Label(synergyRow.transform, "Caption", "SINERGIA", 14f, MetaUi.Muted,
+                TextAlignmentOptions.TopLeft, new Vector2(24f, 12f), new Vector2(400f, 22f),
+                FontStyles.Bold);
+            _summarySynergyLine = MetaUi.Label(synergyRow.transform, "Line", string.Empty, 20f,
+                MetaUi.Text, TextAlignmentOptions.TopLeft, new Vector2(24f, 42f),
+                new Vector2(1790f, 68f));
+
+            MetaUi.Label(parent, "Upcoming", "PRÓXIMAMENTE · Gacha · Restaurante", 14f,
+                MetaUi.Muted, TextAlignmentOptions.TopLeft, new Vector2(SummaryLeft, 704f),
+                new Vector2(1200f, 24f));
+
+            _summaryStartButton = MetaUi.Button(parent, "Play", "JUGAR", MetaUi.Accent,
+                new Vector2(SummaryLeft, 940f), new Vector2(SummaryWidth, 92f), 34f,
+                out _summaryStartLabel);
+            _summaryStartButton.onClick.AddListener(StartRun);
+        }
+
+        private static Vector2 SummaryRowButtonTopLeft => new Vector2(
+            SummaryWidth - 24f - SummaryRowButtonWidth, 68f);
+
+        private static Vector2 SummaryRowButtonSize =>
+            new Vector2(SummaryRowButtonWidth, SummaryRowButtonHeight);
+
+        /// <summary>
+        /// Fila de resumen con caption, dato principal y dato secundario. Devuelve el root
+        /// para colgarle la acción a la derecha.
+        /// </summary>
+        private GameObject BuildSummaryRow(Transform parent, string name, float top,
+            string caption, float mainSize, FontStyles mainStyle,
+            out TextMeshProUGUI main, out TextMeshProUGUI detail)
+        {
+            GameObject row = MetaUi.Panel(parent, name, SummaryRowColor,
+                new Vector2(SummaryLeft, top), new Vector2(SummaryWidth, 184f));
+            MetaUi.AccentBar(row.transform, Vector2.zero, new Vector2(6f, 184f), MetaUi.Accent);
+
+            MetaUi.Label(row.transform, "Caption", caption, 14f, MetaUi.Muted,
+                TextAlignmentOptions.TopLeft, new Vector2(24f, 14f), new Vector2(400f, 22f),
+                FontStyles.Bold);
+
+            main = MetaUi.Label(row.transform, "Main", string.Empty, mainSize, MetaUi.Text,
+                TextAlignmentOptions.TopLeft, new Vector2(24f, 42f), new Vector2(1500f, 40f),
+                mainStyle);
+
+            detail = MetaUi.Label(row.transform, "Detail", string.Empty, 19f, MetaUi.Muted,
+                TextAlignmentOptions.TopLeft, new Vector2(24f, 94f), new Vector2(1500f, 34f));
+
+            return row;
+        }
+
+        private void RefreshSummary(PlayerProfile profile)
+        {
+            if (_summaryContractTitle != null)
+            {
+                ContractSO contract = _selectedContract;
+                bool hasContract = contract != null;
+
+                _summaryContractTitle.text = hasContract ? contract.Title : "ELEGÍ UNO";
+                _summaryContractTitle.color = hasContract ? MetaUi.Text : MetaUi.Muted;
+                _summaryContractGoal.text = hasContract
+                    ? contract.ToDefinition().GoalText
+                    : "Todavía no elegiste contrato.";
+            }
+
+            if (_summaryPartyLine != null) _summaryPartyLine.text = PartyLineText(profile);
+        }
+
+        /// <summary>
+        /// Una línea con la party y sus estrellas; si falta gente, cierra con "FALTAN N".
+        /// </summary>
+        private string PartyLineText(PlayerProfile profile)
+        {
+            int slots = profile != null && profile.party != null ? profile.party.Count : 0;
+            var text = new System.Text.StringBuilder();
+
+            for (int i = 0; i < slots; i++)
+            {
+                WaifuDefinitionSO definition = _catalog != null ? _catalog.Find(profile.party[i]) : null;
+                if (definition == null) continue;
+
+                int stars = StarsOf(profile, definition.Id);
+                if (stars <= 0) stars = definition.BaseStars;
+
+                if (text.Length > 0) text.Append(" · ");
+                // Misma notación que los chips del roster ("1/3"): el atlas TMP no trae ★.
+                text.Append(definition.DisplayName).Append(' ')
+                    .Append(RosterChipView.StarsText(WaifuStars.Clamp(stars), true));
+            }
+
+            int missing = MaxParty - Mathf.Clamp(slots, 0, MaxParty);
+            if (missing > 0)
+            {
+                if (text.Length > 0) text.Append(" · ");
+                text.Append("FALTAN ").Append(missing);
+            }
+
+            return text.Length == 0 ? "PARTY VACÍA" : text.ToString();
         }
 
         private void BuildContractCards()
@@ -289,7 +528,12 @@ namespace V2.Meta
             var scrollGo = new GameObject("RosterScroll", typeof(RectTransform), typeof(ScrollRect));
             var scrollRect = scrollGo.GetComponent<RectTransform>();
             scrollRect.SetParent(rosterPanel, false);
-            MetaUi.SetTopLeft(scrollRect, new Vector2(18f, 50f), new Vector2(width - 36f, height - 64f));
+            MetaUi.SetTopLeft(scrollRect, new Vector2(18f, 50f), new Vector2(width - 36f, height - 90f));
+
+            // El roster lista sólo lo poseído; lo que falta se resume en este pie.
+            _rosterFooter = MetaUi.Label(rosterPanel, "Footer", string.Empty, 14f, MetaUi.Muted,
+                TextAlignmentOptions.TopLeft, new Vector2(18f, height - 36f),
+                new Vector2(width - 36f, 26f));
 
             GameObject viewport = MetaUi.Panel(scrollRect, "Viewport",
                 new Color(1f, 1f, 1f, 0.01f), Vector2.zero, Vector2.zero);
@@ -350,24 +594,38 @@ namespace V2.Meta
             EnsureContractSelection();
             UpdateCardSelection();
             UpdateStartState(profile);
+            RefreshSummary(profile);
         }
 
         /// <summary>
         /// Sinergia real de la party: breakpoints, badge de ultimate y tooltip. Todo sale de
-        /// <see cref="SynergyModel"/>; la vista sólo pinta el texto.
+        /// <see cref="SynergyModel"/>; la vista sólo pinta el texto. El resumen del home
+        /// reusa el mismo cálculo en una sola línea.
         /// </summary>
         private void RefreshSynergy(PlayerProfile profile)
         {
-            if (_partyPanelView == null) return;
+            if (_partyPanelView == null && _summarySynergyLine == null) return;
 
             List<WaifuKit> kits = BuildPartyKits(profile);
             PartyModifiers modifiers = SynergyModel.Build(kits);
             UltimateInfo ultimate = modifiers.Ultimate;
+            string summary = SynergyModel.Summary(kits);
+            string badge = SynergyModel.BadgeText(ultimate, kits);
 
-            _partyPanelView.SetSynergySummary("Sinergia: " + SynergyModel.Summary(kits));
-            _partyPanelView.SetUltimateBadge(SynergyModel.BadgeText(ultimate, kits),
-                ultimate.IsReady && ultimate.Live);
-            _partyPanelView.SetUltimateTooltip(SynergyModel.Tooltip(kits));
+            if (_partyPanelView != null)
+            {
+                _partyPanelView.SetSynergySummary("Sinergia: " + summary);
+                _partyPanelView.SetUltimateBadge(badge, ultimate.IsReady && ultimate.Live);
+                _partyPanelView.SetUltimateTooltip(SynergyModel.Tooltip(kits));
+            }
+
+            if (_summarySynergyLine != null)
+            {
+                _summarySynergyLine.text = summary + " · " + badge;
+                _summarySynergyLine.color = ultimate.IsReady && ultimate.Live
+                    ? MetaUi.Accent
+                    : MetaUi.Text;
+            }
         }
 
         private List<WaifuKit> BuildPartyKits(PlayerProfile profile)
@@ -414,16 +672,28 @@ namespace V2.Meta
             _chips.Clear();
 
             HashSet<string> owned = OwnedIds(profile);
+            int total = 0;
+            int ownedCount = 0;
             for (int i = 0; i < _catalog.All.Count; i++)
             {
                 WaifuDefinitionSO definition = _catalog.All[i];
                 if (definition == null) continue;
 
-                bool isOwned = owned.Contains(definition.Id);
+                total++;
+                // Sólo lo poseído tiene chip: lo bloqueado no se lista, se cuenta.
+                if (!owned.Contains(definition.Id)) continue;
+
+                ownedCount++;
                 bool inParty = PartyContains(profile, definition.Id);
-                int stars = isOwned ? StarsOf(profile, definition.Id) : 0;
-                _chips.Add(new RosterChipView(_rosterContent, definition, stars, isOwned, inParty,
+                int stars = StarsOf(profile, definition.Id);
+                _chips.Add(new RosterChipView(_rosterContent, definition, stars, true, inParty,
                     ToggleParty));
+            }
+
+            if (_rosterFooter != null)
+            {
+                int locked = Mathf.Max(0, total - ownedCount);
+                _rosterFooter.text = locked > 0 ? locked + " POR DESBLOQUEAR" : string.Empty;
             }
         }
 
@@ -480,6 +750,7 @@ namespace V2.Meta
             // si no, el pick cambia en memoria y la tarjeta resaltada no se mueve.
             UpdateCardSelection();
             UpdateStartState(_profile.Current);
+            RefreshSummary(_profile.Current);
         }
 
         /// <summary>
@@ -507,10 +778,13 @@ namespace V2.Meta
 
         private void UpdateStartState(PlayerProfile profile)
         {
-            if (_partyPanelView == null) return;
-
             string reason = StartBlocker(profile);
-            _partyPanelView.SetStartEnabled(string.IsNullOrEmpty(reason), reason);
+            bool ready = string.IsNullOrEmpty(reason);
+
+            _partyPanelView?.SetStartEnabled(ready, reason);
+
+            if (_summaryStartButton != null) _summaryStartButton.interactable = ready;
+            if (_summaryStartLabel != null) _summaryStartLabel.text = ready ? "JUGAR" : reason;
         }
 
         private string StartBlocker(PlayerProfile profile)

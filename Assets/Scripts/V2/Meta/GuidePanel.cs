@@ -159,8 +159,8 @@ namespace V2.Meta
             switch (focus)
             {
                 case GuideFocus.Party: return "PARTY Y SINERGIA";
-                case GuideFocus.Gacha: return "GACHA (BLOQUEADA)";
-                case GuideFocus.Restaurant: return "RESTAURANTE (BLOQUEADO)";
+                case GuideFocus.Gacha: return "GACHA";
+                case GuideFocus.Restaurant: return "RESTAURANTE";
                 default: return "CONTRATOS";
             }
         }
