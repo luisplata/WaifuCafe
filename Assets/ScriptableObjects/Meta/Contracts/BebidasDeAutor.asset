@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adc9cf69af1ad4741894f59213940d31, type: 3}
+  m_Name: BebidasDeAutor
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Meta.ContractSO
+  id: bebidas-de-autor
+  title: "Bebidas de Autor"
+  faction: 1
+  locked: 0
+  goalText: "Limpiá 16 Bebida del tablero"
+  modifierText: "Carga 15% más barata · +1 moneda por cascada de 3 o más · Monedas +20%"
+  defeatText: 3 pedidos perdidos o tiempo sin llegar a 16 Bebida
+  goalServedOrders: 0
+  goalSkillsCast: 0
+  goalClearedDish: 2
+  goalClearedDishUnits: 16
+  goalClearedDish2: 0
+  goalClearedDish2Units: 0
+  goalVipOrders: 0
+  arrivalIntervalMultiplier: 1
+  coinMultiplier: 1.2
+  chargeCostMultiplier: 0.85
+  postreWeightMultiplier: 1
+  patienceMultiplier: 1
+  coinsPerCascade: 1
+  ultimateEnabled: 1
+  timeLimitSeconds: 180
+  maxLostOrders: 3
+  failEnabled: 1
+  basePatienceSeconds: 30

@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adc9cf69af1ad4741894f59213940d31, type: 3}
+  m_Name: TurnoDoble
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Meta.ContractSO
+  id: turno-doble
+  title: "Turno Doble"
+  faction: 1
+  locked: 0
+  goalText: "Serví 14 pedidos y lanzá 5 skills"
+  modifierText: "Carga 10% más barata · Clientes con 26 s de paciencia"
+  defeatText: 3 pedidos perdidos o tiempo sin cumplir
+  goalServedOrders: 14
+  goalSkillsCast: 5
+  goalClearedDish: 3
+  goalClearedDishUnits: 0
+  goalClearedDish2: 0
+  goalClearedDish2Units: 0
+  goalVipOrders: 0
+  arrivalIntervalMultiplier: 1
+  coinMultiplier: 1
+  chargeCostMultiplier: 0.9
+  postreWeightMultiplier: 1
+  patienceMultiplier: 1
+  coinsPerCascade: 0
+  ultimateEnabled: 1
+  timeLimitSeconds: 200
+  maxLostOrders: 3
+  failEnabled: 1
+  basePatienceSeconds: 26

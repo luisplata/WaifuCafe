@@ -87,22 +87,44 @@ Cada run tiene un **contrato** con objetivo, modificadores y derrota propios.
 El contrato se elige en el menú y rota entre runs. No hay un objetivo genérico
 de monedas/pedidos.
 
-| Contrato | Facción | Objetivo específico | Modificadores | Derrota |
-|---|---|---|---|---|
-| **Rush de Mediodía** | Café | Servir 18 pedidos en 180 s | Llegadas +13%, monedas +50% | 3 clientes perdidos o tiempo sin llegar a 18 |
-| **Noche de Brujas** | Míticos | Lanzar 6 skills y limpiar 25 Postre | Carga +20%, peso de Postre +50% | 3 perdidos o tiempo sin cumplir |
-| **Hora del Té** (locked preview) | Espectáculo | Servir 6 VIP sin perder ninguno | Paciencia VIP -25%, combos +1 moneda | 1 VIP perdido o tiempo sin llegar a 6 |
-| **Desayuno Real** (later) | Mixto | Servir 10 Desayunos y 10 Postres | Sin ultimate; breakpoints 2/2 | 3 perdidos o tiempo sin cumplir |
+### Catálogo (10 jugables + 2 locked)
 
-- V1: **Rush** y **Noche** jugables (`locked: 0`); **Hora del Té** y **Desayuno
-  Real** existen como preview bloqueada (`locked: 1`) y no son accionables.
-- **Rotación (E6)**: el contrato **destacado** se deriva de `lastContractId` (último
-  jugado) y queda preseleccionado, con badge; el jugador puede elegir el otro. El
-  cursor avanza al **lanzar** la run, no al elegir ni al terminarla. Sin campos
-  nuevos en el perfil.
-- Las previews locked muestran su razón (`lockReason`) y **no** ofrecen acción: no
-  hay botones muertos. La razón de Hora del Té nombra la causa técnica: todavía no
-  existen pedidos VIP en el café V2 (`RunState.VipOrders` nunca se incrementa).
+| Id | Contrato | Facción | Objetivo | Modificadores | Derrota |
+|---|---|---|---|---|---|
+| `rush-mediodia` | **Rush de Mediodía** | Café | 18 pedidos en 180 s | Llegadas +13%, monedas +50% | 3 perdidos o tiempo |
+| `noche-brujas` | **Noche de Brujas** | Míticos | 6 skills + 25 Postre | Carga +20%, peso de Postre +50% | 3 perdidos o tiempo |
+| `hora-punta` | **Hora Punta** | Café | 24 pedidos en 210 s | Llegadas +22%, monedas +20%, paciencia base 26 s | 3 perdidos o tiempo |
+| `antojo-dulce` | **Antojo Dulce** | Café | 22 Postre en 150 s | Peso de Postre +120%, monedas +25%, paciencia base 28 s | 2 perdidos o tiempo |
+| `cafe-de-barrio` | **Café de Barrio** | Café | 20 pedidos en 195 s | Sin ultimate, monedas +50%, paciencia base 28 s | 3 perdidos o tiempo |
+| `servicio-expres` | **Servicio Exprés** | Café | 12 pedidos en 150 s | Llegadas -15%, paciencia base 20 s, monedas +60% | 2 perdidos o tiempo |
+| `sobremesa` | **Sobremesa** | Míticos | 4 skills + 18 Postre | Carga +15%, peso de Postre +80% | 3 perdidos o tiempo |
+| `bebidas-de-autor` | **Bebidas de Autor** | Míticos | 16 Bebida | Carga +15%, +1 moneda por cascada ≥3, monedas +20% | 3 perdidos o tiempo |
+| `turno-doble` | **Turno Doble** | Míticos | 14 pedidos + 5 skills | Carga +10%, paciencia base 26 s | 3 perdidos o tiempo |
+| `limpieza-profunda` | **Limpieza Profunda** | Míticos | 15 Snack + 15 Almuerzo | Carga +25%, peso de Postre -40% | 3 perdidos o tiempo |
+| `hora-te` | **Hora del Té** (locked) | Espectáculo | 6 VIP | (sin pedidos VIP en la run) | — |
+| `desayuno-real` | **Desayuno Real** (locked) | Café | 10 Desayuno + 10 Postre | (breakpoints 2/2 no existen) | — |
+
+Reparto: **5 Café / 5 Míticos** jugables. Los locked existen como assets
+(`locked: 1`) pero no tienen tarjeta ni botón: aparecen en la línea
+`PRÓXIMAMENTE` del header con su `lockReason` (causa técnica, no gameplay).
+
+### Pool visible y cadencia
+
+- El menú muestra **3 contratos** (`ContractPoolSize`), no el catálogo entero.
+  El orden del array `GameRoot.contracts` **es** el orden de rotación.
+- `ContractPool.Build(playableIds, lastContractId, size)` (modelo puro en
+  `WaifuCafe.Core.Meta`, sin Unity) devuelve la ventana: sin cursor (perfil
+  nuevo, reset, cursor locked/desconocido) arranca en el primero; con cursor
+  avanza al siguiente con wrap; si `size` cubre el catálogo devuelve el ciclo
+  completo una vez, sin duplicados. Comparación OrdinalIgnoreCase.
+- El **recomendado** es `pool[0]` y se pinta como pill `RECOMENDADO`: es una
+  sugerencia de rotación, no una obligación. El CTA `ELEGIR`/`ELEGIDO` sigue
+  siendo la señal de selección.
+- El cursor `lastContractId` avanza al **lanzar** la run, no al elegir ni al
+  terminarla; abandonar una run también lo mueve (el write ocurre al lanzar).
+  Sin campos nuevos en el perfil (`waifu_profile_v1` no cambia).
+- Jugar siempre el recomendado recorre los 10 contratos en 10 runs sin repetir
+  destacado; cada contrato aparece en 3 pools consecutivos (1 nuevo por run).
 - La rotación es la razón para cambiar de facción/party. Sin contratos, la build
   óptima se congela.
 - La derrota y la victoria son **por contrato**, no por un marcador único.
