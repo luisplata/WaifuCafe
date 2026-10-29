@@ -26,10 +26,15 @@ namespace V2.Meta
 
         private readonly Transform _parent;
         private GameObject _panel;
+        private GameObject _actionsGroup;
+        private GameObject _confirmGroup;
 
         public PauseOverlay(Transform parent) => _parent = parent;
 
         public bool IsVisible => _panel != null && _panel.activeSelf;
+
+        /// <summary>Hay una confirmación de abandono abierta.</summary>
+        public bool IsConfirming => _confirmGroup != null && _confirmGroup.activeSelf;
 
         public void Show(RunConfig config, ContractProgress progress, string ultimateText,
             Action onResume, Action onAbandon)
@@ -74,13 +79,40 @@ namespace V2.Meta
             string footer = string.IsNullOrWhiteSpace(ultimateText)
                 ? "ESC para seguir"
                 : ultimateText + "   ·   ESC para seguir";
-            Label(card.transform, "Footer", footer, 19f, TextAlignmentOptions.Center,
-                new Vector2(0f, 0.155f), new Vector2(1f, 0.215f), 0f, 0f, MutedColor);
 
-            BuildButton(card.transform, "ResumeButton", "SEGUIR", new Vector2(-170f, 34f),
+            _actionsGroup = Group(card.transform, "Actions");
+            Label(_actionsGroup.transform, "Footer", footer, 19f, TextAlignmentOptions.Center,
+                new Vector2(0f, 0.155f), new Vector2(1f, 0.215f), 0f, 0f, MutedColor);
+            BuildButton(_actionsGroup.transform, "ResumeButton", "SEGUIR", new Vector2(-170f, 34f),
                 new Color(0.24f, 0.20f, 0.34f, 1f), TextColor, onResume);
-            BuildButton(card.transform, "AbandonButton", "SALIR AL MENÚ", new Vector2(170f, 34f),
-                new Color(0.30f, 0.14f, 0.18f, 1f), new Color(1f, 0.78f, 0.80f, 1f), onAbandon);
+            BuildButton(_actionsGroup.transform, "AbandonButton", "SALIR AL MENÚ", new Vector2(170f, 34f),
+                new Color(0.30f, 0.14f, 0.18f, 1f), new Color(1f, 0.78f, 0.80f, 1f), ShowConfirm);
+
+            _confirmGroup = Group(card.transform, "Confirm");
+            Label(_confirmGroup.transform, "Warning",
+                "¿Abandonar la run? Perdés las monedas ganadas.", 20f,
+                TextAlignmentOptions.Center, new Vector2(0f, 0.155f), new Vector2(1f, 0.215f),
+                40f, 0f, AccentColor);
+            BuildButton(_confirmGroup.transform, "ConfirmAbandon", "SÍ, ABANDONAR", new Vector2(-170f, 34f),
+                new Color(0.42f, 0.14f, 0.18f, 1f), new Color(1f, 0.82f, 0.84f, 1f), onAbandon);
+            BuildButton(_confirmGroup.transform, "CancelAbandon", "CANCELAR", new Vector2(170f, 34f),
+                new Color(0.24f, 0.20f, 0.34f, 1f), TextColor, CancelConfirm);
+            _confirmGroup.SetActive(false);
+        }
+
+        /// <summary>Pasa de las acciones normales al paso de confirmación.</summary>
+        private void ShowConfirm()
+        {
+            if (_actionsGroup != null) _actionsGroup.SetActive(false);
+            if (_confirmGroup != null) _confirmGroup.SetActive(true);
+        }
+
+        /// <summary>Vuelve a las acciones normales sin abandonar.</summary>
+        public void CancelConfirm()
+        {
+            if (_confirmGroup == null) return;
+            _confirmGroup.SetActive(false);
+            if (_actionsGroup != null) _actionsGroup.SetActive(true);
         }
 
         public void Hide()
@@ -88,6 +120,8 @@ namespace V2.Meta
             if (_panel == null) return;
             UnityEngine.Object.Destroy(_panel);
             _panel = null;
+            _actionsGroup = null;
+            _confirmGroup = null;
         }
 
         public void Dispose() => Hide();
@@ -171,6 +205,14 @@ namespace V2.Meta
             label.alignment = TextAlignmentOptions.Center;
             label.color = textColor;
             label.raycastTarget = false;
+        }
+
+        private static GameObject Group(Transform parent, string name)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent, false);
+            Stretch(go.GetComponent<RectTransform>());
+            return go;
         }
 
         private static void Stretch(RectTransform rect)

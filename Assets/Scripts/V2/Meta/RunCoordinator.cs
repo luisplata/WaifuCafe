@@ -44,6 +44,7 @@ namespace V2.Meta
         private ResultScreen _result;
         private PauseOverlay _pause;
         private bool _paused;
+        private bool _abandoned;
         private List<WaifuKit> _partyKits = new List<WaifuKit>();
         private PartyModifiers _partyModifiers = PartyModifiers.Neutral();
 
@@ -147,6 +148,7 @@ namespace V2.Meta
             EnsureUi();
             if (_paused) GameplayLock.Release();
             _paused = false;
+            _abandoned = false;
             _pause.Hide();
             _result.Hide();
             _hud.Build(config);
@@ -177,8 +179,21 @@ namespace V2.Meta
         {
             if (!_running || _ended) return;
 
-            if (_paused) ResumeRun();
-            else PauseRun();
+            if (_paused)
+            {
+                // Con la confirmación de abandono abierta, ESC cancela en vez de reanudar.
+                if (_pause != null && _pause.IsConfirming)
+                {
+                    _pause.CancelConfirm();
+                    return;
+                }
+
+                ResumeRun();
+            }
+            else
+            {
+                PauseRun();
+            }
         }
 
         private void PauseRun()
@@ -202,8 +217,14 @@ namespace V2.Meta
             GameplayLock.Release();
         }
 
+        /// <summary>
+        /// Abandonar descarta todo lo ganado en la run: no se persiste el perfil, así que
+        /// las monedas de esta partida se pierden. La run del tutorial tampoco avanza de
+        /// paso, así que al volver al menú se relanza.
+        /// </summary>
         private void AbandonRun()
         {
+            _abandoned = true;
             ResumeRun();
             GoToMenu();
         }
@@ -425,6 +446,9 @@ namespace V2.Meta
         /// </summary>
         private void Persist(RunResult result)
         {
+            // Abandonar la run descarta lo ganado: ni monedas ni contrato ni tutorial.
+            if (_abandoned) return;
+
             GameRoot root = GameRoot.Instance;
             if (root == null || root.Profile == null) return;
 
