@@ -369,6 +369,11 @@ namespace V2.Meta
             // jugado" y lo escribe StartRun. Si no, clickear sin jugar rotaría el destacado.
             _selectedContract = contract;
             _contractChosenThisSession = true;
+
+            // Sin Save() no hay Changed, así que el refresco de la selección es explícito:
+            // si no, el pick cambia en memoria y la tarjeta resaltada no se mueve.
+            UpdateCardSelection();
+            UpdateStartState(_profile.Current);
         }
 
         /// <summary>
