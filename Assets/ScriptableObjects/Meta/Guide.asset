@@ -16,7 +16,7 @@ MonoBehaviour:
   portrait: {fileID: 6484472854786379645, guid: f48eb54ba38c56749b87d8313b57bba8, type: 3}
   pages:
   - title: "CONTRATOS"
-    body: "Estos son los contratos del d\xEDa. Rush de Mediod\xEDa pide 18 pedidos en 180 s; Noche de Brujas pide 6 skills y 25 Postre. Hora del T\xE9 queda como preview bloqueada."
+    body: "Cada día ves una selección de 3 contratos del catálogo; al lanzar la run la selección rota. El recomendado es sólo una sugerencia: podés elegir otro. Hora del Té y Desayuno Real todavía no están disponibles."
     focus: 0
   - title: "PARTY Y SINERGIA"
     body: "Arm\xE1 una party de 4 waifus distintas. Las facciones y roles repetidos activan sinergias; con 3 M\xEDticos y una de 3 estrellas se desbloquea la ultimate Luna de Sangre."

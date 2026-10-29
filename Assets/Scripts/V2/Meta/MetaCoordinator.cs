@@ -18,6 +18,9 @@ namespace V2.Meta
     {
         private const int MaxParty = 4;
 
+        /// <summary>Contratos jugables visibles por sesión (el resto rota al lanzar).</summary>
+        private const int ContractPoolSize = 3;
+
         [Header("Header")]
         [SerializeField] private TextMeshProUGUI coinsLabel;
         [SerializeField] private TextMeshProUGUI profileLabel;
@@ -44,6 +47,7 @@ namespace V2.Meta
         private readonly List<ContractCardView> _cards = new List<ContractCardView>();
         private readonly List<RosterChipView> _chips = new List<RosterChipView>();
         private readonly List<string> _playableIds = new List<string>();
+        private readonly List<string> _pool = new List<string>();
         private ContractSO _selectedContract;
         private ContractSO _featuredContract;
         private bool _contractChosenThisSession;
@@ -91,9 +95,10 @@ namespace V2.Meta
             if (resetConfirmYesButton != null) resetConfirmYesButton.onClick.AddListener(ConfirmReset);
             if (resetConfirmNoButton != null) resetConfirmNoButton.onClick.AddListener(HideResetConfirm);
 
-            // El destacado se deriva UNA sola vez por sesión, antes del primer RefreshAll:
-            // el badge no migra al elegir y los refresh de perfil no lo recalculan.
+            // El pool y el destacado se derivan UNA sola vez por sesión, antes del primer
+            // RefreshAll: el badge no migra al elegir y los refresh de perfil no los recalculan.
             CachePlayableIds();
+            ResolvePool();
             _featuredContract = ResolveFeatured();
 
             BuildContractCards();
@@ -109,23 +114,28 @@ namespace V2.Meta
         {
             if (contractPanel == null) return;
 
-            MetaUi.Label(contractPanel, "Title", "CONTRATOS", 24f, MetaUi.Accent,
+            float panelWidth = contractPanel.rect.width > 0f ? contractPanel.rect.width : 1120f;
+
+            MetaUi.Label(contractPanel, "Title",
+                $"CONTRATOS · {_pool.Count} DE {_playableIds.Count}", 24f, MetaUi.Accent,
                 TextAlignmentOptions.TopLeft, new Vector2(18f, 12f), new Vector2(600f, 34f),
                 FontStyles.Bold);
 
-            int count = _contracts.All.Count;
+            BuildUpcomingLabel(panelWidth);
+
+            int count = _pool.Count;
             if (count <= 0) return;
 
-            float panelWidth = contractPanel.rect.width > 0f ? contractPanel.rect.width : 1120f;
             const float gap = 12f;
             const float padding = 18f;
             const float top = 56f;
-            float cardWidth = Mathf.Min(262f, (panelWidth - padding * 2f - gap * (count - 1)) / count);
+            // Sin cap: con 3 tarjetas el ancho disponible se reparte entre todas.
+            float cardWidth = (panelWidth - padding * 2f - gap * (count - 1)) / count;
             float cardHeight = 424f;
 
             for (int i = 0; i < count; i++)
             {
-                ContractSO contract = _contracts.All[i];
+                ContractSO contract = _contracts.Find(_pool[i]);
                 if (contract == null) continue;
 
                 var view = new ContractCardView(contractPanel, contract,
@@ -133,6 +143,40 @@ namespace V2.Meta
                     new Vector2(cardWidth, cardHeight), SelectContract);
                 _cards.Add(view);
             }
+
+            // El pool es la sugerencia; el pie aclara que no es una obligación.
+            MetaUi.Label(contractPanel, "Hint", "Podés elegir otro contrato", 13f, MetaUi.Muted,
+                TextAlignmentOptions.TopLeft, new Vector2(padding, top + cardHeight + 2f),
+                new Vector2(panelWidth - padding * 2f, 22f));
+        }
+
+        /// <summary>
+        /// Los locked no tienen tarjeta: una sola línea en el header telegrafía qué falta
+        /// y por qué (título + <see cref="ContractSO.LockReason"/>).
+        /// </summary>
+        private void BuildUpcomingLabel(float panelWidth)
+        {
+            IReadOnlyList<ContractSO> all = _contracts.All;
+            var text = new System.Text.StringBuilder("PRÓXIMAMENTE");
+            int shown = 0;
+
+            for (int i = 0; i < all.Count; i++)
+            {
+                ContractSO contract = all[i];
+                if (contract == null || !contract.Locked) continue;
+
+                text.Append(" · ").Append(contract.Title);
+                if (!string.IsNullOrWhiteSpace(contract.LockReason))
+                    text.Append(" (").Append(contract.LockReason.Trim()).Append(')');
+                shown++;
+            }
+
+            if (shown == 0) return;
+
+            const float reservedTitle = 620f;
+            MetaUi.Label(contractPanel, "Upcoming", text.ToString(), 12f, MetaUi.Muted,
+                TextAlignmentOptions.TopRight, new Vector2(reservedTitle, 10f),
+                new Vector2(panelWidth - reservedTitle - 18f, 44f));
         }
 
         /// <summary>
@@ -151,12 +195,24 @@ namespace V2.Meta
             }
         }
 
+        /// <summary>
+        /// Ventana de contratos jugables derivada del cursor. Sin cursor (perfil nuevo,
+        /// reset, cursor locked/desconocido) arranca en el primero del catálogo.
+        /// </summary>
+        private void ResolvePool()
+        {
+            _pool.Clear();
+            PlayerProfile profile = _profile != null ? _profile.Current : null;
+            string cursor = profile != null ? profile.lastContractId : null;
+            IReadOnlyList<string> ids = ContractPool.Build(_playableIds, cursor, ContractPoolSize);
+            for (int i = 0; i < ids.Count; i++) _pool.Add(ids[i]);
+        }
+
+        /// <summary>El recomendado es el primer contrato del pool (generaliza NextFeatured).</summary>
         private ContractSO ResolveFeatured()
         {
-            PlayerProfile profile = _profile.Current;
-            string cursor = profile != null ? profile.lastContractId : null;
-            string featuredId = ContractRotation.NextFeatured(_playableIds, cursor);
-            return string.IsNullOrEmpty(featuredId) ? null : _contracts.Find(featuredId);
+            if (_pool.Count == 0) ResolvePool();
+            return _pool.Count == 0 ? null : _contracts.Find(_pool[0]);
         }
 
         private ContractSO FirstPlayable()
@@ -169,6 +225,27 @@ namespace V2.Meta
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Rearma la grilla completa desde el pool actual. Se usa tras un reset, cuando el
+        /// cursor cambia y por lo tanto la ventana visible ya no es la misma.
+        /// </summary>
+        private void RebuildContractCards()
+        {
+            if (contractPanel == null) return;
+
+            for (int i = contractPanel.childCount - 1; i >= 0; i--)
+            {
+                GameObject child = contractPanel.GetChild(i).gameObject;
+                child.SetActive(false);
+                Destroy(child);
+            }
+
+            _cards.Clear();
+            ResolvePool();
+            BuildContractCards();
+            UpdateCardSelection();
         }
 
         private void BuildRosterScroll()
@@ -386,7 +463,12 @@ namespace V2.Meta
                 return;
 
             // Se re-deriva sólo si se invalidó (reset del perfil), no en cada refresh.
-            if (_featuredContract == null) _featuredContract = ResolveFeatured();
+            if (_featuredContract == null)
+            {
+                ResolvePool();
+                _featuredContract = ResolveFeatured();
+            }
+
             _selectedContract = _featuredContract != null ? _featuredContract : FirstPlayable();
         }
 
@@ -460,11 +542,15 @@ namespace V2.Meta
             HideResetConfirm();
             _contractChosenThisSession = false;
 
-            // El reset borra el cursor de rotación: se invalida el destacado para que el
-            // próximo Changed lo re-derive del perfil vacío.
+            // El reset borra el cursor de rotación: se invalidan pool y destacado para que
+            // el próximo Changed los re-derive del perfil vacío.
+            _pool.Clear();
             _featuredContract = null;
             _selectedContract = null;
             _profile?.Reset();
+
+            // El reset cambia el cursor: la ventana visible también.
+            RebuildContractCards();
         }
 
         private static HashSet<string> OwnedIds(PlayerProfile profile)

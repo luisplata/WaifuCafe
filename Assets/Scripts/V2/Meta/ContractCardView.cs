@@ -7,20 +7,18 @@ using WaifuCafe.Core.Meta;
 namespace V2.Meta
 {
     /// <summary>
-    /// Tarjeta de selección de contrato. Muestra título, facción, objetivo,
-    /// modificadores y derrota; los contratos bloqueados quedan como preview inerte con
-    /// su motivo visible y sin ningún <see cref="Button"/> (Hora del Té / Desayuno Real).
+    /// Tarjeta de contrato jugable. Muestra título, facción, objetivo, modificadores y
+    /// derrota, más un pill <c>RECOMENDADO</c> que sugiere sin obligar. Los contratos
+    /// locked ya no llegan acá: se telegrafían en una línea del header del menú.
     /// </summary>
     public sealed class ContractCardView
     {
-        private const string DefaultLockReason = "PREVIEW BLOQUEADA";
-
         private static readonly Color CardColor = new Color(0.11f, 0.09f, 0.17f, 0.96f);
         private static readonly Color SelectedColor = new Color(0.20f, 0.16f, 0.28f, 1f);
+        private static readonly Color BadgeTextColor = new Color(0.08f, 0.06f, 0.10f, 1f);
 
         private readonly ContractSO _contract;
         private readonly Image _background;
-        private readonly Button _button;
         private readonly TextMeshProUGUI _selectLabel;
         private readonly GameObject _featuredBadge;
 
@@ -34,8 +32,7 @@ namespace V2.Meta
             GameObject root = MetaUi.Panel(parent, "Card_" + contract.Id, CardColor, topLeft, size);
             _background = root.GetComponent<Image>();
 
-            MetaUi.AccentBar(root.transform, new Vector2(0f, 0f), new Vector2(size.x, 5f),
-                contract.Locked ? MetaUi.Muted : MetaUi.Accent);
+            MetaUi.AccentBar(root.transform, new Vector2(0f, 0f), new Vector2(size.x, 5f), MetaUi.Accent);
 
             MetaUi.Label(root.transform, "Title", contract.Title, 24f, MetaUi.Text,
                 TextAlignmentOptions.TopLeft, new Vector2(16f, 16f), new Vector2(size.x - 32f, 58f),
@@ -56,36 +53,23 @@ namespace V2.Meta
                 15f, new Color(1f, 0.62f, 0.62f, 0.9f), TextAlignmentOptions.TopLeft,
                 new Vector2(16f, 286f), new Vector2(size.x - 32f, 74f));
 
-            // El badge se crea una sola vez y se togglea desde SetFeatured: el destacado
-            // se deriva por sesión, no por refresh.
-            _featuredBadge = MetaUi.Label(root.transform, "Featured", "DESTACADO", 12f, MetaUi.Accent,
-                TextAlignmentOptions.TopRight, new Vector2(size.x - 104f, 76f), new Vector2(88f, 22f),
-                FontStyles.Bold).gameObject;
+            // El pill se crea una sola vez y se togglea desde SetFeatured: el recomendado
+            // se deriva por sesión, no por refresh. Relleno accent = sugerencia, no orden.
+            Image badge = MetaUi.Image(root.transform, "Featured", MetaUi.Accent,
+                new Vector2(size.x - 132f, 74f), new Vector2(116f, 22f));
+            badge.raycastTarget = false;
+            TextMeshProUGUI badgeLabel = MetaUi.Label(badge.transform, "Label", "RECOMENDADO",
+                12f, BadgeTextColor, TextAlignmentOptions.Center, Vector2.zero, Vector2.zero,
+                FontStyles.Bold);
+            MetaUi.Stretch(badgeLabel.rectTransform);
+            _featuredBadge = badge.gameObject;
             _featuredBadge.SetActive(false);
 
-            if (contract.Locked)
-            {
-                // Sin Button ni raycast de acción: el CTA se reemplaza por el motivo.
-                _button = null;
-                _selectLabel = null;
-
-                GameObject overlay = MetaUi.Panel(root.transform, "LockOverlay",
-                    new Color(0.04f, 0.03f, 0.07f, 0.66f), Vector2.zero, size);
-                overlay.GetComponent<Image>().raycastTarget = false;
-                overlay.transform.SetAsLastSibling();
-                MetaUi.Label(overlay.transform, "Locked", LockReasonText(contract), 13f,
-                    MetaUi.Muted, TextAlignmentOptions.Center, new Vector2(16f, size.y - 62f),
-                    new Vector2(size.x - 32f, 46f), FontStyles.Bold);
-            }
-            else
-            {
-                Button button = MetaUi.Button(root.transform, "Select", "ELEGIR", MetaUi.Accent,
-                    new Vector2(16f, size.y - 62f), new Vector2(size.x - 32f, 46f), 18f,
-                    out TextMeshProUGUI selectLabel);
-                _button = button;
-                _selectLabel = selectLabel;
-                _button.onClick.AddListener(() => onSelect?.Invoke(_contract));
-            }
+            Button button = MetaUi.Button(root.transform, "Select", "ELEGIR", MetaUi.Accent,
+                new Vector2(16f, size.y - 62f), new Vector2(size.x - 32f, 46f), 18f,
+                out TextMeshProUGUI selectLabel);
+            _selectLabel = selectLabel;
+            button.onClick.AddListener(() => onSelect?.Invoke(_contract));
 
             SetSelected(false);
         }
@@ -96,8 +80,7 @@ namespace V2.Meta
         {
             _background.color = selected ? SelectedColor : CardColor;
 
-            // Locked: no hay CTA que actualizar (y nunca puede ser la seleccionada).
-            if (_button == null || _selectLabel == null) return;
+            if (_selectLabel == null) return;
             _selectLabel.text = selected ? "ELEGIDO" : "ELEGIR";
         }
 
@@ -116,12 +99,6 @@ namespace V2.Meta
                 case WaifuFaction.Espectaculo: return "Espectáculo";
                 default: return faction.ToString();
             }
-        }
-
-        private static string LockReasonText(ContractSO contract)
-        {
-            string reason = contract != null ? contract.LockReason : null;
-            return string.IsNullOrWhiteSpace(reason) ? DefaultLockReason : reason.Trim();
         }
     }
 }
