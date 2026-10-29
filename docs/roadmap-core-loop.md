@@ -41,7 +41,7 @@ El gacha real y la economía quedan para una fase posterior.
 
 | Facción | Waifus | Identidad | Breakpoints |
 |---|---|---|---|
-| **Café** | Airi (Merchant), Neko (Catgirl), Yuki (Maid) | Economía | 2: +1 moneda/pedido · 3: +2 monedas y +10% carga |
+| **Café** | Airi (Merchant), Neko (Catgirl), Yuki (Maid) | Economía | 2: +1 moneda/pedido · 3: +2 monedas y costo de carga ×0.9 |
 | **Míticos** | Hana (Fox), Luna (Witch), Miko (Angel), Rika (Demon) | Skills/tablero | 2: -1 carga de skill · 3: -2 y +1 potencia · 4: empezar con 50% carga |
 | **Espectáculo** | Alice (Princess), Emi (Idol), Sora (Idol) | Paciencia/combos | 2: +15% paciencia · 3: +30% y +1 moneda por combo |
 
@@ -89,12 +89,13 @@ de monedas/pedidos.
 
 | Contrato | Facción | Objetivo específico | Modificadores | Derrota |
 |---|---|---|---|---|
-| **Rush de Mediodía** | Café | Servir 18 pedidos en 180 s | Llegadas +15%, monedas +50% | 3 clientes perdidos o tiempo sin llegar a 18 |
+| **Rush de Mediodía** | Café | Servir 18 pedidos en 180 s | Llegadas +13%, monedas +50% | 3 clientes perdidos o tiempo sin llegar a 18 |
 | **Noche de Brujas** | Míticos | Lanzar 6 skills y limpiar 25 Postre | Carga +20%, peso de Postre +50% | 3 perdidos o tiempo sin cumplir |
 | **Hora del Té** (locked preview) | Espectáculo | Servir 6 VIP sin perder ninguno | Paciencia VIP -25%, combos +1 moneda | 1 VIP perdido o tiempo sin llegar a 6 |
 | **Desayuno Real** (later) | Mixto | Servir 10 Desayunos y 10 Postres | Sin ultimate; breakpoints 2/2 | 3 perdidos o tiempo sin cumplir |
 
-- V1: **Rush** y **Noche** jugables + **Hora del Té** locked preview.
+- V1: **Rush** y **Noche** jugables (`locked: 0`); **Hora del Té** y **Desayuno
+  Real** existen como preview bloqueada (`locked: 1`) y no son accionables.
 - La rotación es la razón para cambiar de facción/party. Sin contratos, la build
   óptima se congela.
 - La derrota y la victoria son **por contrato**, no por un marcador único.
@@ -133,6 +134,10 @@ de monedas/pedidos.
 - Soft fail: monedas parciales; nunca castigo duro.
 - Resultado: objetivo, progreso, monedas, ultimate usada, botón “volver al menú”.
 - Las monedas se guardan aunque el gacha esté locked.
+- **HUD en juego**: solo estado vivo en columnas fijas (título, progreso, perdidos,
+  monedas, tiempo) + pill de ultimate y botón de pausa. Lo descriptivo del contrato
+  (objetivo, modificadores, derrota) vive en el **menú de pausa** (`ESC` o botón),
+  que congela run, café y tablero vía `GameplayLock` (sin tocar `Time.timeScale`).
 
 ## 8. Tutorial
 
@@ -175,7 +180,7 @@ de monedas/pedidos.
   Ninguna waifu depende de otra; las ultimates son por facción.
 - **Composition root + prefabs**:
   - `GameRoot` persistente: `IProfileStore`, `IWaifuCatalog`, `IContractCatalog`,
-    `IRunSession`, `ITutorialFlow`.
+    `IRunLauncher`, `ITutorialFlow`.
   - `MetaCoordinator` (menú), `RunCoordinator` (board),
     `TutorialCoordinator`/`GiftCoordinator`.
   - Cada coordinador posee sus prefabs y referencias serializadas;
@@ -203,6 +208,11 @@ de monedas/pedidos.
 | **E7 T2/Espectáculo ultimate** | 7 Tier 2 | E4 (4 kits data-ready) | L | Implementar los 4 kits restantes, Zorro de Fuego (4 Míticos + total ★≥8) y Encore; debug ownership. |
 | **E8 Roadmap docs/Project** | 8 Docs | E0, ongoing | S | Doc + Project #10 actualizados; tarea fija. |
 | **E9 Gacha/economía/dupes/4–5★** | 9 Gacha | E1, E4, E7 | XL | Gacha real, monedas, dupes/ascensión (estrellas), 4–5★ y adquisición de Alice/Emi/Sora/Miko. |
+
+**Estado al cerrar el Core Loop Meta V1:** E0–E5 cerrados y commiteados
+(`01d504e` roadmap, `8ccd51c` E1, `84bf724` E3, `ec423e5` E2, `9bc831e` E4,
+`ac9f6f9` E5, `3775d7f` HUD compacto + pausa, `67d2e58` botón de pausa). E8 cierra
+este documento y el Project #10. **E6, E7 y E9 siguen abiertos.**
 
 ```mermaid
 graph TD
