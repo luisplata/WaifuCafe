@@ -21,9 +21,9 @@ MonoBehaviour:
   - title: "PARTY Y SINERGIA"
     body: "Arm\xE1 una party de 4 waifus distintas. Las facciones y roles repetidos activan sinergias; con 3 M\xEDticos y una de 3 estrellas se desbloquea la ultimate Luna de Sangre."
     focus: 1
-  - title: "GACHA BLOQUEADA"
-    body: "Gacha y compras quedan bloqueadas por ahora: el roster se gana jugando. Las estrellas subir\xE1n con dupes m\xE1s adelante."
+  - title: "GACHA - PR\xD3XIMAMENTE"
+    body: "El gacha llega m\xE1s adelante: por ahora el roster se gana jugando, y las estrellas subir\xE1n con dupes cuando est\xE9 disponible."
     focus: 2
-  - title: "RESTAURANTE BLOQUEADO"
-    body: "El restaurante tambi\xE9n queda para m\xE1s adelante. Es la parte de gesti\xF3n del caf\xE9; con el men\xFA ya ten\xE9s todo para el primer d\xEDa."
+  - title: "RESTAURANTE - PR\xD3XIMAMENTE"
+    body: "El restaurante tambi\xE9n llega m\xE1s adelante. Es la parte de gesti\xF3n del caf\xE9; con los contratos y la party ya ten\xE9s todo para el primer d\xEDa."
     focus: 3

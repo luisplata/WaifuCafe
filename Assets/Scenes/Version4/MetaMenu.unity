@@ -2262,6 +2262,7 @@ MonoBehaviour:
   contractPanel: {fileID: 409690599}
   rosterPanel: {fileID: 1514564584}
   partyPanel: {fileID: 834297646}
+  managerPanel: {fileID: 1906393353}
   resetConfirmPanel: {fileID: 2085657058}
   resetConfirmYesButton: {fileID: 553029804}
   resetConfirmNoButton: {fileID: 1424071380}
