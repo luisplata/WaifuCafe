@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adc9cf69af1ad4741894f59213940d31, type: 3}
+  m_Name: HoraPunta
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Meta.ContractSO
+  id: hora-punta
+  title: "Hora Punta"
+  faction: 0
+  locked: 0
+  goalText: "Serví 24 pedidos"
+  modifierText: "Llegadas 22% más rápidas · Monedas +20% · Clientes con 26 s de paciencia"
+  defeatText: 3 pedidos perdidos o tiempo sin llegar a 24
+  goalServedOrders: 24
+  goalSkillsCast: 0
+  goalClearedDish: 3
+  goalClearedDishUnits: 0
+  goalClearedDish2: 0
+  goalClearedDish2Units: 0
+  goalVipOrders: 0
+  arrivalIntervalMultiplier: 0.78
+  coinMultiplier: 1.2
+  chargeCostMultiplier: 1
+  postreWeightMultiplier: 1
+  patienceMultiplier: 1
+  coinsPerCascade: 0
+  ultimateEnabled: 1
+  timeLimitSeconds: 210
+  maxLostOrders: 3
+  failEnabled: 1
+  basePatienceSeconds: 26

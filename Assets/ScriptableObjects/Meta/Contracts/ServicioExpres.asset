@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adc9cf69af1ad4741894f59213940d31, type: 3}
+  m_Name: ServicioExpres
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Meta.ContractSO
+  id: servicio-expres
+  title: "Servicio Exprés"
+  faction: 0
+  locked: 0
+  goalText: "Serví 12 pedidos"
+  modifierText: "Llegadas 15% más lentas · Clientes impacientes (20 s) · Monedas +60%"
+  defeatText: 2 pedidos perdidos o tiempo sin llegar a 12
+  goalServedOrders: 12
+  goalSkillsCast: 0
+  goalClearedDish: 3
+  goalClearedDishUnits: 0
+  goalClearedDish2: 0
+  goalClearedDish2Units: 0
+  goalVipOrders: 0
+  arrivalIntervalMultiplier: 1.15
+  coinMultiplier: 1.6
+  chargeCostMultiplier: 1
+  postreWeightMultiplier: 1
+  patienceMultiplier: 1
+  coinsPerCascade: 0
+  ultimateEnabled: 1
+  timeLimitSeconds: 150
+  maxLostOrders: 2
+  failEnabled: 1
+  basePatienceSeconds: 20
