@@ -382,7 +382,17 @@ namespace V2.Meta
             if (profile == null) return;
 
             if (result.Coins > 0) profile.coins += result.Coins;
-            profile.lastContractId = result.ContractId;
+
+            bool tutorial = string.Equals(result.ContractId, TutorialFlow.ContractId,
+                StringComparison.Ordinal);
+
+            // La run del tutorial no es un contrato del menú: no ensucia lastContractId.
+            if (!tutorial) profile.lastContractId = result.ContractId;
+
+            // Victoria del tutorial: el menú retoma en Reward (Hana + Yuki) al volver.
+            if (tutorial && result.IsVictory && profile.tutorialStep == TutorialStep.ScriptedRun)
+                profile.tutorialStep = TutorialStep.Reward;
+
             root.Profile.Save();
         }
 

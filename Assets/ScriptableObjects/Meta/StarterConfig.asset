@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f98980ee8b0f4a1f86e9fdfee4a0274f, type: 3}
+  m_Name: StarterConfig
+  m_EditorClassIdentifier: Assembly-CSharp::V2.Meta.StarterConfigSO
+  gift:
+  - waifu: {fileID: 11400000, guid: ffd17270658cd464aa04ae7c50d12735, type: 2}
+    stars: 1
+  - waifu: {fileID: 11400000, guid: 3c937361a5c467d40a8eec6b983e30f6, type: 2}
+    stars: 2
+  - waifu: {fileID: 11400000, guid: e9b23fe207cb3604b9f1daeb61b4e880, type: 2}
+    stars: 2
+  - waifu: {fileID: 11400000, guid: 406b1545c9fc7284fa3f41dbcd3902e1, type: 2}
+    stars: 3
+  reward:
+  - waifu: {fileID: 11400000, guid: 99fa76fe843224f459b99222e438ff16, type: 2}
+    stars: 1
+  - waifu: {fileID: 11400000, guid: 4dba41cc4313b2a4eaaae5fc4a616408, type: 2}
+    stars: 2

@@ -87,6 +87,9 @@ namespace V2.Cafe
         private float _arrivalMultiplier = 1f;
         private float _postreWeight = 1f;
         private int _orderCoinBonus;
+        private ScriptedOrder[] _scriptedOrders = Array.Empty<ScriptedOrder>();
+        private int _scriptedCursor;
+        private float _scriptedClock;
 
         /// <summary>Monedas pagadas en el dia (HUD completo llega en otro corte).</summary>
         public int Coins { get; private set; }
@@ -140,6 +143,11 @@ namespace V2.Cafe
             Lost = 0;
             _arrivalClock = 0f;
             _rampClock = 0f;
+
+            // Tutorial (E5): pedidos guionados reemplazan al spawner aleatorio.
+            _scriptedOrders = CopyScripted(config.ScriptedOrders);
+            _scriptedCursor = 0;
+            _scriptedClock = 0f;
 
             ContractModifiers modifiers = config.Modifiers;
             _coinMultiplier = Mathf.Max(0f, modifiers.coinMultiplier);
@@ -230,7 +238,7 @@ namespace V2.Cafe
             BuildFlights();
 
             if (_session != null) _session.Delivered += OnDelivered;
-            TrySpawn();
+            if (!HasScriptedOrders) TrySpawn();
             StartCoroutine(SpawnLoop());
         }
 
@@ -258,6 +266,13 @@ namespace V2.Cafe
                 _rampClock += dt;
                 _interval = IntervalAt(_rampClock);
                 TickPatience(dt);
+
+                if (HasScriptedOrders)
+                {
+                    TickScripted(dt);
+                    continue;
+                }
+
                 if (_arrivalClock < _interval) continue;
 
                 _arrivalClock -= _interval;
@@ -296,11 +311,18 @@ namespace V2.Cafe
 
         private void TrySpawn()
         {
+            if (HasScriptedOrders) return;
             if (_stopped || GameplayLock.IsLocked) return;
             Seat seat = FreeSeat();
             if (seat == null) return;
 
-            Order order = CreateOrder();
+            Place(seat, CreateOrder());
+        }
+
+        private void Place(Seat seat, Order order)
+        {
+            if (seat == null || order == null) return;
+
             Delivery auto = _book.Add(order);
             seat.Order = order;
             seat.Served = false;
@@ -313,6 +335,38 @@ namespace V2.Cafe
             _bank.Refresh(_book);
 
             if (order.IsComplete) Serve(seat);
+        }
+
+        private bool HasScriptedOrders => _scriptedOrders != null && _scriptedOrders.Length > 0;
+
+        /// <summary>
+        /// Tutorial: cada pedido entra en su segundo guionado, sin spawner aleatorio. Si no
+        /// hay asiento libre se espera (el reloj sigue) y se reintenta al liberarse uno.
+        /// </summary>
+        private void TickScripted(float dt)
+        {
+            _scriptedClock += dt;
+            if (_stopped || GameplayLock.IsLocked) return;
+            if (_scriptedCursor >= _scriptedOrders.Length) return;
+
+            ScriptedOrder next = _scriptedOrders[_scriptedCursor];
+            if (_scriptedClock < next.AtSecond) return;
+
+            Seat seat = FreeSeat();
+            if (seat == null) return;
+
+            int seq = ++_seq;
+            _scriptedCursor++;
+            Place(seat, next.ToOrder(seq, seq));
+        }
+
+        private static ScriptedOrder[] CopyScripted(IReadOnlyList<ScriptedOrder> orders)
+        {
+            if (orders == null || orders.Count == 0) return Array.Empty<ScriptedOrder>();
+
+            var copy = new ScriptedOrder[orders.Count];
+            for (int i = 0; i < orders.Count; i++) copy[i] = orders[i];
+            return copy;
         }
 
         private Sprite NextCustomer()
