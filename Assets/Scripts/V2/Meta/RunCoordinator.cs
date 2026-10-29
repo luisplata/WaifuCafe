@@ -468,7 +468,12 @@ namespace V2.Meta
 
         private void EnsureUi()
         {
-            if (_hud == null) _hud = new RunHud(transform);
+            if (_hud == null)
+            {
+                _hud = new RunHud(transform);
+                _hud.PauseButtonClicked += TogglePause;
+            }
+
             if (_result == null) _result = new ResultScreen(_hud.CanvasTransform);
             if (_pause == null) _pause = new PauseOverlay(_hud.CanvasTransform);
         }
@@ -476,6 +481,7 @@ namespace V2.Meta
         private void OnDestroy()
         {
             if (_paused) GameplayLock.Release();
+            if (_hud != null) _hud.PauseButtonClicked -= TogglePause;
             Unsubscribe();
             _pause?.Dispose();
             _result?.Dispose();

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -16,9 +17,13 @@ namespace V2.Meta
     {
         private static readonly Color PanelColor = new Color(0.06f, 0.05f, 0.09f, 0.82f);
         private static readonly Color PillColor = new Color(0.06f, 0.05f, 0.09f, 0.72f);
+        private static readonly Color PauseButtonColor = new Color(0.20f, 0.17f, 0.27f, 0.96f);
         private static readonly Color AccentColor = new Color(1f, 0.86f, 0.42f, 1f);
         private static readonly Color TextColor = new Color(1f, 1f, 1f, 0.9f);
         private static readonly Color MutedColor = new Color(1f, 1f, 1f, 0.62f);
+
+        /// <summary>El HUD no pausa: avisa y <see cref="RunCoordinator"/> decide.</summary>
+        public event Action PauseButtonClicked;
 
         private readonly Canvas _canvas;
         private GameObject _panel;
@@ -72,20 +77,22 @@ namespace V2.Meta
             _title.text = config.Contract.Title;
 
             _progress = Label(_panel.transform, "Progress", 30f, TextAlignmentOptions.Center,
-                new Vector2(0.27f, 0f), new Vector2(0.63f, 1f),
+                new Vector2(0.27f, 0f), new Vector2(0.62f, 1f),
                 new Vector2(8f, 0f), new Vector2(-8f, 0f), TextColor);
 
             _lost = Label(_panel.transform, "Lost", 21f, TextAlignmentOptions.Center,
-                new Vector2(0.63f, 0f), new Vector2(0.80f, 1f),
+                new Vector2(0.62f, 0f), new Vector2(0.76f, 1f),
                 new Vector2(8f, 0f), new Vector2(-8f, 0f), MutedColor);
 
-            _coins = Label(_panel.transform, "Coins", 26f, TextAlignmentOptions.Right,
-                new Vector2(0.80f, 0.55f), new Vector2(1f, 1f),
-                new Vector2(0f, 0f), new Vector2(-24f, -10f), AccentColor);
+            _coins = Label(_panel.transform, "Coins", 25f, TextAlignmentOptions.Right,
+                new Vector2(0.78f, 0.55f), new Vector2(0.93f, 1f),
+                new Vector2(0f, 0f), new Vector2(-8f, -10f), AccentColor);
 
-            _timer = Label(_panel.transform, "Timer", 24f, TextAlignmentOptions.Right,
-                new Vector2(0.80f, 0f), new Vector2(1f, 0.45f),
-                new Vector2(0f, 10f), new Vector2(-24f, 0f), TextColor);
+            _timer = Label(_panel.transform, "Timer", 23f, TextAlignmentOptions.Right,
+                new Vector2(0.78f, 0f), new Vector2(0.93f, 0.45f),
+                new Vector2(0f, 10f), new Vector2(-8f, 0f), TextColor);
+
+            BuildPauseButton();
 
             _ultimatePill = new GameObject("UltimatePill", typeof(RectTransform), typeof(Image));
             _ultimatePill.transform.SetParent(_panel.transform, false);
@@ -102,6 +109,45 @@ namespace V2.Meta
 
             ApplyUltimateText();
             Refresh(ContractProgress.Empty, config);
+        }
+
+        /// <summary>
+        /// Botón visible de pausa, anclado al extremo derecho de la barra. Sin él, ESC es un
+        /// atajo invisible y en móvil no hay forma de abrir el menú de pausa.
+        /// </summary>
+        private void BuildPauseButton()
+        {
+            var go = new GameObject("PauseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(_panel.transform, false);
+
+            var rect = go.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(1f, 0.5f);
+            rect.anchorMax = new Vector2(1f, 0.5f);
+            rect.pivot = new Vector2(1f, 0.5f);
+            rect.sizeDelta = new Vector2(56f, 48f);
+            rect.anchoredPosition = new Vector2(-16f, 0f);
+
+            var image = go.GetComponent<Image>();
+            image.color = PauseButtonColor;
+
+            var button = go.GetComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(() => PauseButtonClicked?.Invoke());
+
+            var labelGo = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelGo.transform.SetParent(go.transform, false);
+            var labelRect = labelGo.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            var label = labelGo.GetComponent<TextMeshProUGUI>();
+            label.text = "||";
+            label.fontSize = 26f;
+            label.alignment = TextAlignmentOptions.Center;
+            label.color = TextColor;
+            label.raycastTarget = false;
         }
 
         /// <summary>
@@ -163,13 +209,13 @@ namespace V2.Meta
         public void Dispose()
         {
             DisposePanel();
-            if (_canvas != null) Object.Destroy(_canvas.gameObject);
+            if (_canvas != null) UnityEngine.Object.Destroy(_canvas.gameObject);
         }
 
         private void DisposePanel()
         {
             if (_panel == null) return;
-            Object.Destroy(_panel);
+            UnityEngine.Object.Destroy(_panel);
             _panel = null;
             _ultimatePill = null;
         }
