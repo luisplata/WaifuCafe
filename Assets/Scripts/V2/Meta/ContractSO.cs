@@ -20,6 +20,8 @@ namespace V2.Meta
         [SerializeField] private WaifuFaction faction = WaifuFaction.Cafe;
         [Tooltip("Preview bloqueada: se muestra pero no se puede jugar.")]
         [SerializeField] private bool locked;
+        [Tooltip("Motivo visible del bloqueo (causa técnica, máx. ~60 caracteres).")]
+        [SerializeField] private string lockReason = string.Empty;
 
         [Header("Textos de UI")]
         [SerializeField] private string goalText = string.Empty;
@@ -55,6 +57,7 @@ namespace V2.Meta
         public string Title => title;
         public WaifuFaction Faction => faction;
         public bool Locked => locked;
+        public string LockReason => lockReason;
 
         public ContractDefinition ToDefinition()
         {

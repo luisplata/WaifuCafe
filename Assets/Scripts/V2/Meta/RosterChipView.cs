@@ -65,25 +65,22 @@ namespace V2.Meta
                 FontStyles.Bold).gameObject;
             _partyTag.SetActive(inParty);
 
-            Button button = root.AddComponent<Button>();
-            button.targetGraphic = _background;
-
             if (owned)
             {
+                Button button = root.AddComponent<Button>();
+                button.targetGraphic = _background;
                 button.onClick.AddListener(() => onToggle?.Invoke(_definition));
             }
             else
             {
-                button.interactable = false;
-
+                // Sin Button: el chip no poseído es inerte (ni raycast de acción).
                 GameObject overlay = MetaUi.Panel(root.transform, "LockOverlay",
                     new Color(0.04f, 0.03f, 0.07f, 0.62f), Vector2.zero, new Vector2(width, height));
+                overlay.GetComponent<Image>().raycastTarget = false;
                 overlay.transform.SetAsLastSibling();
                 MetaUi.Label(overlay.transform, "Lock", "LOCK", 18f, MetaUi.Muted,
                     TextAlignmentOptions.Center, new Vector2(0f, 62f), new Vector2(width, 32f),
                     FontStyles.Bold);
-                Button overlayButton = overlay.AddComponent<Button>();
-                overlayButton.interactable = false;
             }
         }
 

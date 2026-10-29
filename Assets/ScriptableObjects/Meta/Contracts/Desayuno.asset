@@ -16,6 +16,7 @@ MonoBehaviour:
   title: Desayuno Real
   faction: 0
   locked: 1
+  lockReason: "Contrato Mixto: breakpoints 2/2 llegan en E7"
   goalText: "Serv\xED 10 Desayunos y 10 Postres"
   modifierText: "Sin ultimate \xB7 breakpoints 2/2"
   defeatText: 3 pedidos perdidos o tiempo sin cumplir

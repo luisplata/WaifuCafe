@@ -16,6 +16,7 @@ MonoBehaviour:
   title: "Hora del T\xE9"
   faction: 2
   locked: 1
+  lockReason: "Sin pedidos VIP en la run: Espect\xE1culo llega en E7"
   goalText: "Serv\xED 6 VIP sin perder ninguno"
   modifierText: "Paciencia VIP -25% \xB7 +1 moneda por cascada \u22653"
   defeatText: 1 VIP perdido o tiempo sin llegar a 6
