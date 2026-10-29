@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using V2.Board;
 using V2.Cafe;
@@ -41,6 +42,8 @@ namespace V2.Meta
         private bool _ended;
         private RunHud _hud;
         private ResultScreen _result;
+        private PauseOverlay _pause;
+        private bool _paused;
         private List<WaifuKit> _partyKits = new List<WaifuKit>();
         private PartyModifiers _partyModifiers = PartyModifiers.Neutral();
 
@@ -142,6 +145,9 @@ namespace V2.Meta
             Subscribe();
 
             EnsureUi();
+            if (_paused) GameplayLock.Release();
+            _paused = false;
+            _pause.Hide();
             _result.Hide();
             _hud.Build(config);
             _hud.SetUltimate(UltimateBadge(), IsUltimateLive());
@@ -150,12 +156,56 @@ namespace V2.Meta
 
         private void Update()
         {
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+                TogglePause();
+
             if (!_running || _ended) return;
+            if (_paused) return;
 
             if (!GameplayLock.IsLocked) _state.ElapsedSeconds += Time.deltaTime;
             _state.Coins = cafeFloor != null ? cafeFloor.Coins : _state.Coins;
 
             Evaluate();
+        }
+
+        /// <summary>
+        /// Pausa real: el <see cref="GameplayLock"/> congela reloj de la run, relojes del café
+        /// y el tablero (BoardView deja de ser interactivo), así que no hace falta tocar
+        /// <c>Time.timeScale</c> ni perder el estado de la escena.
+        /// </summary>
+        private void TogglePause()
+        {
+            if (!_running || _ended) return;
+
+            if (_paused) ResumeRun();
+            else PauseRun();
+        }
+
+        private void PauseRun()
+        {
+            EnsureUi();
+            if (_pause.IsVisible) return;
+
+            _paused = true;
+            GameplayLock.Hold();
+            _hud.SetVisible(false);
+            _pause.Show(_config, _state.Progress, UltimateBadge(), ResumeRun, AbandonRun);
+        }
+
+        private void ResumeRun()
+        {
+            if (!_paused) return;
+
+            _paused = false;
+            _pause.Hide();
+            _hud.SetVisible(true);
+            GameplayLock.Release();
+        }
+
+        private void AbandonRun()
+        {
+            ResumeRun();
+            GoToMenu();
         }
 
         private void ConfigureParty(RunConfig config, PartyModifiers modifiers)
@@ -420,11 +470,14 @@ namespace V2.Meta
         {
             if (_hud == null) _hud = new RunHud(transform);
             if (_result == null) _result = new ResultScreen(_hud.CanvasTransform);
+            if (_pause == null) _pause = new PauseOverlay(_hud.CanvasTransform);
         }
 
         private void OnDestroy()
         {
+            if (_paused) GameplayLock.Release();
             Unsubscribe();
+            _pause?.Dispose();
             _result?.Dispose();
             _hud?.Dispose();
         }

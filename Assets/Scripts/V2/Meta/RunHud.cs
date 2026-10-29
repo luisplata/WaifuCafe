@@ -15,14 +15,15 @@ namespace V2.Meta
     public sealed class RunHud
     {
         private static readonly Color PanelColor = new Color(0.06f, 0.05f, 0.09f, 0.82f);
+        private static readonly Color PillColor = new Color(0.06f, 0.05f, 0.09f, 0.72f);
         private static readonly Color AccentColor = new Color(1f, 0.86f, 0.42f, 1f);
         private static readonly Color TextColor = new Color(1f, 1f, 1f, 0.9f);
         private static readonly Color MutedColor = new Color(1f, 1f, 1f, 0.62f);
 
         private readonly Canvas _canvas;
         private GameObject _panel;
+        private GameObject _ultimatePill;
         private TextMeshProUGUI _title;
-        private TextMeshProUGUI _objective;
         private TextMeshProUGUI _progress;
         private TextMeshProUGUI _lost;
         private TextMeshProUGUI _ultimate;
@@ -60,38 +61,44 @@ namespace V2.Meta
             rect.anchorMax = new Vector2(1f, 1f);
             rect.pivot = new Vector2(0.5f, 1f);
             rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(0f, 132f);
+            rect.sizeDelta = new Vector2(0f, 96f);
             _panel.GetComponent<Image>().color = PanelColor;
 
-            _title = Label(_panel.transform, "Title", 32f, TextAlignmentOptions.Left,
-                new Vector2(0f, 0.62f), new Vector2(0.42f, 1f),
-                new Vector2(28f, 0f), new Vector2(0f, -10f), AccentColor);
+            // Columnas fijas con gutter: nada se solapa aunque el título o el progreso crezcan.
+            // El detalle descriptivo del contrato vive en el menú de pausa, no acá.
+            _title = Label(_panel.transform, "Title", 24f, TextAlignmentOptions.Left,
+                new Vector2(0f, 0f), new Vector2(0.27f, 1f),
+                new Vector2(24f, 0f), new Vector2(-12f, 0f), AccentColor);
             _title.text = config.Contract.Title;
 
-            _objective = Label(_panel.transform, "Objective", 24f, TextAlignmentOptions.Left,
-                new Vector2(0f, 0.18f), new Vector2(0.42f, 0.62f),
-                new Vector2(28f, 8f), new Vector2(0f, 0f), TextColor);
-            _objective.text = config.Contract.GoalText;
-
             _progress = Label(_panel.transform, "Progress", 30f, TextAlignmentOptions.Center,
-                new Vector2(0.40f, 0.56f), new Vector2(0.76f, 1f),
-                Vector2.zero, Vector2.zero, TextColor);
+                new Vector2(0.27f, 0f), new Vector2(0.63f, 1f),
+                new Vector2(8f, 0f), new Vector2(-8f, 0f), TextColor);
 
-            _lost = Label(_panel.transform, "Lost", 22f, TextAlignmentOptions.Center,
-                new Vector2(0.40f, 0.28f), new Vector2(0.76f, 0.56f),
-                Vector2.zero, Vector2.zero, MutedColor);
+            _lost = Label(_panel.transform, "Lost", 21f, TextAlignmentOptions.Center,
+                new Vector2(0.63f, 0f), new Vector2(0.80f, 1f),
+                new Vector2(8f, 0f), new Vector2(-8f, 0f), MutedColor);
 
-            _ultimate = Label(_panel.transform, "Ultimate", 20f, TextAlignmentOptions.Center,
-                new Vector2(0.34f, 0f), new Vector2(0.78f, 0.28f),
-                Vector2.zero, Vector2.zero, MutedColor);
+            _coins = Label(_panel.transform, "Coins", 26f, TextAlignmentOptions.Right,
+                new Vector2(0.80f, 0.55f), new Vector2(1f, 1f),
+                new Vector2(0f, 0f), new Vector2(-24f, -10f), AccentColor);
 
-            _coins = Label(_panel.transform, "Coins", 30f, TextAlignmentOptions.Right,
-                new Vector2(0.76f, 0.5f), new Vector2(1f, 1f),
-                Vector2.zero, new Vector2(-28f, -8f), AccentColor);
+            _timer = Label(_panel.transform, "Timer", 24f, TextAlignmentOptions.Right,
+                new Vector2(0.80f, 0f), new Vector2(1f, 0.45f),
+                new Vector2(0f, 10f), new Vector2(-24f, 0f), TextColor);
 
-            _timer = Label(_panel.transform, "Timer", 26f, TextAlignmentOptions.Right,
-                new Vector2(0.76f, 0f), new Vector2(1f, 0.5f),
-                Vector2.zero, new Vector2(-28f, 8f), TextColor);
+            _ultimatePill = new GameObject("UltimatePill", typeof(RectTransform), typeof(Image));
+            _ultimatePill.transform.SetParent(_panel.transform, false);
+            var pillRect = _ultimatePill.GetComponent<RectTransform>();
+            pillRect.anchorMin = new Vector2(0.5f, 1f);
+            pillRect.anchorMax = new Vector2(0.5f, 1f);
+            pillRect.pivot = new Vector2(0.5f, 1f);
+            pillRect.sizeDelta = new Vector2(620f, 38f);
+            pillRect.anchoredPosition = new Vector2(0f, -104f);
+            _ultimatePill.GetComponent<Image>().color = PillColor;
+
+            _ultimate = Label(_ultimatePill.transform, "Ultimate", 20f, TextAlignmentOptions.Center,
+                Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero, MutedColor);
 
             ApplyUltimateText();
             Refresh(ContractProgress.Empty, config);
@@ -113,6 +120,8 @@ namespace V2.Meta
             if (_ultimate == null) return;
             _ultimate.text = _ultimateText;
             _ultimate.color = _ultimateReady ? AccentColor : MutedColor;
+            if (_ultimatePill != null)
+                _ultimatePill.SetActive(!string.IsNullOrWhiteSpace(_ultimateText));
         }
 
         public void Refresh(ContractProgress progress, RunConfig config)
@@ -162,6 +171,7 @@ namespace V2.Meta
             if (_panel == null) return;
             Object.Destroy(_panel);
             _panel = null;
+            _ultimatePill = null;
         }
 
         public static string ProgressText(ContractDefinition contract, ContractProgress progress)
