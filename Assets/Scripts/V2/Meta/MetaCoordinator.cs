@@ -365,11 +365,10 @@ namespace V2.Meta
         {
             if (contract == null || contract.Locked || _profile == null) return;
 
+            // Elegir no mueve el cursor de rotación: `lastContractId` significa "último
+            // jugado" y lo escribe StartRun. Si no, clickear sin jugar rotaría el destacado.
             _selectedContract = contract;
             _contractChosenThisSession = true;
-            PlayerProfile profile = _profile.Current;
-            profile.lastContractId = contract.Id;
-            _profile.Save();
         }
 
         /// <summary>
@@ -381,6 +380,8 @@ namespace V2.Meta
             if (_contractChosenThisSession && _selectedContract != null && !_selectedContract.Locked)
                 return;
 
+            // Se re-deriva sólo si se invalidó (reset del perfil), no en cada refresh.
+            if (_featuredContract == null) _featuredContract = ResolveFeatured();
             _selectedContract = _featuredContract != null ? _featuredContract : FirstPlayable();
         }
 
@@ -453,6 +454,11 @@ namespace V2.Meta
         {
             HideResetConfirm();
             _contractChosenThisSession = false;
+
+            // El reset borra el cursor de rotación: se invalida el destacado para que el
+            // próximo Changed lo re-derive del perfil vacío.
+            _featuredContract = null;
+            _selectedContract = null;
             _profile?.Reset();
         }
 
