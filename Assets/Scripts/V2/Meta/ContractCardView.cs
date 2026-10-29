@@ -20,7 +20,7 @@ namespace V2.Meta
         private readonly ContractSO _contract;
         private readonly Image _background;
         private readonly TextMeshProUGUI _selectLabel;
-        private readonly GameObject _featuredBadge;
+        private readonly GameObject _recommendedBadge;
 
         public ContractCardView(Transform parent, ContractSO contract, Vector2 topLeft, Vector2 size,
             Action<ContractSO> onSelect)
@@ -53,7 +53,7 @@ namespace V2.Meta
                 15f, new Color(1f, 0.62f, 0.62f, 0.9f), TextAlignmentOptions.TopLeft,
                 new Vector2(16f, 286f), new Vector2(size.x - 32f, 74f));
 
-            // El pill se crea una sola vez y se togglea desde SetFeatured: el recomendado
+            // El pill se crea una sola vez y se togglea desde SetRecommended: el recomendado
             // se deriva por sesión, no por refresh. Relleno accent = sugerencia, no orden.
             Image badge = MetaUi.Image(root.transform, "Featured", MetaUi.Accent,
                 new Vector2(size.x - 132f, 74f), new Vector2(116f, 22f));
@@ -62,8 +62,8 @@ namespace V2.Meta
                 12f, BadgeTextColor, TextAlignmentOptions.Center, Vector2.zero, Vector2.zero,
                 FontStyles.Bold);
             MetaUi.Stretch(badgeLabel.rectTransform);
-            _featuredBadge = badge.gameObject;
-            _featuredBadge.SetActive(false);
+            _recommendedBadge = badge.gameObject;
+            _recommendedBadge.SetActive(false);
 
             Button button = MetaUi.Button(root.transform, "Select", "ELEGIR", MetaUi.Accent,
                 new Vector2(16f, size.y - 62f), new Vector2(size.x - 32f, 46f), 18f,
@@ -84,10 +84,10 @@ namespace V2.Meta
             _selectLabel.text = selected ? "ELEGIDO" : "ELEGIR";
         }
 
-        public void SetFeatured(bool featured)
+        public void SetRecommended(bool recommended)
         {
-            if (_featuredBadge == null) return;
-            _featuredBadge.SetActive(featured);
+            if (_recommendedBadge == null) return;
+            _recommendedBadge.SetActive(recommended);
         }
 
         public static string FactionName(WaifuFaction faction)

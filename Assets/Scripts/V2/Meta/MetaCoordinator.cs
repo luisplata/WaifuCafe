@@ -49,7 +49,7 @@ namespace V2.Meta
         private readonly List<string> _playableIds = new List<string>();
         private readonly List<string> _pool = new List<string>();
         private ContractSO _selectedContract;
-        private ContractSO _featuredContract;
+        private ContractSO _recommendedContract;
         private bool _contractChosenThisSession;
 
         private void Start()
@@ -95,11 +95,11 @@ namespace V2.Meta
             if (resetConfirmYesButton != null) resetConfirmYesButton.onClick.AddListener(ConfirmReset);
             if (resetConfirmNoButton != null) resetConfirmNoButton.onClick.AddListener(HideResetConfirm);
 
-            // El pool y el destacado se derivan UNA sola vez por sesión, antes del primer
-            // RefreshAll: el badge no migra al elegir y los refresh de perfil no los recalculan.
+            // El pool se deriva una vez por sesión; la recomendación depende de la party,
+            // así que se recalcula en cada refresh (sin party no hay listón).
             CachePlayableIds();
             ResolvePool();
-            _featuredContract = ResolveFeatured();
+            ResolveRecommendation();
 
             BuildContractCards();
             BuildRosterScroll();
@@ -145,7 +145,7 @@ namespace V2.Meta
             }
 
             // El pool es la sugerencia; el pie aclara que no es una obligación.
-            MetaUi.Label(contractPanel, "Hint", "Podés elegir otro contrato", 13f, MetaUi.Muted,
+            MetaUi.Label(contractPanel, "Hint", "Elegí un contrato para jugar", 13f, MetaUi.Muted,
                 TextAlignmentOptions.TopLeft, new Vector2(padding, top + cardHeight + 2f),
                 new Vector2(panelWidth - padding * 2f, 22f));
         }
@@ -202,17 +202,44 @@ namespace V2.Meta
         private void ResolvePool()
         {
             _pool.Clear();
+            _recommendedContract = null;
             PlayerProfile profile = _profile != null ? _profile.Current : null;
             string cursor = profile != null ? profile.lastContractId : null;
             IReadOnlyList<string> ids = ContractPool.Build(_playableIds, cursor, ContractPoolSize);
             for (int i = 0; i < ids.Count; i++) _pool.Add(ids[i]);
         }
 
-        /// <summary>El recomendado es el primer contrato del pool (generaliza NextFeatured).</summary>
-        private ContractSO ResolveFeatured()
+        /// <summary>
+        /// Recomendación del juego: el contrato del pool que comparte la facción dominante
+        /// de la party. Sin mayoría clara o sin match, no hay recomendado y no hay listón.
+        /// </summary>
+        private void ResolveRecommendation()
         {
-            if (_pool.Count == 0) ResolvePool();
-            return _pool.Count == 0 ? null : _contracts.Find(_pool[0]);
+            _recommendedContract = null;
+            if (_pool.Count == 0 || _profile == null || _catalog == null) return;
+
+            PlayerProfile profile = _profile.Current;
+            if (profile == null) return;
+
+            var candidates = new List<ContractCandidate>(_pool.Count);
+            for (int i = 0; i < _pool.Count; i++)
+            {
+                ContractSO contract = _contracts.Find(_pool[i]);
+                if (contract != null) candidates.Add(new ContractCandidate(contract.Id, contract.Faction));
+            }
+
+            var partyFactions = new List<WaifuFaction>(MaxParty);
+            if (profile.party != null)
+            {
+                for (int i = 0; i < profile.party.Count; i++)
+                {
+                    WaifuDefinitionSO definition = _catalog.Find(profile.party[i]);
+                    if (definition != null) partyFactions.Add(definition.Faction);
+                }
+            }
+
+            string recommendedId = ContractRecommendation.Recommend(candidates, partyFactions);
+            if (!string.IsNullOrEmpty(recommendedId)) _recommendedContract = _contracts.Find(recommendedId);
         }
 
         private ContractSO FirstPlayable()
@@ -318,6 +345,8 @@ namespace V2.Meta
             RebuildRoster(profile);
             _partyPanelView?.Refresh(profile.party, _catalog, profile);
             RefreshSynergy(profile);
+            // La recomendación sale de la party: se recalcula en cada refresh, no se congela.
+            ResolveRecommendation();
             EnsureContractSelection();
             UpdateCardSelection();
             UpdateStartState(profile);
@@ -459,17 +488,12 @@ namespace V2.Meta
         /// </summary>
         private void EnsureContractSelection()
         {
-            if (_contractChosenThisSession && _selectedContract != null && !_selectedContract.Locked)
-                return;
+            // Sin preselección: el jugador elige siempre. Sólo se limpia el pick si el
+            // contrato salió del pool (reset) o dejó de estar disponible.
+            if (_selectedContract == null) return;
 
-            // Se re-deriva sólo si se invalidó (reset del perfil), no en cada refresh.
-            if (_featuredContract == null)
-            {
-                ResolvePool();
-                _featuredContract = ResolveFeatured();
-            }
-
-            _selectedContract = _featuredContract != null ? _featuredContract : FirstPlayable();
+            if (_selectedContract.Locked || !_pool.Contains(_selectedContract.Id))
+                _selectedContract = null;
         }
 
         private void UpdateCardSelection()
@@ -477,7 +501,7 @@ namespace V2.Meta
             foreach (ContractCardView card in _cards)
             {
                 card.SetSelected(card.Contract == _selectedContract);
-                card.SetFeatured(card.Contract == _featuredContract);
+                card.SetRecommended(card.Contract == _recommendedContract);
             }
         }
 
@@ -491,8 +515,8 @@ namespace V2.Meta
 
         private string StartBlocker(PlayerProfile profile)
         {
-            if (_selectedContract == null) return "SIN CONTRATOS";
-            if (_selectedContract.Locked) return "CONTRATO BLOQUEADO";
+            if (_pool.Count == 0) return "SIN CONTRATOS";
+            if (_selectedContract == null) return "ELEGÍ UN CONTRATO";
             if (profile == null || profile.party == null) return "PARTY VACÍA";
 
             if (profile.party.Count != MaxParty) return $"FALTAN {MaxParty - profile.party.Count} WAIFUS";
@@ -545,7 +569,8 @@ namespace V2.Meta
             // El reset borra el cursor de rotación: se invalidan pool y destacado para que
             // el próximo Changed los re-derive del perfil vacío.
             _pool.Clear();
-            _featuredContract = null;
+            _recommendedContract = null;
+            _recommendedContract = null;
             _selectedContract = null;
             _profile?.Reset();
 
