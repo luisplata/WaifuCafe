@@ -43,7 +43,10 @@ namespace V2.Meta
 
         private readonly List<ContractCardView> _cards = new List<ContractCardView>();
         private readonly List<RosterChipView> _chips = new List<RosterChipView>();
+        private readonly List<string> _playableIds = new List<string>();
         private ContractSO _selectedContract;
+        private ContractSO _featuredContract;
+        private bool _contractChosenThisSession;
 
         private void Start()
         {
@@ -88,6 +91,11 @@ namespace V2.Meta
             if (resetConfirmYesButton != null) resetConfirmYesButton.onClick.AddListener(ConfirmReset);
             if (resetConfirmNoButton != null) resetConfirmNoButton.onClick.AddListener(HideResetConfirm);
 
+            // El destacado se deriva UNA sola vez por sesión, antes del primer RefreshAll:
+            // el badge no migra al elegir y los refresh de perfil no lo recalculan.
+            CachePlayableIds();
+            _featuredContract = ResolveFeatured();
+
             BuildContractCards();
             BuildRosterScroll();
             _partyPanelView = new PartyPanelView(partyPanel, RemoveFromParty);
@@ -125,6 +133,42 @@ namespace V2.Meta
                     new Vector2(cardWidth, cardHeight), SelectContract);
                 _cards.Add(view);
             }
+        }
+
+        /// <summary>
+        /// Ids de los contratos jugables en orden de catálogo. <see cref="IContractCatalog.All"/>
+        /// es inmutable por vida de <see cref="GameRoot"/>, así que se cachea una vez.
+        /// </summary>
+        private void CachePlayableIds()
+        {
+            _playableIds.Clear();
+            IReadOnlyList<ContractSO> all = _contracts.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                ContractSO contract = all[i];
+                if (contract != null && !contract.Locked && !string.IsNullOrWhiteSpace(contract.Id))
+                    _playableIds.Add(contract.Id);
+            }
+        }
+
+        private ContractSO ResolveFeatured()
+        {
+            PlayerProfile profile = _profile.Current;
+            string cursor = profile != null ? profile.lastContractId : null;
+            string featuredId = ContractRotation.NextFeatured(_playableIds, cursor);
+            return string.IsNullOrEmpty(featuredId) ? null : _contracts.Find(featuredId);
+        }
+
+        private ContractSO FirstPlayable()
+        {
+            IReadOnlyList<ContractSO> all = _contracts.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                ContractSO contract = all[i];
+                if (contract != null && !contract.Locked) return contract;
+            }
+
+            return null;
         }
 
         private void BuildRosterScroll()
@@ -197,7 +241,7 @@ namespace V2.Meta
             RebuildRoster(profile);
             _partyPanelView?.Refresh(profile.party, _catalog, profile);
             RefreshSynergy(profile);
-            EnsureContractSelection(profile);
+            EnsureContractSelection();
             UpdateCardSelection();
             UpdateStartState(profile);
         }
@@ -322,36 +366,31 @@ namespace V2.Meta
             if (contract == null || contract.Locked || _profile == null) return;
 
             _selectedContract = contract;
+            _contractChosenThisSession = true;
             PlayerProfile profile = _profile.Current;
             profile.lastContractId = contract.Id;
             _profile.Save();
         }
 
-        private void EnsureContractSelection(PlayerProfile profile)
+        /// <summary>
+        /// Corre en cada <c>Changed</c>. Sin pick manual de la sesión, preselecciona el
+        /// destacado (congelado por sesión) y sólo cae al primer jugable si no hay.
+        /// </summary>
+        private void EnsureContractSelection()
         {
-            ContractSO fromProfile = _contracts.Find(profile.lastContractId);
-            if (fromProfile != null && !fromProfile.Locked)
-            {
-                _selectedContract = fromProfile;
+            if (_contractChosenThisSession && _selectedContract != null && !_selectedContract.Locked)
                 return;
-            }
 
-            if (_selectedContract != null && !_selectedContract.Locked) return;
-
-            _selectedContract = null;
-            for (int i = 0; i < _contracts.All.Count; i++)
-            {
-                ContractSO contract = _contracts.All[i];
-                if (contract == null || contract.Locked) continue;
-                _selectedContract = contract;
-                break;
-            }
+            _selectedContract = _featuredContract != null ? _featuredContract : FirstPlayable();
         }
 
         private void UpdateCardSelection()
         {
             foreach (ContractCardView card in _cards)
+            {
                 card.SetSelected(card.Contract == _selectedContract);
+                card.SetFeatured(card.Contract == _featuredContract);
+            }
         }
 
         private void UpdateStartState(PlayerProfile profile)
@@ -364,7 +403,7 @@ namespace V2.Meta
 
         private string StartBlocker(PlayerProfile profile)
         {
-            if (_selectedContract == null) return "ELEGÍ UN CONTRATO";
+            if (_selectedContract == null) return "SIN CONTRATOS";
             if (_selectedContract.Locked) return "CONTRATO BLOQUEADO";
             if (profile == null || profile.party == null) return "PARTY VACÍA";
 
@@ -413,6 +452,7 @@ namespace V2.Meta
         private void ConfirmReset()
         {
             HideResetConfirm();
+            _contractChosenThisSession = false;
             _profile?.Reset();
         }
 
