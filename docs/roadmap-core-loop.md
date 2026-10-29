@@ -138,6 +138,8 @@ de monedas/pedidos.
   monedas, tiempo) + pill de ultimate y botón de pausa. Lo descriptivo del contrato
   (objetivo, modificadores, derrota) vive en el **menú de pausa** (`ESC` o botón),
   que congela run, café y tablero vía `GameplayLock` (sin tocar `Time.timeScale`).
+- **Abandonar**: `SALIR AL MENÚ` pide confirmación y **descarta todo lo ganado en la
+  run** (monedas, contrato y avance del tutorial). No hay soft fail al abandonar.
 
 ## 8. Tutorial
 
